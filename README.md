@@ -117,10 +117,7 @@ Second, add the MCP to `.vscode/mcp.json`:
 
 Third, create a `.env` file in this repository (you can copy from `.env.template`) and configure environment variables as [described above](#environment-variables).
 
-Last but not least, switch to Agent Mode in CoPilot and reload tools:
-![CoPilot Enable Agent Mode](assets/copilot-enable-agent-mode.gif)
-
-
+Last but not least, switch to Agent Mode in CoPilot and reload tools.
 
 
 ## Notes
