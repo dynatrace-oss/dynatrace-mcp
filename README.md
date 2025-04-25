@@ -7,10 +7,43 @@ This repository provides a model-context-protocol package for interacting with D
 
 ## Quickstart
 
+**Work in progress**
+
+You can add this MCP server (using STDIO) to your Claude or VSCode Copilot via the package `@dynatrace-oss/dynatrace-mcp` (name might change).
+
+**VSCode**
+```json
+{
+  "servers": {
+    "npx-dynatrace-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@dynatrace-oss/dynatrace-mcp@latest"],
+      "envFile": "${workspaceFolder}/.env"
+    }
+  }
+}
+```
+
+**Claude Desktop**
+```json
+{
+  "mcpServers": {
+    "mobile-mcp": {
+      "command": "npx",
+      "args": ["-y", "@dynatrace-oss/dynatrace-mcp@latest"],
+      "env": {
+        "OAUTH_CLIENT_ID": "",
+        "OAUTH_CLIENT_SECRET": "",
+        "DT_ENVIRONMENT": ""
+      }
+    }
+  }
+}
+```
 
 ## Environment Variables
 
-A Dynatrace OAuth Client is needed to communicate with your Dynatrace Environment. Please follow the documentation about
+A **Dynatrace OAuth Client** is needed to communicate with your Dynatrace Environment. Please follow the documentation about
 [creating an Oauth Client in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/oauth-clients),
 and set up the following environment variables in order for this MCP to work:
 
