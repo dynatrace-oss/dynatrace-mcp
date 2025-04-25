@@ -1,17 +1,25 @@
-# Dynatrace MCP
+# Dynatrace MCP Server
 
-> **Note**: This product is not officially supported by Dynatrace. Please reach out via GitHub Issues if you have feature-requests, questions, or need help.
+This prototype for a remote MCP server allows interaction with [Dynatrace](https://www.dynatrace.com/) observability platform. 
+Get real-time observability data early on in the daily development cycle.
 
-This repository provides a model-context-protocol package for interacting with Dynatrace.
+<img width="1046" alt="image" src="https://github.com/user-attachments/assets/1537d5df-be2a-4b9c-b1d6-c024541b5f35" />
+
+## Use cases
+
+- Real-time observability, fetch production-level data for early detection.
+- Fix issues in the context from monitored exceptions, logs, and anomalies.
+- More context on security level issues
+- Natural language to query log data
 
 
 ## Quickstart
 
 **Work in progress**
 
-You can add this MCP server (using STDIO) to your Claude or VSCode Copilot via the package `@dynatrace-oss/dynatrace-mcp` (name might change).
+You can add this MCP server (using STDIO) to your MCP Client like VS Code, Claude, Cursor, Windsurf Github Copilot via the package `@dynatrace-oss/dynatrace-mcp`. 
 
-**VSCode**
+**VS Code**
 ```json
 {
   "servers": {
@@ -111,3 +119,10 @@ Third, create a `.env` file in this repository (you can copy from `.env.template
 
 Last but not least, switch to Agent Mode in CoPilot and reload tools:
 ![CoPilot Enable Agent Mode](assets/copilot-enable-agent-mode.gif)
+
+
+
+
+## Notes
+This product is not officially supported by Dynatrace. 
+Please contact us via [GitHub Issues](https://github.com/dynatrace-oss/dynatrace-mcp/issues) if you have feature requests, questions, or need help.
