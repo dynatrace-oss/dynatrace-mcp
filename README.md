@@ -3,7 +3,7 @@
 This prototype for a remote MCP server allows interaction with [Dynatrace](https://www.dynatrace.com/) observability platform. 
 Bring real-time observability data directly into your development workflow.
 
-<img width="1046" alt="image" src="https://github.com/user-attachments/assets/1537d5df-be2a-4b9c-b1d6-c024541b5f35" />
+<img width="1046" alt="image" src="/assets/dynatrace-mcp-arch.png" />
 
 ## Use cases
 
