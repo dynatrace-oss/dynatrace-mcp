@@ -37,7 +37,7 @@
     "@dynatrace-sdk/client-query": "^1.18.1",
     "@modelcontextprotocol/sdk": "^1.8.0",
     "dotenv": "^16.4.7",
-    "dt-app": "^0.138.0",
+    "dt-app": "^0.140.1",
     "zod-to-json-schema": "^3.24.5"
   },
   "devDependencies": {
