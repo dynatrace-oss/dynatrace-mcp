@@ -1,6 +1,6 @@
 # Dynatrace MCP Server
 
-This remote MCP server allows interaction with the [Dynatrace](https://www.dynatrace.com/) observability platform. 
+This remote MCP server allows interaction with the [Dynatrace](https://www.dynatrace.com/) observability platform.
 Bring real-time observability data directly into your development workflow.
 
 <img width="1046" alt="image" src="/assets/dynatrace-mcp-arch.png" />
@@ -17,7 +17,7 @@ Bring real-time observability data directly into your development workflow.
 
 **Work in progress**
 
-You can add this MCP server (using STDIO) to your MCP Client like VS Code, Claude, Cursor, Windsurf Github Copilot via the package `@dynatrace-oss/dynatrace-mcp`. 
+You can add this MCP server (using STDIO) to your MCP Client like VS Code, Claude, Cursor, Windsurf Github Copilot via the package `@dynatrace/dynatrace-mcp-server`.
 
 **VS Code**
 
@@ -26,7 +26,7 @@ You can add this MCP server (using STDIO) to your MCP Client like VS Code, Claud
   "servers": {
     "npx-dynatrace-mcp-server": {
       "command": "npx",
-      "args": ["-y", "@dynatrace-oss/dynatrace-mcp@latest"],
+      "args": ["-y", "@dynatrace/dynatrace-mcp-server@latest"],
       "envFile": "${workspaceFolder}/.env"
     }
   }
@@ -39,7 +39,7 @@ You can add this MCP server (using STDIO) to your MCP Client like VS Code, Claud
   "mcpServers": {
     "mobile-mcp": {
       "command": "npx",
-      "args": ["-y", "@dynatrace-oss/dynatrace-mcp@latest"],
+      "args": ["-y", "@dynatrace/dynatrace-mcp-server@latest"],
       "env": {
         "OAUTH_CLIENT_ID": "",
         "OAUTH_CLIENT_SECRET": "",
@@ -122,5 +122,5 @@ Last but not least, switch to Agent Mode in CoPilot and reload tools.
 
 
 ## Notes
-This product is not officially supported by Dynatrace. 
+This product is not officially supported by Dynatrace.
 Please contact us via [GitHub Issues](https://github.com/dynatrace-oss/dynatrace-mcp/issues) if you have feature requests, questions, or need help.
