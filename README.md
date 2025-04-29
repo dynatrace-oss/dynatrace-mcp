@@ -20,6 +20,7 @@ Bring real-time observability data directly into your development workflow.
 You can add this MCP server (using STDIO) to your MCP Client like VS Code, Claude, Cursor, Windsurf Github Copilot via the package `@dynatrace-oss/dynatrace-mcp`. 
 
 **VS Code**
+
 ```json
 {
   "servers": {
