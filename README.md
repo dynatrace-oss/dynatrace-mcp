@@ -25,7 +25,7 @@ Bring real-time observability data directly into your development workflow.
 
 **Work in progress**
 
-You can add this MCP server (using STDIO) to your MCP Client like VS Code, Claude, Cursor, Windsurf Github Copilot via the package `@dynatrace/dynatrace-mcp-server`.
+You can add this MCP server (using STDIO) to your MCP Client like VS Code, Claude, Cursor, Windsurf Github Copilot via the package `@dynatrace-oss/dynatrace-mcp-server`.
 
 **VS Code**
 
@@ -34,7 +34,7 @@ You can add this MCP server (using STDIO) to your MCP Client like VS Code, Claud
   "servers": {
     "npx-dynatrace-mcp-server": {
       "command": "npx",
-      "args": ["-y", "@dynatrace/dynatrace-mcp-server@latest"],
+      "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "envFile": "${workspaceFolder}/.env"
     }
   }
@@ -47,7 +47,7 @@ You can add this MCP server (using STDIO) to your MCP Client like VS Code, Claud
   "mcpServers": {
     "mobile-mcp": {
       "command": "npx",
-      "args": ["-y", "@dynatrace/dynatrace-mcp-server@latest"],
+      "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
         "OAUTH_CLIENT_ID": "",
         "OAUTH_CLIENT_SECRET": "",
@@ -105,7 +105,7 @@ and extend them as needed. They’re here to help you imagine how real-time obse
 I have this code snippet here in my IDE, where I get a dependency vulnerability warning for my code.
 Check if I see any open vulnerability/cve on production.
 Analyze a specific production problem.
-Setup a workflow that sends Slack alerts to the #devops-alerts channel when availability problems occur. 
+Setup a workflow that sends Slack alerts to the #devops-alerts channel when availability problems occur.
 ```
 **Debug intermittent 503 errors.**
 ```

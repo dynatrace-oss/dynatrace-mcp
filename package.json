@@ -1,5 +1,5 @@
 {
-  "name": "@dynatrace/dynatrace-mcp-server",
+  "name": "@dynatrace-oss/dynatrace-mcp-server",
   "version": "0.1.0",
   "description": "Model Context Protocol (MCP) server for Dynatrace",
   "main": "./dist/index.js",
@@ -10,9 +10,6 @@
   "files": [
     "dist"
   ],
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/"
-  },
   "exports": {
     "./package.json": "./package.json",
     ".": {
