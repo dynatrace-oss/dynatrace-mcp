@@ -59,6 +59,7 @@ You can add this MCP server (using STDIO) to your MCP Client like VS Code, Claud
 ```
 
 **Amazon Q Developer CLI**
+
 The [Amazon Q Developer CLI](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/command-line-chat.html) provides an interactive chat experience directly in your terminal. You can ask questions, get help with AWS services, troubleshoot issues, and generate code snippets without leaving your command line environment.
 ```json
 {
