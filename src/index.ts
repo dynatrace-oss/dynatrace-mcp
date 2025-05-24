@@ -49,6 +49,7 @@ let scopes = [
   'storage:bizevents:read', // Read bizevents for reliability guardian validations
   'storage:spans:read', // Read spans from Grail
   'storage:entities:read', // Read Entities from Grail
+  'storage:events:read', // Read events from Grail
   'storage:system:read', // Read System Data from Grail
   'storage:user.events:read', // Read User events from Grail
   'storage:user.sessions:read', // Read User sessions from Grail
@@ -335,7 +336,7 @@ const main = async () => {
     "verify_dql",
     "Verify a DQL statement on Dynatrace",
     {
-      dqlStatement: z.string().optional()
+      dqlStatement: z.string()
     },
     async ({dqlStatement}) => {
       const response = await verifyDqlStatement(dtClient, dqlStatement);
@@ -347,7 +348,7 @@ const main = async () => {
     "execute_dql",
     "Get Logs, Metrics, Spans, Events from Dynatrace by executing a DQL statement. Please use verify_dql tool before you execute a DQL statement.",
     {
-      dqlStatement: z.string().optional()
+      dqlStatement: z.string()
     },
     async ({dqlStatement}) => {
       const response = await executeDql(dtClient, dqlStatement);
@@ -402,14 +403,14 @@ const main = async () => {
 
   tool(
     "get_kubernetes_events",
-    "Get all events from a specific Kubernetes cluster",
+    "Get all events from a specific Kubernetes (K8s) cluster",
     {
-      clusterId: z.string().optional()
+      clusterId: z.string().optional().describe(`The Kubernetes (K8s) Cluster Id, referred to as k8s.cluster.uid (this is NOT the Dynatrace environment)`)
     },
     async ({clusterId}) => {
       const events = await getEventsForCluster(dtClient, clusterId);
 
-      return `Events:\n${JSON.stringify(events)}`;
+      return `Kubernetes Events:\n${JSON.stringify(events)}`;
     }
   )
 

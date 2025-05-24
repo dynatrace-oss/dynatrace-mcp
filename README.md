@@ -41,6 +41,25 @@ You can add this MCP server (using STDIO) to your MCP Client like VS Code, Claud
 }
 ```
 
+Please note: In this config, [the `${workspaceFolder}` variable](https://code.visualstudio.com/docs/reference/variables-reference#_predefined-variables) is used.
+This only works if the config is stored in the current workspaces, e.g., `<your-repo>/.vscode/mcp.json`. Alternatively, this can also be stored in user-settings, and you can define `env` as follows:
+
+```json
+{
+  "servers": {
+    "npx-dynatrace-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
+      "env": {
+        "OAUTH_CLIENT_ID": "",
+        "OAUTH_CLIENT_SECRET": "",
+        "DT_ENVIRONMENT": ""
+      }
+    }
+  }
+}
+```
+
 **Claude Desktop**
 ```json
 {
@@ -102,6 +121,7 @@ and set up the following environment variables in order for this MCP to work:
   * `storage:bizevents:read` - Read bizevents for reliability guardian validations
   * `storage:spans:read` - Read spans from Grail
   * `storage:entities:read` - Read Entities from Grail
+  * `storage:events:read` -  Read Events from Grail
   * `storage:system:read` - Read System Data from Grail
   * `storage:user.events:read` - Read User events from Grail
   * `storage:user.sessions:read` - Read User sessions from Grail
