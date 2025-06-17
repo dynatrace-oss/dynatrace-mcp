@@ -36,7 +36,8 @@
   "scripts": {
     "build": "tsc --build",
     "prepare": "npm run build",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "test": "jest"
   },
   "author": "Dynatrace",
   "license": "MIT",
