@@ -29,6 +29,7 @@ import { getVulnerabilityDetails } from "./capabilities/get-vulnerability-detail
 import { executeDql, verifyDqlStatement } from "./capabilities/execute-dql";
 import { sendSlackMessage } from "./capabilities/send-slack-message";
 import { findMonitoredEntityByName } from './capabilities/find-monitored-entity-by-name';
+import { DynatraceEnv, getDynatraceEnv } from "./getDynatraceEnv";
 
 config();
 
@@ -71,19 +72,14 @@ if (process.env.USE_WORKFLOWS) {
 
 const main = async () => {
   // read Environment variables
-  const oauthClient = process.env.OAUTH_CLIENT_ID;
-  const oauthClientSecret = process.env.OAUTH_CLIENT_SECRET;
-  const dtEnvironment = process.env.DT_ENVIRONMENT;
-
-  const slackConnectionId = process.env.SLACK_CONNECTION_ID || "fake-slack-connection-id";
-
-  // ensure oauthClient and dtEnvironment are set
-  if (!oauthClient || !oauthClientSecret || !dtEnvironment) {
-    console.error(
-      "Please set OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET and DT_ENVIRONMENT environment variables",
-    );
+  let dynatraceEnv: DynatraceEnv;
+  try {
+    dynatraceEnv = getDynatraceEnv();
+  } catch (err) {
+    console.error((err as Error).message);
     process.exit(1);
   }
+  const { oauthClient, oauthClientSecret, dtEnvironment, slackConnectionId } = dynatraceEnv;
 
   // create an oauth-client
   const dtClient = await createOAuthClient(oauthClient, oauthClientSecret, dtEnvironment, scopes);
