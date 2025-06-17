@@ -102,7 +102,7 @@ A **Dynatrace OAuth Client** is needed to communicate with your Dynatrace Enviro
 [creating an Oauth Client in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/oauth-clients),
 and set up the following environment variables in order for this MCP to work:
 
-* `DT_ENVIRONMENT` (string, e.g., https://abcd1234.apps.dynatrace.com) - URL to your Dynatrace Platform
+* `DT_ENVIRONMENT` (string, e.g., https://abc12345.apps.dynatrace.com) - URL to your Dynatrace Platform (do not use Dynatrace classic URLs like `abc12345.live.dynatrace.com`)
 * `OAUTH_CLIENT_ID` (string, e.g., `dt0s02.SAMPLE`) - Dynatrace OAuth Client ID
 * `OAUTH_CLIENT_SECRET` (string, e.g., `dt0s02.SAMPLE.abcd1234`) - Dynatrace OAuth Client Secret
 * OAuth Client Scopes:
@@ -114,7 +114,6 @@ and set up the following environment variables in order for this MCP to work:
   * `environment-api:problems:read` - get problems
   * `environment-api:metrics:read` - read metrics
   * `environment-api:slo:read` - read SLOs
-  * `settings:objects:read` - needed for reading ownership information and Guardians (SRG) from settings
   * `storage:buckets:read` - Read all system data stored on Grail
   * `storage:logs:read` - Read logs for reliability guardian validations
   * `storage:metrics:read` - Read metrics for reliability guardian validations
@@ -125,6 +124,9 @@ and set up the following environment variables in order for this MCP to work:
   * `storage:system:read` - Read System Data from Grail
   * `storage:user.events:read` - Read User events from Grail
   * `storage:user.sessions:read` - Read User sessions from Grail
+  * `settings:objects:read` - needed for reading ownership information and Guardians (SRG) from settings
+
+    **Note**: Please ensure that `settings:objects:read` is used, and *not* the similarly named scope `app-settings:objects:read`.
 
 In addition, depending on the features you use, the following variables can be configured:
 
@@ -172,9 +174,53 @@ Can you fetch recent events from our "production-cluster"
 to help identify what might be causing these deployment issues?
 ```
 
+## Troubleshooting
+
+### Authentication Issues
+
+In most cases, something is wrong with the OAuth Client. Please ensure that you have added all scopes as requested above.
+In addition, please ensure that your user also has all necessary permissions on your Dynatrace Environment.
+
+In case of any problems, you can troubleshoot SSO/OAuth issues based on our [Dynatrace Developer Documentation](https://developer.dynatrace.com/develop/access-platform-apis-from-outside/#get-bearer-token-and-call-app-function) and providing the list of scopes.
+
+It is recommended to try access the following API (which requires minimal scopes `app-engine:apps:run` and `app-engine:functions:run`):
+
+1. Use OAuth Client ID and Secret to retrieve a Bearer Token (only valid for a couple of minutes):
+```bash
+curl --request POST 'https://sso.dynatrace.com/sso/oauth2/token' \
+  --header 'Content-Type: application/x-www-form-urlencoded' \
+  --data-urlencode 'grant_type=client_credentials' \
+  --data-urlencode 'client_id={your-client-id}' \
+  --data-urlencode 'client_secret={your-client-secret}' \
+  --data-urlencode 'scope=app-engine:apps:run app-engine:functions:run'
+```
+
+2. Use `access_token` from the response of the above call as the bearer-token in the next call:
+```bash
+curl -X GET https://abc12345.apps.dynatrace.com/platform/management/v1/environment \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer {your-bearer-token}'
+```
+
+3. You should retrieve a result like this:
+```json
+{
+  "environmentId": "abc12345",
+  "createTime": "2023-01-01T00:10:57.123Z",
+  "blockTime": "2025-12-07T00:00:00Z",
+  "state": "ACTIVE"
+}
+```
+
+
+### Problem accessing data on Grail
+
+Grail has a dedicated section about permissions in the Dynatrace Docs. Please refer to https://docs.dynatrace.com/docs/discover-dynatrace/platform/grail/data-model/assign-permissions-in-grail for more details.
+
+
 ## Development
 
-For development purposes, you can use VSCode and GitHub Copilot.
+For local development purposes, you can use VSCode and GitHub Copilot.
 
 First, enable Copilot for your Workspace `.vscode/settings.json`:
 ```json
