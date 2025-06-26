@@ -6,11 +6,19 @@ export interface DynatraceEnv {
   slackConnectionId: string;
 }
 
+interface ProcessEnv {
+  [key: string]: string | undefined;
+}
+
+declare const process: {
+  env: ProcessEnv;
+};
+
 /**
  * Reads and validates required environment variables for Dynatrace MCP.
  * Throws an Error if validation fails.
  */
-export function getDynatraceEnv(env: NodeJS.ProcessEnv = process.env): DynatraceEnv {
+export function getDynatraceEnv(env: ProcessEnv = process.env): DynatraceEnv {
   const oauthClient = env.OAUTH_CLIENT_ID;
   const oauthClientSecret = env.OAUTH_CLIENT_SECRET;
   const dtEnvironment = env.DT_ENVIRONMENT;
