@@ -36,6 +36,18 @@ import { getUserSessions } from "./capabilities/get-user-sessions";
 import { getEntityMetrics } from "./capabilities/get-entity-metrics";
 import { getTraceDetails, getServiceTraces } from "./capabilities/get-trace-details";
 import { getSloDetails, getSloViolations, getErrorBudgetConsumption } from "./capabilities/get-slo-details";
+import { getSyntheticMonitors, getSyntheticTestResults } from "./capabilities/get-synthetic-monitors";
+import { getInfrastructureHealth, getProcesses, getInfrastructureMetrics } from "./capabilities/get-infrastructure-health";
+import { getChangeEvents, getDeploymentEvents, getConfigurationChanges, getCustomAnnotations } from "./capabilities/get-change-events";
+import { 
+  getAvailableSkills, 
+  generateDqlFromNaturalLanguage, 
+  explainDqlInNaturalLanguage, 
+  chatWithDavisCopilot,
+  submitNl2DqlFeedback,
+  submitDql2NlFeedback,
+  submitConversationFeedback
+} from "./capabilities/davis-copilot";
 
 config();
 
@@ -49,6 +61,10 @@ let scopes = [
   'environment-api:problems:read', // get problems
   'environment-api:metrics:read', // read metrics
   'environment-api:slo:read', // read SLOs
+  'environment-api:synthetic:read', // read synthetic monitors
+  'davis-copilot:conversations:execute', // execute conversational skill
+  'davis-copilot:nl2dql:execute', // execute NL to DQL skill
+  'davis-copilot:dql2nl:execute', // execute DQL to NL skill
   'settings:objects:read', // needed for reading settings objects, like ownership information and Guardians (SRG) from settings
   // 'settings:objects:write', // [OPTIONAL] not used right now
 
@@ -799,6 +815,474 @@ const main = async () => {
       }
       
       return resp;
+    }
+  )
+
+  tool(
+    "get_synthetic_monitors",
+    "Get synthetic monitoring data to check website availability and performance from different locations. This provides insights into user experience from various geographic locations.",
+    {
+      monitorId: z.string().optional().describe("Optional specific monitor ID to retrieve")
+    },
+    async ({monitorId}) => {
+      const monitors = await getSyntheticMonitors(dtClient, monitorId);
+      
+      if (monitors.length === 0) {
+        return "No synthetic monitors found";
+      }
+      
+      let resp = `🌐 Synthetic Monitors (${monitors.length} found):\n\n`;
+      
+      monitors.forEach((monitor) => {
+        resp += `📡 ${monitor.name} (ID: ${monitor.entityId})\n`;
+        resp += `   - Type: ${monitor.type}\n`;
+        resp += `   - Status: ${monitor.enabled ? '✅ Enabled' : '❌ Disabled'}\n`;
+        resp += `   - Frequency: ${monitor.frequency} minutes\n`;
+        resp += `   - Locations: ${monitor.locations.join(', ')}\n`;
+        
+        if (monitor.availability) {
+          resp += `   - Availability: ${monitor.availability.percentage.toFixed(2)}% (${monitor.availability.successful}/${monitor.availability.total})\n`;
+        }
+        
+        if (monitor.lastTestResult) {
+          const status = monitor.lastTestResult.status === 'SUCCESS' ? '✅' : '❌';
+          resp += `   - Last Test: ${status} ${monitor.lastTestResult.responseTime}ms from ${monitor.lastTestResult.location}\n`;
+          if (monitor.lastTestResult.errorMessage) {
+            resp += `     Error: ${monitor.lastTestResult.errorMessage}\n`;
+          }
+        }
+        
+        resp += `\n`;
+      });
+      
+      return resp;
+    }
+  )
+
+  tool(
+    "get_synthetic_test_results",
+    "Get detailed test results for a synthetic monitor to analyze performance trends and identify issues.",
+    {
+      monitorId: z.string().describe("The monitor ID to get test results for"),
+      timeframe: z.string().optional().default('1h').describe("Timeframe: '1h', '24h' (default: '1h')")
+    },
+    async ({monitorId, timeframe}) => {
+      const results = await getSyntheticTestResults(dtClient, monitorId, timeframe);
+      
+      if (results.length === 0) {
+        return "No test results found for this monitor in the specified timeframe";
+      }
+      
+      let resp = `📊 Synthetic Test Results for Monitor ${monitorId} (${results.length} results):\n\n`;
+      
+      // Calculate summary statistics
+      const successful = results.filter(r => r.status === 'SUCCESS').length;
+      const failed = results.length - successful;
+      const avgResponseTime = results.reduce((sum, r) => sum + r.responseTime, 0) / results.length;
+      
+      resp += `📈 Summary:\n`;
+      resp += `   - Success Rate: ${((successful / results.length) * 100).toFixed(2)}%\n`;
+      resp += `   - Failed Tests: ${failed}\n`;
+      resp += `   - Average Response Time: ${avgResponseTime.toFixed(2)}ms\n\n`;
+      
+      // Show recent results
+      resp += `🕒 Recent Test Results:\n`;
+      results.slice(0, 10).forEach((result, index) => {
+        const status = result.status === 'SUCCESS' ? '✅' : '❌';
+        const timestamp = new Date(result.timestamp).toISOString();
+        resp += `   ${index + 1}. ${status} ${result.responseTime}ms from ${result.location} at ${timestamp}\n`;
+        if (result.errorMessage) {
+          resp += `      Error: ${result.errorMessage}\n`;
+        }
+      });
+      
+      if (results.length > 10) {
+        resp += `   ... and ${results.length - 10} more results\n`;
+      }
+      
+      return resp;
+    }
+  )
+
+  tool(
+    "get_infrastructure_health",
+    "Get infrastructure health data including host status, CPU, memory, disk usage, and network performance. This provides comprehensive infrastructure monitoring insights.",
+    {
+      hostId: z.string().optional().describe("Optional specific host ID to retrieve")
+    },
+    async ({hostId}) => {
+      const hosts = await getInfrastructureHealth(dtClient, hostId);
+      
+      if (hosts.length === 0) {
+        return "No hosts found";
+      }
+      
+      let resp = `🖥️ Infrastructure Health (${hosts.length} hosts):\n\n`;
+      
+      hosts.forEach((host) => {
+        const status = host.status === 'UP' ? '✅' : host.status === 'DOWN' ? '❌' : '⚠️';
+        resp += `${status} ${host.name} (ID: ${host.entityId})\n`;
+        resp += `   - OS: ${host.osType}\n`;
+        resp += `   - Status: ${host.status}\n`;
+        resp += `   - Last Seen: ${host.lastSeen}\n`;
+        
+        if (host.tags && host.tags.length > 0) {
+          resp += `   - Tags: ${host.tags.join(', ')}\n`;
+        }
+        
+        resp += `\n`;
+      });
+      
+      return resp;
+    }
+  )
+
+  tool(
+    "get_processes",
+    "Get process information and health data. This shows running processes, their resource usage, and status across hosts.",
+    {
+      hostId: z.string().optional().describe("Optional specific host ID to get processes for")
+    },
+    async ({hostId}) => {
+      const processes = await getProcesses(dtClient, hostId);
+      
+      if (processes.length === 0) {
+        return "No processes found";
+      }
+      
+      let resp = `⚙️ Processes (${processes.length} found):\n\n`;
+      
+      processes.forEach((process) => {
+        const status = process.status === 'UP' ? '✅' : process.status === 'DOWN' ? '❌' : '⚠️';
+        resp += `${status} ${process.name} (ID: ${process.entityId})\n`;
+        resp += `   - Status: ${process.status}\n`;
+        resp += `   - Command: ${process.commandLine || 'N/A'}\n`;
+        resp += `   - Last Seen: ${process.lastSeen}\n`;
+        
+        if (process.tags && process.tags.length > 0) {
+          resp += `   - Tags: ${process.tags.join(', ')}\n`;
+        }
+        
+        resp += `\n`;
+      });
+      
+      return resp;
+    }
+  )
+
+  tool(
+    "get_infrastructure_metrics",
+    "Get detailed infrastructure metrics including CPU, memory, disk, and network performance for a specific entity.",
+    {
+      entityId: z.string().describe("The entity ID to get metrics for"),
+      timeframe: z.string().optional().default('1h').describe("Timeframe: '1h', '24h' (default: '1h')")
+    },
+    async ({entityId, timeframe}) => {
+      const metrics = await getInfrastructureMetrics(dtClient, entityId, timeframe);
+      
+      let resp = `📊 Infrastructure Metrics for ${entityId}:\n\n`;
+      resp += `Timeframe: ${timeframe}\n\n`;
+      
+      if (metrics && metrics.length > 0) {
+        resp += `Metrics:\n`;
+        metrics.forEach((metric) => {
+          resp += `   - ${metric.metricId}: ${metric.value.toFixed(2)}\n`;
+        });
+      } else {
+        resp += `No metrics found for this entity in the specified timeframe.\n`;
+      }
+      
+      return resp;
+    }
+  )
+
+  tool(
+    "get_change_events",
+    "Get change events and deployment tracking data. This shows configuration changes, deployments, and custom annotations across your infrastructure.",
+    {
+      entityId: z.string().optional().describe("Optional specific entity ID to get changes for"),
+      timeframe: z.string().optional().default('24h').describe("Timeframe: '1h', '24h' (default: '24h')")
+    },
+    async ({entityId, timeframe}) => {
+      const events = await getChangeEvents(dtClient, entityId, timeframe);
+      
+      if (!events || events.length === 0) {
+        return "No change events found in the specified timeframe";
+      }
+      
+      let resp = `🔄 Change Events (${events.length} found):\n\n`;
+      resp += `Timeframe: ${timeframe}\n\n`;
+      
+      events.slice(0, 15).forEach((event, index) => {
+        const timestamp = new Date(event.timestamp).toISOString();
+        resp += `${index + 1}. ${event.eventType}\n`;
+        resp += `   - Entity: ${event.entityName || event.entityId}\n`;
+        resp += `   - Time: ${timestamp}\n`;
+        resp += `   - Source: ${event.source}\n`;
+        if (event.description) {
+          resp += `   - Description: ${event.description}\n`;
+        }
+        resp += `\n`;
+      });
+      
+      if (events.length > 15) {
+        resp += `... and ${events.length - 15} more events\n`;
+      }
+      
+      return resp;
+    }
+  )
+
+  tool(
+    "get_deployment_events",
+    "Get deployment events to track application deployments and their impact on services.",
+    {
+      serviceName: z.string().optional().describe("Optional specific service name to get deployments for"),
+      timeframe: z.string().optional().default('24h').describe("Timeframe: '1h', '24h' (default: '24h')")
+    },
+    async ({serviceName, timeframe}) => {
+      const deployments = await getDeploymentEvents(dtClient, serviceName, timeframe);
+      
+      if (!deployments || deployments.length === 0) {
+        return "No deployment events found in the specified timeframe";
+      }
+      
+      let resp = `🚀 Deployment Events (${deployments.length} found):\n\n`;
+      resp += `Timeframe: ${timeframe}\n`;
+      if (serviceName) {
+        resp += `Service: ${serviceName}\n`;
+      }
+      resp += `\n`;
+      
+      deployments.slice(0, 10).forEach((deployment, index) => {
+        const timestamp = new Date(deployment.timestamp).toISOString();
+        resp += `${index + 1}. ${deployment.deploymentName}\n`;
+        resp += `   - Service: ${deployment.serviceName}\n`;
+        resp += `   - Version: ${deployment.version}\n`;
+        resp += `   - Time: ${timestamp}\n`;
+        resp += `   - Status: ${deployment.status}\n`;
+        resp += `\n`;
+      });
+      
+      if (deployments.length > 10) {
+        resp += `... and ${deployments.length - 10} more deployments\n`;
+      }
+      
+      return resp;
+    }
+  )
+
+  tool(
+    "get_configuration_changes",
+    "Get configuration change events to track infrastructure and application configuration modifications.",
+    {
+      entityId: z.string().optional().describe("Optional specific entity ID to get configuration changes for"),
+      timeframe: z.string().optional().default('24h').describe("Timeframe: '1h', '24h' (default: '24h')")
+    },
+    async ({entityId, timeframe}) => {
+      const changes = await getConfigurationChanges(dtClient, entityId, timeframe);
+      
+      if (!changes || changes.length === 0) {
+        return "No configuration changes found in the specified timeframe";
+      }
+      
+      let resp = `⚙️ Configuration Changes (${changes.length} found):\n\n`;
+      resp += `Timeframe: ${timeframe}\n`;
+      if (entityId) {
+        resp += `Entity: ${entityId}\n`;
+      }
+      resp += `\n`;
+      
+      changes.slice(0, 10).forEach((change, index) => {
+        const timestamp = new Date(change.timestamp).toISOString();
+        resp += `${index + 1}. Configuration Change\n`;
+        resp += `   - Entity: ${change.entityName || change.entityId}\n`;
+        resp += `   - Time: ${timestamp}\n`;
+        resp += `   - Source: ${change.source}\n`;
+        if (change.description) {
+          resp += `   - Description: ${change.description}\n`;
+        }
+        resp += `\n`;
+      });
+      
+      if (changes.length > 10) {
+        resp += `... and ${changes.length - 10} more changes\n`;
+      }
+      
+      return resp;
+    }
+  )
+
+  tool(
+    "get_davis_copilot_skills",
+    "Get available Davis CoPilot skills. This shows which AI capabilities are available in your Dynatrace environment.",
+    {},
+    async ({}) => {
+      const skills = await getAvailableSkills(dtClient);
+      
+      if (!skills.skills || skills.skills.length === 0) {
+        return "No Davis CoPilot skills available. Please ensure Davis CoPilot is enabled for your environment.";
+      }
+      
+      let resp = `🤖 Davis CoPilot Skills Available:\n\n`;
+      
+      skills.skills.forEach((skill) => {
+        switch (skill) {
+          case 'conversation':
+            resp += `💬 **Conversation** - Chat with Davis CoPilot for assistance\n`;
+            break;
+          case 'nl2dql':
+            resp += `🔤 **Natural Language to DQL** - Convert natural language to Dynatrace Query Language\n`;
+            break;
+          case 'dql2nl':
+            resp += `📝 **DQL to Natural Language** - Explain DQL queries in plain English\n`;
+            break;
+          default:
+            resp += `❓ **${skill}** - Unknown skill type\n`;
+        }
+      });
+      
+      resp += `\nUse the other Davis CoPilot tools to interact with these capabilities.`;
+      
+      return resp;
+    }
+  )
+
+  tool(
+    "generate_dql_from_natural_language",
+    "Convert natural language queries to Dynatrace Query Language (DQL) using Davis CoPilot AI. This helps you write DQL queries without knowing the exact syntax.",
+    {
+      text: z.string().describe("Natural language description of what you want to query")
+    },
+    async ({text}) => {
+      const response = await generateDqlFromNaturalLanguage(dtClient, text);
+      
+      let resp = `🔤 Natural Language to DQL:\n\n`;
+      resp += `**Query:** "${text}"\n\n`;
+      resp += `**Generated DQL:**\n\`\`\`\n${response.dql}\n\`\`\`\n\n`;
+      resp += `**Status:** ${response.status}\n`;
+      resp += `**Message Token:** ${response.messageToken}\n`;
+      
+      if (response.metadata?.notifications && response.metadata.notifications.length > 0) {
+        resp += `\n**Notifications:**\n`;
+        response.metadata.notifications.forEach((notification) => {
+          resp += `- ${notification.severity}: ${notification.message}\n`;
+        });
+      }
+      
+      resp += `\n💡 **Tip:** You can use the "verify_dql" tool to validate this query before executing it.`;
+      
+      return resp;
+    }
+  )
+
+  tool(
+    "explain_dql_in_natural_language",
+    "Explain Dynatrace Query Language (DQL) statements in natural language using Davis CoPilot AI. This helps you understand what complex DQL queries do.",
+    {
+      dql: z.string().describe("The DQL statement to explain")
+    },
+    async ({dql}) => {
+      const response = await explainDqlInNaturalLanguage(dtClient, dql);
+      
+      let resp = `📝 DQL to Natural Language:\n\n`;
+      resp += `**DQL Query:**\n\`\`\`\n${dql}\n\`\`\`\n\n`;
+      resp += `**Summary:** ${response.summary}\n\n`;
+      resp += `**Detailed Explanation:**\n${response.explanation}\n\n`;
+      resp += `**Status:** ${response.status}\n`;
+      resp += `**Message Token:** ${response.messageToken}\n`;
+      
+      if (response.metadata?.notifications && response.metadata.notifications.length > 0) {
+        resp += `\n**Notifications:**\n`;
+        response.metadata.notifications.forEach((notification) => {
+          resp += `- ${notification.severity}: ${notification.message}\n`;
+        });
+      }
+      
+      return resp;
+    }
+  )
+
+  tool(
+    "chat_with_davis_copilot",
+    "Chat with Davis CoPilot AI for assistance with Dynatrace questions, troubleshooting, and guidance. This provides contextual help based on your environment.",
+    {
+      text: z.string().describe("Your question or request for Davis CoPilot"),
+      context: z.string().optional().describe("Optional context to provide additional information"),
+      instruction: z.string().optional().describe("Optional instruction for how to format the response")
+    },
+    async ({text, context, instruction}) => {
+      const conversationContext: any[] = [];
+      
+      if (context) {
+        conversationContext.push({
+          type: "supplementary",
+          value: context
+        });
+      }
+      
+      if (instruction) {
+        conversationContext.push({
+          type: "instruction",
+          value: instruction
+        });
+      }
+      
+      const response = await chatWithDavisCopilot(dtClient, text, conversationContext);
+      
+      let resp = `🤖 Davis CoPilot Response:\n\n`;
+      resp += `**Your Question:** "${text}"\n\n`;
+      resp += `**Answer:**\n${response.text}\n\n`;
+      resp += `**Status:** ${response.status}\n`;
+      resp += `**Message Token:** ${response.messageToken}\n`;
+      
+      if (response.metadata?.sources && response.metadata.sources.length > 0) {
+        resp += `\n**Sources:**\n`;
+        response.metadata.sources.forEach((source) => {
+          resp += `- ${source.title || 'Untitled'}: ${source.url || 'No URL'}\n`;
+        });
+      }
+      
+      if (response.metadata?.notifications && response.metadata.notifications.length > 0) {
+        resp += `\n**Notifications:**\n`;
+        response.metadata.notifications.forEach((notification) => {
+          resp += `- ${notification.severity}: ${notification.message}\n`;
+        });
+      }
+      
+      if (response.state?.conversationId) {
+        resp += `\n**Conversation ID:** ${response.state.conversationId}`;
+      }
+      
+      return resp;
+    }
+  )
+
+  tool(
+    "submit_davis_copilot_feedback",
+    "Submit feedback for Davis CoPilot responses to help improve the AI. This can be used for any Davis CoPilot interaction.",
+    {
+      messageToken: z.string().describe("The message token from the Davis CoPilot response"),
+      feedbackType: z.enum(["positive", "negative"]).describe("Whether the response was helpful"),
+      feedbackText: z.string().optional().describe("Optional detailed feedback text"),
+      origin: z.string().optional().default("Dynatrace MCP Server").describe("Origin of the feedback")
+    },
+    async ({messageToken, feedbackType, feedbackText, origin}) => {
+      const feedbackRequest = {
+        messageToken,
+        origin,
+        feedback: {
+          type: feedbackType,
+          text: feedbackText
+        }
+      };
+      
+      try {
+        await submitConversationFeedback(dtClient, feedbackRequest);
+        return `✅ Feedback submitted successfully!\n\n**Type:** ${feedbackType}\n**Message Token:** ${messageToken}\n${feedbackText ? `**Feedback:** ${feedbackText}` : ''}`;
+      } catch (error) {
+        return `❌ Failed to submit feedback: ${error.message}`;
+      }
     }
   )
 

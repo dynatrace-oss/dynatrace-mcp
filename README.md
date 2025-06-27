@@ -1,28 +1,56 @@
 # Dynatrace MCP Server
 
-This remote MCP server allows interaction with the [Dynatrace](https://www.dynatrace.com/) observability platform.
-Bring real-time observability data directly into your development workflow.
+This remote MCP server provides comprehensive access to the [Dynatrace](https://www.dynatrace.com/) observability platform, bringing real-time production data directly into your development workflow.
 
 <img width="1046" alt="image" src="/assets/dynatrace-mcp-arch.png" />
 
-## Use cases
+## 🎯 Use Cases
 
-- Real-time observability, fetch production-level data for early detection.
-- Fix issues in the context from monitored exceptions, logs, and anomalies.
-- More context on security level issues
-- Natural language to query log data
+- **Real-time observability** - Fetch production-level data for early detection and proactive monitoring
+- **Contextual debugging** - Fix issues with full context from monitored exceptions, logs, and anomalies
+- **Security insights** - Get detailed vulnerability analysis and security problem tracking
+- **Natural language queries** - Use AI-powered DQL generation and explanation
+- **Infrastructure monitoring** - Monitor hosts, processes, and system health
+- **Deployment tracking** - Track changes and correlate with performance issues
 
-## Capabilities
+## 🚀 Capabilities
 
-- List and get [problem](https://www.dynatrace.com/hub/detail/problems/) details from your services (for example Kubernetes)
-- List and get security problems / [vulnerability](https://www.dynatrace.com/hub/detail/vulnerabilities/) details
-- Execute DQL (Dynatrace Query Language) and retrieve logs, events, spans and metrics
-- Send Slack messages (via Slack Connector)
-- Set up notification Workflow (via Dynatrace [AutomationEngine](https://docs.dynatrace.com/docs/discover-dynatrace/platform/automationengine))
-- Get more information about a monitored entity
-- Get Ownership of an entity
+### Core Observability
+- **Problems & Issues** - List and get detailed problem information from your services
+- **Security & Vulnerabilities** - Track security problems and vulnerability details with CVE information
+- **Entity Management** - Get detailed information about monitored entities and find entities by name
+- **Ownership Information** - Retrieve ownership details for entities and teams
 
-## Quickstart
+### Data Query & Analysis
+- **DQL Execution** - Execute Dynatrace Query Language (DQL) to retrieve logs, events, spans, and metrics
+- **DQL Validation** - Verify DQL statements before execution to prevent errors
+- **Davis CoPilot AI** - Natural language to DQL conversion, DQL explanation, and AI assistance
+
+### Infrastructure & Performance
+- **Infrastructure Health** - Monitor host status, CPU, memory, disk usage, and network performance
+- **Process Monitoring** - Track running processes and their resource usage across hosts
+- **Real-time Metrics** - Get comprehensive performance data for any entity with CPU, memory, response time, and throughput
+- **Distributed Tracing** - Analyze request flows across microservices with detailed span information
+
+### Business & User Experience
+- **SLO Monitoring** - Track service level objectives, violations, and error budget consumption
+- **User Experience** - Monitor user sessions, page views, and application performance metrics
+- **Synthetic Monitoring** - Check website availability and performance from different geographic locations
+
+### Operations & Automation
+- **Change Detection** - Track deployments, configuration changes, and custom annotations
+- **Maintenance Windows** - Get information about scheduled maintenance and monitoring reductions
+- **Service Dependencies** - Understand service relationships and dependencies
+- **Slack Integration** - Send notifications to Slack channels via Dynatrace connectors
+- **Workflow Automation** - Create and manage notification workflows for teams
+
+### AI-Powered Assistance
+- **Natural Language to DQL** - Convert plain English queries to Dynatrace Query Language
+- **DQL Explanation** - Get plain English explanations of complex DQL queries
+- **AI Chat Assistant** - Get contextual help and guidance for Dynatrace questions
+- **Feedback System** - Provide feedback to improve AI responses over time
+
+## ⚡ Quickstart
 
 **Work in progress**
 
@@ -104,16 +132,18 @@ The [Amazon Q Developer CLI](https://docs.aws.amazon.com/amazonq/latest/qdevelop
 
 This configuration should be stored in `<your-repo>/.amazonq/mcp.json`.
 
-## Environment Variables
+## 🔐 Environment Variables
 
 A **Dynatrace OAuth Client** is needed to communicate with your Dynatrace Environment. Please follow the documentation about
 [creating an Oauth Client in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/oauth-clients),
 and set up the following environment variables in order for this MCP to work:
 
+### Required Variables
 * `DT_ENVIRONMENT` (string, e.g., https://abc12345.apps.dynatrace.com) - URL to your Dynatrace Platform (do not use Dynatrace classic URLs like `abc12345.live.dynatrace.com`)
 * `OAUTH_CLIENT_ID` (string, e.g., `dt0s02.SAMPLE`) - Dynatrace OAuth Client ID
 * `OAUTH_CLIENT_SECRET` (string, e.g., `dt0s02.SAMPLE.abcd1234`) - Dynatrace OAuth Client Secret
-* OAuth Client Scopes:
+
+### Required OAuth Client Scopes
   * `app-engine:apps:run` - needed for environmentInformationClient
   * `app-engine:functions:run` - needed for environmentInformationClient
   * `hub:catalog:read` - get details about installed Apps on Dynatrace Environment
@@ -122,6 +152,10 @@ and set up the following environment variables in order for this MCP to work:
   * `environment-api:problems:read` - get problems
   * `environment-api:metrics:read` - read metrics
   * `environment-api:slo:read` - read SLOs
+  * `environment-api:synthetic:read` - read synthetic monitors
+  * `davis-copilot:conversations:execute` - execute conversational skill
+  * `davis-copilot:nl2dql:execute` - execute NL to DQL skill
+  * `davis-copilot:dql2nl:execute` - execute DQL to NL skill
   * `storage:buckets:read` - Read all system data stored on Grail
   * `storage:logs:read` - Read logs for reliability guardian validations
   * `storage:metrics:read` - Read metrics for reliability guardian validations
@@ -136,19 +170,19 @@ and set up the following environment variables in order for this MCP to work:
 
     **Note**: Please ensure that `settings:objects:read` is used, and *not* the similarly named scope `app-settings:objects:read`.
 
-In addition, depending on the features you use, the following variables can be configured:
-
+### Optional Variables
 * `SLACK_CONNECTION_ID` (string) - connection ID of a [Slack Connection](https://docs.dynatrace.com/docs/analyze-explore-automate/workflows/actions/slack)
 * `USE_APP_SETTINGS`  (boolean, `true` or `false`; default: `false`)
   * Requires scope `app-settings:objects:read` to read settings-objects from app settings
 * `USE_WORKFLOWS` (boolean, `true` or `false`; default: `false`)
   * Requires scopes `automation:workflows:read`, `automation:workflows:write` and `automation:workflows:run` to read, write and execute Workflows
 
-## ✨ Example prompts ✨
+## 💡 Example Prompts
 
 Use these example prompts as a starting point. Just copy them into your IDE or agent setup, adapt them to your services/stack/architecture,
-and extend them as needed. They’re here to help you imagine how real-time observability and automation work together in the MCP context in your IDE.
+and extend them as needed. They're here to help you imagine how real-time observability and automation work together in the MCP context in your IDE.
 
+### Security & Vulnerability Management
 **Find open vulnerabilities on production, setup alert.**
 ```
 I have this code snippet here in my IDE, where I get a dependency vulnerability warning for my code.
@@ -156,6 +190,8 @@ Check if I see any open vulnerability/cve on production.
 Analyze a specific production problem.
 Setup a workflow that sends Slack alerts to the #devops-alerts channel when availability problems occur.
 ```
+
+### Performance Troubleshooting
 **Debug intermittent 503 errors.**
 ```
 Our load balancer is intermittently returning 503 errors during peak traffic.
@@ -163,18 +199,23 @@ Pull all recent problems detected for our front-end services and
 run a query to correlate error rates with service instance health indicators.
 I suspect we have circuit breakers triggering, but need confirmation from the telemetry data.
 ```
+
 **Correlate memory issue with logs.**
 ```
 There's a problem with high memory usage on one of our hosts.
 Get the problem details and then fetch related logs to help understand
 what's causing the memory spike? Which file in this repo is this related to?
 ```
+
+### Distributed Tracing & Request Flow
 **Trace request flow analysis.**
 ```
 Our users are experiencing slow checkout processes.
 Can you execute a DQL query to show me the full request trace for our checkout flow,
 so I can identify which service is causing the bottleneck?
 ```
+
+### Infrastructure & Operations
 **Analyze Kubernetes cluster events.**
 ```
 Our application deployments seem to be failing intermittently.
@@ -182,7 +223,50 @@ Can you fetch recent events from our "production-cluster"
 to help identify what might be causing these deployment issues?
 ```
 
-## Troubleshooting
+**Monitor website availability from multiple locations.**
+```
+Our customers in Europe are reporting slow website performance.
+Can you check our synthetic monitors to see if there are any availability issues
+from different geographic locations and get the test results?
+```
+
+**Investigate infrastructure health issues.**
+```
+We're seeing high CPU usage alerts on our production hosts.
+Can you get the infrastructure health data and check which processes
+are consuming the most resources on our affected hosts?
+```
+
+**Track deployment impact on services.**
+```
+We just deployed a new version of our payment service.
+Can you check the deployment events and see if there were any
+configuration changes that might have affected service performance?
+```
+
+### AI-Powered Assistance
+**Use Davis CoPilot to generate DQL queries.**
+```
+I need to analyze error rates for our payment service.
+Can you use Davis CoPilot to convert this natural language request
+into a DQL query: "Show me error rates for the payment service in the last hour"?
+```
+
+**Get AI assistance for troubleshooting.**
+```
+Our application is experiencing high memory usage.
+Can you chat with Davis CoPilot to get guidance on how to
+investigate memory issues in Dynatrace?
+```
+
+**Understand complex DQL queries.**
+```
+I found this complex DQL query but I'm not sure what it does.
+Can you use Davis CoPilot to explain this query in plain English:
+"fetch logs | filter dt.source_entity == 'SERVICE-123' | summarize count(), by:{severity} | sort count() desc"?
+```
+
+## 🔧 Troubleshooting
 
 ### Authentication Issues
 
