@@ -414,7 +414,7 @@ const main = async () => {
 
   tool(
     "execute_dql",
-    'Get Logs, Metrics, Spans or Events from Dynatrace GRAIL by executing a Dynatrace Query Language (DQL) statement. Always use "verify_dql" tool before you execute a DQL statement. A valid statement looks like this: "fetch [logs, metrics, spans, events] | filter <some-filter> | summarize count(), by:{some-fields}. Adapt filters for certain attributes: `traceId` could be `trace_id` or `trace.id`.',
+    'Execute Dynatrace Query Language (DQL) to retrieve logs, metrics, spans, or events from Dynatrace GRAIL. DQL is the most powerful way to query any data in Dynatrace, including problem events, security issues, logs, metrics, spans, and custom data. Always use "verify_dql" tool before you execute a DQL statement. A valid statement looks like this: "fetch [logs, metrics, spans, events] | filter <some-filter> | summarize count(), by:{some-fields}. Adapt filters for certain attributes: `traceId` could be `trace_id` or `trace.id`.',
     {
       dqlStatement: z.string()
     },
@@ -1150,9 +1150,9 @@ const main = async () => {
 
   tool(
     "generate_dql_from_natural_language",
-    "Convert natural language queries to Dynatrace Query Language (DQL) using Davis CoPilot AI. This helps you write DQL queries without knowing the exact syntax.",
+    "Convert natural language queries to Dynatrace Query Language (DQL) using Davis CoPilot AI. DQL is the most powerful way to query any data in Dynatrace, including problem events, security issues, logs, metrics, spans, and custom data. This helps you write powerful DQL queries without knowing the exact syntax. Workflow: 1) Generate DQL, 2) Verify with verify_dql tool, 3) Execute with execute_dql tool, 4) Iterate if results don't match expectations. *(Note: Davis CoPilot AI is GA, but the Davis CoPilot APIs are in preview)*",
     {
-      text: z.string().describe("Natural language description of what you want to query")
+      text: z.string().describe("Natural language description of what you want to query. Be specific and include time ranges, entities, and metrics of interest.")
     },
     async ({text}) => {
       const response = await generateDqlFromNaturalLanguage(dtClient, text);
@@ -1170,7 +1170,10 @@ const main = async () => {
         });
       }
       
-      resp += `\n💡 **Tip:** You can use the "verify_dql" tool to validate this query before executing it.`;
+      resp += `\n💡 **Next Steps:**\n`;
+      resp += `1. Use "verify_dql" tool to validate this query\n`;
+      resp += `2. Use "execute_dql" tool to run the query\n`;
+      resp += `3. If results don't match expectations, refine your natural language description and try again\n`;
       
       return resp;
     }
@@ -1178,7 +1181,7 @@ const main = async () => {
 
   tool(
     "explain_dql_in_natural_language",
-    "Explain Dynatrace Query Language (DQL) statements in natural language using Davis CoPilot AI. This helps you understand what complex DQL queries do.",
+    "Explain Dynatrace Query Language (DQL) statements in natural language using Davis CoPilot AI. DQL is the most powerful way to query any data in Dynatrace, including problem events, security issues, logs, metrics, spans, and custom data. This helps you understand what complex DQL queries do. *(Note: Davis CoPilot AI is GA, but the Davis CoPilot APIs are in preview)*",
     {
       dql: z.string().describe("The DQL statement to explain")
     },
@@ -1205,7 +1208,7 @@ const main = async () => {
 
   tool(
     "chat_with_davis_copilot",
-    "Chat with Davis CoPilot AI for assistance with Dynatrace questions, troubleshooting, and guidance. This provides contextual help based on your environment.",
+    "Chat with Davis CoPilot AI for assistance with Dynatrace questions, troubleshooting, and guidance. This provides contextual help based on your environment. *(Note: Davis CoPilot AI is GA, but the Davis CoPilot APIs are in preview)*",
     {
       text: z.string().describe("Your question or request for Davis CoPilot"),
       context: z.string().optional().describe("Optional context to provide additional information"),

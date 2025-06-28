@@ -22,9 +22,9 @@ This remote MCP server provides comprehensive access to the [Dynatrace](https://
 - **Ownership Information** - Retrieve ownership details for entities and teams
 
 ### Data Query & Analysis
-- **DQL Execution** - Execute Dynatrace Query Language (DQL) to retrieve logs, events, spans, and metrics
+- **DQL Execution** - Execute Dynatrace Query Language (DQL) to retrieve logs, events, spans, and metrics. DQL is the most powerful way to query any data in Dynatrace, including problem events, security issues, and custom metrics.
 - **DQL Validation** - Verify DQL statements before execution to prevent errors
-- **Davis CoPilot AI** - Natural language to DQL conversion, DQL explanation, and AI assistance
+- **Davis CoPilot AI** - Natural language to DQL conversion, DQL explanation, and AI assistance *(Note: Davis CoPilot AI is GA, but the Davis CoPilot APIs are in preview)*
 
 ### Infrastructure & Performance
 - **Infrastructure Health** - Monitor host status, CPU, memory, disk usage, and network performance
@@ -49,6 +49,8 @@ This remote MCP server provides comprehensive access to the [Dynatrace](https://
 - **DQL Explanation** - Get plain English explanations of complex DQL queries
 - **AI Chat Assistant** - Get contextual help and guidance for Dynatrace questions
 - **Feedback System** - Provide feedback to improve AI responses over time
+
+> **Note:** While Davis CoPilot AI is generally available (GA), the Davis CoPilot APIs are currently in preview. For more information, visit the [Davis CoPilot Preview Community](https://dt-url.net/copilot-community).
 
 ## ⚡ Quickstart
 
@@ -196,7 +198,7 @@ Setup a workflow that sends Slack alerts to the #devops-alerts channel when avai
 ```
 Our load balancer is intermittently returning 503 errors during peak traffic.
 Pull all recent problems detected for our front-end services and
-run a query to correlate error rates with service instance health indicators.
+run a DQL query to correlate error rates with service instance health indicators.
 I suspect we have circuit breakers triggering, but need confirmation from the telemetry data.
 ```
 
@@ -205,6 +207,13 @@ I suspect we have circuit breakers triggering, but need confirmation from the te
 There's a problem with high memory usage on one of our hosts.
 Get the problem details and then fetch related logs to help understand
 what's causing the memory spike? Which file in this repo is this related to?
+```
+
+**Query problem events with DQL.**
+```
+We're seeing intermittent failures in our payment service.
+Use DQL to query for all problem events related to the payment service
+in the last 24 hours and show me the correlation with infrastructure metrics.
 ```
 
 ### Distributed Tracing & Request Flow
@@ -304,11 +313,112 @@ curl -X GET https://abc12345.apps.dynatrace.com/platform/management/v1/environme
 }
 ```
 
+## 🤖 Agent Workflow Guide
 
-### Problem accessing data on Grail
+This section provides guidance for AI agents on how to effectively use the Dynatrace MCP tools, especially for complex workflows that require multiple tool interactions.
 
-Grail has a dedicated section about permissions in the Dynatrace Docs. Please refer to https://docs.dynatrace.com/docs/discover-dynatrace/platform/grail/data-model/assign-permissions-in-grail for more details.
+### 🔄 Natural Language to DQL Workflow
 
+**When to use this workflow:** When users ask questions in natural language that require data analysis, such as "Show me error rates for the payment service" or "What are the slowest database queries?"
+
+**Step-by-step process:**
+
+1. **Generate DQL from Natural Language**
+   - Use `generate_dql_from_natural_language` tool
+   - Provide a clear, specific natural language description
+   - Example: "Show me error rates for the payment service in the last hour"
+
+2. **Validate the Generated DQL**
+   - Use `verify_dql` tool to check if the generated DQL is valid
+   - This prevents execution errors and helps identify issues
+
+3. **Execute the DQL Query**
+   - Use `execute_dql` tool to run the validated query
+   - Review the results to ensure they match the user's intent
+
+4. **Iterate if Needed**
+   - If results don't match expectations, refine the natural language description
+   - Use `explain_dql_in_natural_language` to understand what the current query does
+   - Generate a new DQL query with more specific requirements
+
+5. **Provide Context and Analysis**
+   - Use the results to provide meaningful insights
+   - Correlate with other data sources if needed (problems, metrics, etc.)
+
+**Example Iteration:**
+```
+User: "Show me database performance issues"
+→ Generate DQL: "fetch logs | filter dt.source_entity == 'database'"
+→ Verify DQL: Valid
+→ Execute DQL: Returns logs but not performance metrics
+→ Refine: "Show me database performance metrics and slow queries"
+→ Generate new DQL: "fetch metrics | filter metricId in ('builtin:database.performance')"
+→ Execute and provide results
+```
+
+### 🔍 Problem Investigation Workflow
+
+**When to use:** When investigating incidents, errors, or performance issues.
+
+**Recommended tool sequence:**
+1. `list_problems` - Get overview of current issues
+2. `get_problem_details` - Get detailed information about specific problems
+3. `get_entity_details` - Understand affected entities
+4. `get_entity_metrics` - Get performance data for affected entities
+5. `execute_dql` - Query specific logs, metrics, or events
+6. `get_trace_details` - Analyze request flows if applicable
+
+### 🏗️ Infrastructure Health Workflow
+
+**When to use:** When monitoring system health, capacity planning, or troubleshooting infrastructure issues.
+
+**Recommended tool sequence:**
+1. `get_infrastructure_health` - Get host status overview
+2. `get_processes` - Check running processes on specific hosts
+3. `get_infrastructure_metrics` - Get detailed performance metrics
+4. `get_maintenance_windows` - Check if maintenance is affecting monitoring
+5. `execute_dql` - Query specific infrastructure data
+
+### 🚀 Deployment Impact Analysis Workflow
+
+**When to use:** When analyzing the impact of deployments or configuration changes.
+
+**Recommended tool sequence:**
+1. `get_deployment_events` - Get recent deployment information
+2. `get_change_events` - Check for configuration changes
+3. `get_entity_metrics` - Compare before/after performance
+4. `get_slo_details` - Check if SLAs were affected
+5. `execute_dql` - Query specific time ranges for detailed analysis
+
+### 🎯 Best Practices for Agents
+
+1. **Always validate DQL before execution** - Use `verify_dql` to prevent errors
+2. **Iterate on natural language queries** - Refine descriptions based on results
+3. **Provide context** - Explain what you're doing and why
+4. **Use multiple tools** - Combine different tools for comprehensive analysis
+5. **Handle errors gracefully** - If a tool fails, try alternative approaches
+6. **Ask for clarification** - If user requests are ambiguous, ask for more details
+
+### 🔧 Tool-Specific Guidelines
+
+**Davis CoPilot Tools:**
+- Use `generate_dql_from_natural_language` for initial query generation
+- Use `explain_dql_in_natural_language` to understand complex queries
+- Use `chat_with_davis_copilot` for general Dynatrace guidance
+- Provide feedback using `submit_davis_copilot_feedback` to improve future responses
+
+**DQL Execution:**
+- Always verify DQL statements before execution
+- Use specific time ranges and filters for better performance
+- Consider using sampling for large datasets
+- Provide clear explanations of what the query does
+
+**Entity Analysis:**
+- Start with entity names, then get entity IDs for detailed analysis
+- Use entity IDs consistently across multiple tools
+- Correlate entity data with problems and metrics
+
+This workflow guide helps agents understand the most effective ways to use the Dynatrace MCP tools and provides clear patterns for common scenarios.
 
 ## Development
 

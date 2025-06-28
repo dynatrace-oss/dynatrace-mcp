@@ -1,5 +1,22 @@
 import { _OAuthHttpClient } from "@dynatrace-sdk/http-client";
 
+/**
+ * Davis CoPilot API Integration
+ * 
+ * This module provides access to Davis CoPilot AI capabilities including:
+ * - Natural Language to DQL conversion
+ * - DQL explanation in plain English
+ * - AI-powered conversation assistance
+ * - Feedback submission for continuous improvement
+ * 
+ * Note: While Davis CoPilot AI is generally available (GA), 
+ * the Davis CoPilot APIs are currently in preview.
+ * For more information: https://dt-url.net/copilot-community
+ * 
+ * DQL (Dynatrace Query Language) is the most powerful way to query any data
+ * in Dynatrace, including problem events, security issues, logs, metrics, and spans.
+ */
+
 // TypeScript interfaces based on OpenAPI spec
 export interface AvailableSkillsResponse {
   skills: SkillType[];
@@ -147,6 +164,11 @@ export interface ConversationImprovedSummary {
 }
 
 // API Functions
+
+/**
+ * Get available Davis CoPilot skills
+ * Returns a list of available AI capabilities in your Dynatrace environment
+ */
 export const getAvailableSkills = async (dtClient: _OAuthHttpClient): Promise<AvailableSkillsResponse> => {
   const response = await dtClient.request({
     method: 'GET',
@@ -159,6 +181,12 @@ export const getAvailableSkills = async (dtClient: _OAuthHttpClient): Promise<Av
   return response.json();
 };
 
+/**
+ * Generate DQL from natural language
+ * Converts plain English descriptions into powerful Dynatrace Query Language (DQL) statements.
+ * DQL is the most powerful way to query any data in Dynatrace, including problem events,
+ * security issues, logs, metrics, spans, and custom data.
+ */
 export const generateDqlFromNaturalLanguage = async (
   dtClient: _OAuthHttpClient, 
   text: string
@@ -178,6 +206,12 @@ export const generateDqlFromNaturalLanguage = async (
   return response.json();
 };
 
+/**
+ * Explain DQL in natural language
+ * Provides plain English explanations of complex DQL queries.
+ * Helps users understand what powerful DQL statements do, including
+ * queries for problem events, security issues, and performance metrics.
+ */
 export const explainDqlInNaturalLanguage = async (
   dtClient: _OAuthHttpClient, 
   dql: string
