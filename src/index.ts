@@ -30,9 +30,6 @@ import { executeDql, verifyDqlStatement } from "./capabilities/execute-dql";
 import { sendSlackMessage } from "./capabilities/send-slack-message";
 import { findMonitoredEntityByName } from './capabilities/find-monitored-entity-by-name';
 import { DynatraceEnv, getDynatraceEnv } from "./getDynatraceEnv";
-import { getServiceDependencies } from "./capabilities/get-service-dependencies";
-import { getEntityMetrics } from "./capabilities/get-entity-metrics";
-import { getTraceDetails, getServiceTraces } from "./capabilities/get-trace-details";
 import { 
   getAvailableSkills, 
   generateDqlFromNaturalLanguage, 
@@ -49,30 +46,15 @@ let scopes = [
   'app-engine:apps:run', // needed for environmentInformationClient
   'app-engine:functions:run', // needed for environmentInformationClient
   'hub:catalog:read', // get details about installed Apps on Dynatrace Environment
-
   'environment-api:security-problems:read', // needed for reading security problems
   'environment-api:entities:read', // read monitored entities
   'environment-api:problems:read', // get problems
   'environment-api:metrics:read', // read metrics
-  'environment-api:slo:read', // read SLOs
-  'environment-api:synthetic:read', // read synthetic monitors
   'davis-copilot:conversations:execute', // execute conversational skill
   'davis-copilot:nl2dql:execute', // execute NL to DQL skill
   'davis-copilot:dql2nl:execute', // execute DQL to NL skill
   'settings:objects:read', // needed for reading settings objects, like ownership information and Guardians (SRG) from settings
   // 'settings:objects:write', // [OPTIONAL] not used right now
-
-  // Grail related permissions: https://docs.dynatrace.com/docs/discover-dynatrace/platform/grail/data-model/assign-permissions-in-grail
-  'storage:buckets:read', // Read all system data stored on Grail
-  'storage:logs:read', // Read logs for reliability guardian validations
-  'storage:metrics:read', // Read metrics for reliability guardian validations
-  'storage:bizevents:read', // Read bizevents for reliability guardian validations
-  'storage:spans:read', // Read spans from Grail
-  'storage:entities:read', // Read Entities from Grail
-  'storage:events:read', // Read events from Grail
-  'storage:system:read', // Read System Data from Grail
-  'storage:user.events:read', // Read User events from Grail
-  'storage:user.sessions:read', // Read User sessions from Grail
 ];
 
 // configurable call for app settings scope (not available on all environments)
@@ -488,124 +470,6 @@ const main = async () => {
       console.error(`Done!`);
       let resp = 'Ownership information:\n';
       resp += JSON.stringify(ownershipInformation);
-      return resp;
-    }
-  )
-
-  tool(
-    "get_entity_metrics",
-    "Get comprehensive real-time metrics and performance data for any entity. This provides CPU, memory, response time, throughput, and error rate data.",
-    {
-      entityId: z.string().describe("The entity ID to get metrics for"),
-      metricSelector: z.string().optional().describe("Optional specific metrics to retrieve (comma-separated)"),
-      timeframe: z.string().optional().default('1h').describe("Timeframe for metrics: '1h', '24h' (default: '1h')")
-    },
-    async ({entityId, metricSelector, timeframe}) => {
-      const metrics = await getEntityMetrics(dtClient, entityId, metricSelector, timeframe);
-      
-      let resp = `Metrics for ${metrics.entityName} (ID: ${metrics.entityId}):\n\n`;
-      
-      // Summary section
-      if (metrics.summary) {
-        resp += `📊 Performance Summary:\n`;
-        if (metrics.summary.cpuUsage !== undefined) {
-          resp += `  - CPU Usage: ${metrics.summary.cpuUsage.toFixed(2)}%\n`;
-        }
-        if (metrics.summary.memoryUsage !== undefined) {
-          resp += `  - Memory Usage: ${metrics.summary.memoryUsage.toFixed(2)}%\n`;
-        }
-        if (metrics.summary.responseTime !== undefined) {
-          resp += `  - Response Time: ${metrics.summary.responseTime.toFixed(2)}ms\n`;
-        }
-        if (metrics.summary.throughput !== undefined) {
-          resp += `  - Throughput: ${metrics.summary.throughput.toFixed(2)} req/s\n`;
-        }
-        if (metrics.summary.errorRate !== undefined) {
-          resp += `  - Error Rate: ${metrics.summary.errorRate.toFixed(2)}%\n`;
-        }
-        resp += `\n`;
-      }
-      
-      // Detailed metrics
-      resp += `📈 Detailed Metrics:\n`;
-      Object.entries(metrics.metrics).forEach(([metricId, metricData]) => {
-        if (metricData.dataPoints.length > 0) {
-          const latestValue = metricData.dataPoints[metricData.dataPoints.length - 1].value;
-          resp += `  - ${metricId}: ${latestValue.toFixed(2)} ${metricData.unit}\n`;
-        }
-      });
-      
-      return resp;
-    }
-  )
-
-  tool(
-    "get_trace_details",
-    "Get detailed distributed tracing information for a specific trace ID. This shows the complete request flow across services.",
-    {
-      traceId: z.string().describe("The trace ID to get details for")
-    },
-    async ({traceId}) => {
-      const trace = await getTraceDetails(dtClient, traceId);
-      
-      let resp = `🔍 Trace Details for ${traceId}:\n\n`;
-      resp += `Service: ${trace.serviceName}\n`;
-      resp += `Operation: ${trace.operationName}\n`;
-      resp += `Duration: ${trace.duration.toFixed(2)}ms\n`;
-      resp += `Status: ${trace.status}\n`;
-      resp += `Total Spans: ${trace.summary.totalSpans}\n`;
-      resp += `Error Spans: ${trace.summary.errorSpans}\n\n`;
-      
-      if (trace.summary.slowestSpan) {
-        resp += `🐌 Slowest Span: ${trace.summary.slowestSpan.serviceName} - ${trace.summary.slowestSpan.operationName} (${trace.summary.slowestSpan.duration.toFixed(2)}ms)\n\n`;
-      }
-      
-      if (trace.summary.errorSpansList.length > 0) {
-        resp += `❌ Error Spans:\n`;
-        trace.summary.errorSpansList.forEach((span) => {
-          resp += `  - ${span.serviceName}: ${span.operationName}\n`;
-        });
-        resp += `\n`;
-      }
-      
-      resp += `📋 Span Details:\n`;
-      trace.spans.slice(0, 10).forEach((span, index) => {
-        resp += `  ${index + 1}. ${span.serviceName} - ${span.operationName} (${span.duration.toFixed(2)}ms) [${span.status}]\n`;
-      });
-      
-      if (trace.spans.length > 10) {
-        resp += `  ... and ${trace.spans.length - 10} more spans\n`;
-      }
-      
-      return resp;
-    }
-  )
-
-  tool(
-    "get_service_traces",
-    "Get recent traces for a specific service to understand request patterns and performance.",
-    {
-      serviceId: z.string().describe("The service ID to get traces for"),
-      timeframe: z.string().optional().default('1h').describe("Timeframe: '1h', '24h' (default: '1h')"),
-      limit: z.number().optional().default(5).describe("Maximum number of traces to retrieve (default: 5)")
-    },
-    async ({serviceId, timeframe, limit}) => {
-      const traces = await getServiceTraces(dtClient, serviceId, timeframe, limit);
-      
-      if (traces.length === 0) {
-        return "No traces found for this service";
-      }
-      
-      let resp = `🔍 Recent Traces for Service (${traces.length} found):\n\n`;
-      
-      traces.forEach((trace, index) => {
-        resp += `${index + 1}. Trace ${trace.traceId}\n`;
-        resp += `   - Operation: ${trace.operationName}\n`;
-        resp += `   - Duration: ${trace.duration.toFixed(2)}ms\n`;
-        resp += `   - Status: ${trace.status}\n`;
-        resp += `   - Spans: ${trace.summary.totalSpans} (${trace.summary.errorSpans} errors)\n\n`;
-      });
-      
       return resp;
     }
   )
