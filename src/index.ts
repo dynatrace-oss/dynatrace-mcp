@@ -46,15 +46,29 @@ let scopes = [
   'app-engine:apps:run', // needed for environmentInformationClient
   'app-engine:functions:run', // needed for environmentInformationClient
   'hub:catalog:read', // get details about installed Apps on Dynatrace Environment
+
   'environment-api:security-problems:read', // needed for reading security problems
   'environment-api:entities:read', // read monitored entities
   'environment-api:problems:read', // get problems
   'environment-api:metrics:read', // read metrics
+  'environment-api:slo:read', // read SLOs
   'davis-copilot:conversations:execute', // execute conversational skill
   'davis-copilot:nl2dql:execute', // execute NL to DQL skill
   'davis-copilot:dql2nl:execute', // execute DQL to NL skill
   'settings:objects:read', // needed for reading settings objects, like ownership information and Guardians (SRG) from settings
   // 'settings:objects:write', // [OPTIONAL] not used right now
+
+  // Grail related permissions: https://docs.dynatrace.com/docs/discover-dynatrace/platform/grail/data-model/assign-permissions-in-grail
+  'storage:buckets:read', // Read all system data stored on Grail
+  'storage:logs:read', // Read logs for reliability guardian validations
+  'storage:metrics:read', // Read metrics for reliability guardian validations
+  'storage:bizevents:read', // Read bizevents for reliability guardian validations
+  'storage:spans:read', // Read spans from Grail
+  'storage:entities:read', // Read Entities from Grail
+  'storage:events:read', // Read events from Grail
+  'storage:system:read', // Read System Data from Grail
+  'storage:user.events:read', // Read User events from Grail
+  'storage:user.sessions:read', // Read User sessions from Grail
 ];
 
 // configurable call for app settings scope (not available on all environments)
