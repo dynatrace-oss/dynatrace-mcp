@@ -2,14 +2,9 @@
 
 ## Unreleased
 
-- Added Davis CoPilot AI integration with natural language to DQL conversion, DQL explanation, and AI assistance *(Note: Davis CoPilot AI is GA, but the Davis CoPilot APIs are in preview)*
-- Added synthetic monitoring capabilities for website availability and performance testing
-- Added infrastructure health monitoring for hosts, processes, and system metrics
-- Added change detection and deployment tracking capabilities
-- Enhanced real-time metrics and distributed tracing capabilities
-- Added comprehensive SLO monitoring and error budget analysis
-- Added user experience monitoring and session analysis
-- Enhanced DQL capabilities - the most powerful way to query any data in Dynatrace, including problem events, security issues, and custom metrics
+- Added Davis CoPilot AI integration: natural language to DQL conversion, DQL explanation, AI-powered chat, and feedback submission (Note: Davis CoPilot APIs are in preview)
+- Added DQL execution and validation tools: execute any DQL query and verify DQL statements before execution
+- Focused this PR on enabling natural language to DQL workflows and DQL-based data retrieval only
 
 ## 0.2.0
 
