@@ -33,6 +33,10 @@ import { DynatraceEnv, getDynatraceEnv } from "./getDynatraceEnv";
 
 config();
 
+// Get version from package.json
+const packageJson = require("../package.json");
+const VERSION = packageJson.version;
+
 let scopes = [
   'app-engine:apps:run', // needed for environmentInformationClient
   'app-engine:functions:run', // needed for environmentInformationClient
@@ -84,11 +88,11 @@ const main = async () => {
   // create an oauth-client
   const dtClient = await createOAuthClient(oauthClient, oauthClientSecret, dtEnvironment, scopes);
 
-  console.error("Starting Dynatrace MCP Server...");
+  console.error(`Starting Dynatrace MCP Server v${VERSION}...`);
   const server = new McpServer(
     {
       name: "Dynatrace MCP Server",
-      version: "0.0.1", // ToDo: Read from package.json / hard-code?
+      version: VERSION,
     },
     {
       capabilities: {
