@@ -197,19 +197,25 @@ run a query to correlate error rates with service instance health indicators.
 I suspect we have circuit breakers triggering, but need confirmation from the telemetry data.
 ```
 **Correlate memory issue with logs.**
+```
 There's a problem with high memory usage on one of our hosts.
 Get the problem details and then fetch related logs to help understand
 what's causing the memory spike? Which file in this repo is this related to?
+```
 
 **Trace request flow analysis.**
+```
 Our users are experiencing slow checkout processes.
 Can you execute a DQL query to show me the full request trace for our checkout flow,
 so I can identify which service is causing the bottleneck?
+```
 
 **Analyze Kubernetes cluster events.**
+```
 Our application deployments seem to be failing intermittently.
 Can you fetch recent events from our "production-cluster"
 to help identify what might be causing these deployment issues?
+```
 
 ## 🔧 Troubleshooting
 
