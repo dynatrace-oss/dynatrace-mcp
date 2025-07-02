@@ -14,6 +14,7 @@ import {
 import { config } from 'dotenv';
 import { z, ZodRawShape, ZodTypeAny } from "zod";
 
+import { version as VERSION } from '../package.json';
 import { createOAuthClient } from "./dynatrace-clients";
 import { listVulnerabilities } from "./capabilities/list-vulnerabilities";
 import { listProblems } from "./capabilities/list-problems";
@@ -34,8 +35,6 @@ import { DynatraceEnv, getDynatraceEnv } from "./getDynatraceEnv";
 config();
 
 // Get version from package.json
-const packageJson = require("../package.json");
-const VERSION = packageJson.version;
 
 let scopes = [
   'app-engine:apps:run', // needed for environmentInformationClient
