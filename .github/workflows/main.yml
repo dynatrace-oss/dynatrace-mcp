@@ -10,16 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+
     - name: Use Node.js # will read version from .nvmrc
       uses: actions/setup-node@v4
       with:
         node-version-file: '.nvmrc'
-    # install packages
+
     - name: Install dependencies
       run: npm ci
-    # run tests
+
     - name: Test
       run: npm run test
-    # build the package
+
     - name: Build
       run: npm run build
