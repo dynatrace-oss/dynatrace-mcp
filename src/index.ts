@@ -34,8 +34,6 @@ import { DynatraceEnv, getDynatraceEnv } from "./getDynatraceEnv";
 
 config();
 
-// Get version from package.json
-
 let scopes = [
   'app-engine:apps:run', // needed for environmentInformationClient
   'app-engine:functions:run', // needed for environmentInformationClient
