@@ -1,9 +1,8 @@
-import { _OAuthHttpClient } from '@dynatrace-sdk/http-client';
+import { _OAuthHttpClient, HttpClientRequestOptions, HttpClientResponse, RequestBodyTypes } from '@dynatrace-sdk/http-client';
 import { getSSOUrl } from 'dt-app';
+import { version as VERSION } from '../package.json';
 
-
-// {"errorCode":400,"message":"Bad Request","issueId":"<some-id>","error":"invalid_request","error_description":""}
-
+// Define the OAuthTokenResponse interface to match the expected structure of the response
 export interface OAuthTokenResponse {
   scope?: string;
   token_type?: string;
@@ -46,6 +45,32 @@ const requestToken = async (clientId: string, clientSecret: string, authUrl: str
   return await res.json();
 }
 
+/**
+ * ExtendedOAuthClient that takes parameters for clientId, secret, scopes, environmentUrl, authUrl, and the version of the dynatrace-mcp-server
+ */
+export class ExtendedOauthClient extends _OAuthHttpClient {
+  constructor(config: {
+    clientId: string;
+    secret: string;
+    scopes: string[];
+    environmentUrl: string;
+    authUrl: string;
+  }, protected userAgent: string) {
+    super(config);
+  }
+
+  send<T extends keyof RequestBodyTypes = 'json'>(options: HttpClientRequestOptions<T>): Promise<HttpClientResponse> {
+    // add the user-agent header to the request
+    options.headers = {
+      ...options.headers,
+      'User-Agent': this.userAgent,
+    };
+    // call the parent send method
+    return super.send(options);
+  }
+}
+
+
 /** Create an Oauth Client based on clientId, clientSecret, environmentUrl and scopes */
 export const createOAuthClient = async (clientId: string, clientSecret: string, environmentUrl: string, scopes: string[]): Promise<_OAuthHttpClient> => {
   if (!clientId) {
@@ -73,13 +98,15 @@ export const createOAuthClient = async (clientId: string, clientSecret: string, 
   }
   console.error(`Successfully retrieved token from SSO!`);
 
-  return new _OAuthHttpClient({
+  const userAgent = `dynatrace-mcp-server/v${VERSION} (${process.platform}-${process.arch})`
+
+  return new ExtendedOauthClient({
     scopes,
     clientId,
     secret: clientSecret,
     environmentUrl,
     authUrl: ssoAuthUrl,
-  });
+  }, userAgent);
 };
 
 /** Helper function to call an app-function via platform-api */
