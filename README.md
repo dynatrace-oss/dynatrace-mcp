@@ -1,30 +1,40 @@
 # Dynatrace MCP Server
 
-This remote MCP server allows interaction with the [Dynatrace](https://www.dynatrace.com/) observability platform.
-Bring real-time observability data directly into your development workflow.
+This remote MCP server provides comprehensive access to the [Dynatrace](https://www.dynatrace.com/) observability platform, bringing real-time production data directly into your development workflow.
 
 <img width="1046" alt="image" src="/assets/dynatrace-mcp-arch.png" />
 
-## Use cases
+## 🎯 Use Cases
 
-- Real-time observability, fetch production-level data for early detection.
-- Fix issues in the context from monitored exceptions, logs, and anomalies.
-- More context on security level issues
-- Natural language to query log data
+- **Real-time observability** - Fetch production-level data for early detection and proactive monitoring
+- **Contextual debugging** - Fix issues with full context from monitored exceptions, logs, and anomalies
+- **Security insights** - Get detailed vulnerability analysis and security problem tracking
+- **Natural language queries** - Use AI-powered DQL generation and explanation
 
-## Capabilities
+## 🚀 Capabilities
 
-- List and get [problem](https://www.dynatrace.com/hub/detail/problems/) details from your services (for example Kubernetes)
-- List and get security problems / [vulnerability](https://www.dynatrace.com/hub/detail/vulnerabilities/) details
-- Execute DQL (Dynatrace Query Language) and retrieve logs, events, spans and metrics
-- Send Slack messages (via Slack Connector)
-- Set up notification Workflow (via Dynatrace [AutomationEngine](https://docs.dynatrace.com/docs/discover-dynatrace/platform/automationengine))
-- Get more information about a monitored entity
-- Get Ownership of an entity
+### Data Query & Analysis
+- **DQL Execution** - Execute Dynatrace Query Language (DQL) to retrieve logs, events, spans, and metrics. DQL is the most powerful way to query any data in Dynatrace, including problem events, security issues, and custom metrics.
+- **DQL Validation** - Verify DQL statements before execution to prevent errors
+- **Davis CoPilot AI** - Natural language to DQL conversion, DQL explanation, and AI assistance *(Note: Davis CoPilot AI is GA, but the Davis CoPilot APIs are in preview)*
 
-## Quickstart
+- **List** and get [problem](https://www.dynatrace.com/hub/detail/problems/) details from your services (for example Kubernetes)
+- **List** and get security problems / [vulnerability](https://www.dynatrace.com/hub/detail/vulnerabilities/) details
+- **Execute DQL** (Dynatrace Query Language) and retrieve logs, events, spans and metrics
+- **Send Slack** messages (via Slack Connector)
+- **Set up notification Workflow** (via Dynatrace [AutomationEngine](https://docs.dynatrace.com/docs/discover-dynatrace/platform/automationengine))
+- **Get more information** about a monitored entity
+- **Get Ownership** of an entity
 
-**Work in progress**
+### AI-Powered Assistance
+- **Natural Language to DQL** - Convert plain English queries to Dynatrace Query Language
+- **DQL Explanation** - Get plain English explanations of complex DQL queries
+- **AI Chat Assistant** - Get contextual help and guidance for Dynatrace questions
+- **Feedback System** - Provide feedback to improve AI responses over time
+
+> **Note:** While Davis CoPilot AI is generally available (GA), the Davis CoPilot APIs are currently in preview. For more information, visit the [Davis CoPilot Preview Community](https://dt-url.net/copilot-community).
+
+## ⚡ Quickstart
 
 You can add this MCP server (using STDIO) to your MCP Client like VS Code, Claude, Cursor, Amazon Q Developer CLI, Windsurf Github Copilot via the package `@dynatrace-oss/dynatrace-mcp-server`.
 
@@ -104,16 +114,18 @@ The [Amazon Q Developer CLI](https://docs.aws.amazon.com/amazonq/latest/qdevelop
 
 This configuration should be stored in `<your-repo>/.amazonq/mcp.json`.
 
-## Environment Variables
+## 🔐 Environment Variables
 
 A **Dynatrace OAuth Client** is needed to communicate with your Dynatrace Environment. Please follow the documentation about
 [creating an Oauth Client in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/oauth-clients),
 and set up the following environment variables in order for this MCP to work:
 
+### Required Variables
 * `DT_ENVIRONMENT` (string, e.g., https://abc12345.apps.dynatrace.com) - URL to your Dynatrace Platform (do not use Dynatrace classic URLs like `abc12345.live.dynatrace.com`)
 * `OAUTH_CLIENT_ID` (string, e.g., `dt0s02.SAMPLE`) - Dynatrace OAuth Client ID
 * `OAUTH_CLIENT_SECRET` (string, e.g., `dt0s02.SAMPLE.abcd1234`) - Dynatrace OAuth Client Secret
-* OAuth Client Scopes:
+
+### Required OAuth Client Scopes
   * `app-engine:apps:run` - needed for environmentInformationClient
   * `app-engine:functions:run` - needed for environmentInformationClient
   * `hub:catalog:read` - get details about installed Apps on Dynatrace Environment
@@ -132,6 +144,9 @@ and set up the following environment variables in order for this MCP to work:
   * `storage:system:read` - Read System Data from Grail
   * `storage:user.events:read` - Read User events from Grail
   * `storage:user.sessions:read` - Read User sessions from Grail
+  * `davis-copilot:conversations:execute` - execute conversational skill
+  * `davis-copilot:nl2dql:execute` - execute NL to DQL skill
+  * `davis-copilot:dql2nl:execute` - execute DQL to NL skill
   * `settings:objects:read` - needed for reading ownership information and Guardians (SRG) from settings
 
     **Note**: Please ensure that `settings:objects:read` is used, and *not* the similarly named scope `app-settings:objects:read`.
@@ -144,10 +159,28 @@ In addition, depending on the features you use, the following variables can be c
 * `USE_WORKFLOWS` (boolean, `true` or `false`; default: `false`)
   * Requires scopes `automation:workflows:read`, `automation:workflows:write` and `automation:workflows:run` to read, write and execute Workflows
 
-## ✨ Example prompts ✨
+## 💡 Example Prompts
 
 Use these example prompts as a starting point. Just copy them into your IDE or agent setup, adapt them to your services/stack/architecture,
-and extend them as needed. They’re here to help you imagine how real-time observability and automation work together in the MCP context in your IDE.
+and extend them as needed. They're here to help you imagine how real-time observability and automation work together in the MCP context in your IDE.
+
+
+
+**Write a DQL query from natural language:**
+```
+Show me error rates for the payment service in the last hour
+```
+
+**Explain a DQL query:**
+```
+What does this DQL do?
+fetch logs | filter dt.source_entity == 'SERVICE-123' | summarize count(), by:{severity} | sort count() desc
+```
+
+**Chat with Davis CoPilot:**
+```
+How can I investigate slow database queries in Dynatrace?
+```
 
 **Find open vulnerabilities on production, setup alert.**
 ```
@@ -169,12 +202,14 @@ There's a problem with high memory usage on one of our hosts.
 Get the problem details and then fetch related logs to help understand
 what's causing the memory spike? Which file in this repo is this related to?
 ```
+
 **Trace request flow analysis.**
 ```
 Our users are experiencing slow checkout processes.
 Can you execute a DQL query to show me the full request trace for our checkout flow,
 so I can identify which service is causing the bottleneck?
 ```
+
 **Analyze Kubernetes cluster events.**
 ```
 Our application deployments seem to be failing intermittently.
@@ -182,7 +217,7 @@ Can you fetch recent events from our "production-cluster"
 to help identify what might be causing these deployment issues?
 ```
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
 ### Authentication Issues
 
@@ -220,11 +255,71 @@ curl -X GET https://abc12345.apps.dynatrace.com/platform/management/v1/environme
 }
 ```
 
-
 ### Problem accessing data on Grail
-
 Grail has a dedicated section about permissions in the Dynatrace Docs. Please refer to https://docs.dynatrace.com/docs/discover-dynatrace/platform/grail/data-model/assign-permissions-in-grail for more details.
 
+
+## 🤖 Agent Workflow Guide
+
+### 🔄 Natural Language to DQL Workflow
+
+**When to use this workflow:** When users ask questions in natural language that require data analysis, such as "Show me error rates for the payment service" or "What are the slowest database queries?"
+
+**Step-by-step process:**
+
+1. **Generate DQL from Natural Language**
+   - Use `generate_dql_from_natural_language` tool
+   - Provide a clear, specific natural language description
+   - Example: "Show me error rates for the payment service in the last hour"
+2. **Validate the Generated DQL**
+   - Use `verify_dql` tool to check if the generated DQL is valid
+   - This prevents execution errors and helps identify issues
+3. **Execute the DQL Query**
+   - Use `execute_dql` tool to run the validated query
+   - Review the results to ensure they match the user's intent
+4. **Iterate if Needed**
+   - If results don't match expectations, refine the natural language description
+   - Use `explain_dql_in_natural_language` to understand what the current query does
+   - Generate a new DQL query with more specific requirements
+5. **Provide Context and Analysis**
+   - Use the results to provide meaningful insights
+   - Correlate with other data sources if needed (problems, metrics, etc.)
+
+**Example Iteration:**
+```
+User: "Show me database performance issues"
+→ Generate DQL: "fetch logs | filter dt.source_entity == 'database'"
+→ Verify DQL: Valid
+→ Execute DQL: Returns logs but not performance metrics
+→ Refine: "Show me database performance metrics and slow queries"
+→ Generate new DQL: "fetch metrics | filter metricId in ('builtin:database.performance')"
+→ Execute and provide results
+```
+
+### 🎯 Best Practices for Agents
+
+1. **Always validate DQL before execution** - Use `verify_dql` to prevent errors
+2. **Iterate on natural language queries** - Refine descriptions based on results
+3. **Provide context** - Explain what you're doing and why
+4. **Use multiple tools** - Combine different tools for comprehensive analysis
+5. **Handle errors gracefully** - If a tool fails, try alternative approaches
+6. **Ask for clarification** - If user requests are ambiguous, ask for more details
+
+### 🔧 Tool-Specific Guidelines
+
+**Davis CoPilot Tools:**
+- Use `generate_dql_from_natural_language` for initial query generation
+- Use `explain_dql_in_natural_language` to understand complex queries
+- Use `chat_with_davis_copilot` for general Dynatrace guidance
+- Provide feedback using `submit_davis_copilot_feedback` to improve future responses
+
+**DQL Execution:**
+- Always verify DQL statements before execution
+- Use specific time ranges and filters for better performance
+- Consider using sampling for large datasets
+- Provide clear explanations of what the query does
+
+This workflow guide helps agents understand the most effective ways to use the Dynatrace MCP tools and provides clear patterns for common scenarios.
 
 ## Development
 

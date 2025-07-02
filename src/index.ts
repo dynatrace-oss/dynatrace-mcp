@@ -30,6 +30,15 @@ import { executeDql, verifyDqlStatement } from "./capabilities/execute-dql";
 import { sendSlackMessage } from "./capabilities/send-slack-message";
 import { findMonitoredEntityByName } from './capabilities/find-monitored-entity-by-name';
 import { DynatraceEnv, getDynatraceEnv } from "./getDynatraceEnv";
+import { 
+  getAvailableSkills, 
+  generateDqlFromNaturalLanguage, 
+  explainDqlInNaturalLanguage, 
+  chatWithDavisCopilot,
+  submitNl2DqlFeedback,
+  submitDql2NlFeedback,
+  submitConversationFeedback
+} from "./capabilities/davis-copilot";
 
 config();
 
@@ -43,6 +52,9 @@ let scopes = [
   'environment-api:problems:read', // get problems
   'environment-api:metrics:read', // read metrics
   'environment-api:slo:read', // read SLOs
+  'davis-copilot:conversations:execute', // execute conversational skill
+  'davis-copilot:nl2dql:execute', // execute NL to DQL skill
+  'davis-copilot:dql2nl:execute', // execute DQL to NL skill
   'settings:objects:read', // needed for reading settings objects, like ownership information and Guardians (SRG) from settings
   // 'settings:objects:write', // [OPTIONAL] not used right now
 
@@ -392,7 +404,7 @@ const main = async () => {
 
   tool(
     "execute_dql",
-    'Get Logs, Metrics, Spans or Events from Dynatrace GRAIL by executing a Dynatrace Query Language (DQL) statement. Always use "verify_dql" tool before you execute a DQL statement. A valid statement looks like this: "fetch [logs, metrics, spans, events] | filter <some-filter> | summarize count(), by:{some-fields}. Adapt filters for certain attributes: `traceId` could be `trace_id` or `trace.id`.',
+    'Execute Dynatrace Query Language (DQL) to retrieve logs, metrics, spans, or events from Dynatrace GRAIL. DQL is the most powerful way to query any data in Dynatrace, including problem events, security issues, logs, metrics, spans, and custom data. Always use "verify_dql" tool before you execute a DQL statement. A valid statement looks like this: "fetch [logs, metrics, spans, events] | filter <some-filter> | summarize count(), by:{some-fields}. Adapt filters for certain attributes: `traceId` could be `trace_id` or `trace.id`.',
     {
       dqlStatement: z.string()
     },
@@ -473,6 +485,182 @@ const main = async () => {
       let resp = 'Ownership information:\n';
       resp += JSON.stringify(ownershipInformation);
       return resp;
+    }
+  )
+
+  tool(
+    "get_davis_copilot_skills",
+    "Get available Davis CoPilot skills. This shows which AI capabilities are available in your Dynatrace environment.",
+    {},
+    async ({}) => {
+      const skills = await getAvailableSkills(dtClient);
+      
+      if (!skills.skills || skills.skills.length === 0) {
+        return "No Davis CoPilot skills available. Please ensure Davis CoPilot is enabled for your environment.";
+      }
+      
+      let resp = `🤖 Davis CoPilot Skills Available:\n\n`;
+      
+      skills.skills.forEach((skill) => {
+        switch (skill) {
+          case 'conversation':
+            resp += `💬 **Conversation** - Chat with Davis CoPilot for assistance\n`;
+            break;
+          case 'nl2dql':
+            resp += `🔤 **Natural Language to DQL** - Convert natural language to Dynatrace Query Language\n`;
+            break;
+          case 'dql2nl':
+            resp += `📝 **DQL to Natural Language** - Explain DQL queries in plain English\n`;
+            break;
+          default:
+            resp += `❓ **${skill}** - Unknown skill type\n`;
+        }
+      });
+      
+      resp += `\nUse the other Davis CoPilot tools to interact with these capabilities.`;
+      
+      return resp;
+    }
+  )
+
+  tool(
+    "generate_dql_from_natural_language",
+    "Convert natural language queries to Dynatrace Query Language (DQL) using Davis CoPilot AI. DQL is the most powerful way to query any data in Dynatrace, including problem events, security issues, logs, metrics, spans, and custom data. This helps you write powerful DQL queries without knowing the exact syntax. Workflow: 1) Generate DQL, 2) Verify with verify_dql tool, 3) Execute with execute_dql tool, 4) Iterate if results don't match expectations. *(Note: Davis CoPilot AI is GA, but the Davis CoPilot APIs are in preview)*",
+    {
+      text: z.string().describe("Natural language description of what you want to query. Be specific and include time ranges, entities, and metrics of interest.")
+    },
+    async ({text}) => {
+      const response = await generateDqlFromNaturalLanguage(dtClient, text);
+      
+      let resp = `🔤 Natural Language to DQL:\n\n`;
+      resp += `**Query:** "${text}"\n\n`;
+      resp += `**Generated DQL:**\n\`\`\`\n${response.dql}\n\`\`\`\n\n`;
+      resp += `**Status:** ${response.status}\n`;
+      resp += `**Message Token:** ${response.messageToken}\n`;
+      
+      if (response.metadata?.notifications && response.metadata.notifications.length > 0) {
+        resp += `\n**Notifications:**\n`;
+        response.metadata.notifications.forEach((notification) => {
+          resp += `- ${notification.severity}: ${notification.message}\n`;
+        });
+      }
+      
+      resp += `\n💡 **Next Steps:**\n`;
+      resp += `1. Use "verify_dql" tool to validate this query\n`;
+      resp += `2. Use "execute_dql" tool to run the query\n`;
+      resp += `3. If results don't match expectations, refine your natural language description and try again\n`;
+      
+      return resp;
+    }
+  )
+
+  tool(
+    "explain_dql_in_natural_language",
+    "Explain Dynatrace Query Language (DQL) statements in natural language using Davis CoPilot AI. DQL is the most powerful way to query any data in Dynatrace, including problem events, security issues, logs, metrics, spans, and custom data. This helps you understand what complex DQL queries do. *(Note: Davis CoPilot AI is GA, but the Davis CoPilot APIs are in preview)*",
+    {
+      dql: z.string().describe("The DQL statement to explain")
+    },
+    async ({dql}) => {
+      const response = await explainDqlInNaturalLanguage(dtClient, dql);
+      
+      let resp = `📝 DQL to Natural Language:\n\n`;
+      resp += `**DQL Query:**\n\`\`\`\n${dql}\n\`\`\`\n\n`;
+      resp += `**Summary:** ${response.summary}\n\n`;
+      resp += `**Detailed Explanation:**\n${response.explanation}\n\n`;
+      resp += `**Status:** ${response.status}\n`;
+      resp += `**Message Token:** ${response.messageToken}\n`;
+      
+      if (response.metadata?.notifications && response.metadata.notifications.length > 0) {
+        resp += `\n**Notifications:**\n`;
+        response.metadata.notifications.forEach((notification) => {
+          resp += `- ${notification.severity}: ${notification.message}\n`;
+        });
+      }
+      
+      return resp;
+    }
+  )
+
+  tool(
+    "chat_with_davis_copilot",
+    "Chat with Davis CoPilot AI for assistance with Dynatrace questions, troubleshooting, and guidance. This provides contextual help based on your environment. *(Note: Davis CoPilot AI is GA, but the Davis CoPilot APIs are in preview)*",
+    {
+      text: z.string().describe("Your question or request for Davis CoPilot"),
+      context: z.string().optional().describe("Optional context to provide additional information"),
+      instruction: z.string().optional().describe("Optional instruction for how to format the response")
+    },
+    async ({text, context, instruction}) => {
+      const conversationContext: any[] = [];
+      
+      if (context) {
+        conversationContext.push({
+          type: "supplementary",
+          value: context
+        });
+      }
+      
+      if (instruction) {
+        conversationContext.push({
+          type: "instruction",
+          value: instruction
+        });
+      }
+      
+      const response = await chatWithDavisCopilot(dtClient, text, conversationContext);
+      
+      let resp = `🤖 Davis CoPilot Response:\n\n`;
+      resp += `**Your Question:** "${text}"\n\n`;
+      resp += `**Answer:**\n${response.text}\n\n`;
+      resp += `**Status:** ${response.status}\n`;
+      resp += `**Message Token:** ${response.messageToken}\n`;
+      
+      if (response.metadata?.sources && response.metadata.sources.length > 0) {
+        resp += `\n**Sources:**\n`;
+        response.metadata.sources.forEach((source) => {
+          resp += `- ${source.title || 'Untitled'}: ${source.url || 'No URL'}\n`;
+        });
+      }
+      
+      if (response.metadata?.notifications && response.metadata.notifications.length > 0) {
+        resp += `\n**Notifications:**\n`;
+        response.metadata.notifications.forEach((notification) => {
+          resp += `- ${notification.severity}: ${notification.message}\n`;
+        });
+      }
+      
+      if (response.state?.conversationId) {
+        resp += `\n**Conversation ID:** ${response.state.conversationId}`;
+      }
+      
+      return resp;
+    }
+  )
+
+  tool(
+    "submit_davis_copilot_feedback",
+    "Submit feedback for Davis CoPilot responses to help improve the AI. This can be used for any Davis CoPilot interaction.",
+    {
+      messageToken: z.string().describe("The message token from the Davis CoPilot response"),
+      feedbackType: z.enum(["positive", "negative"]).describe("Whether the response was helpful"),
+      feedbackText: z.string().optional().describe("Optional detailed feedback text"),
+      origin: z.string().optional().default("Dynatrace MCP Server").describe("Origin of the feedback")
+    },
+    async ({messageToken, feedbackType, feedbackText, origin}) => {
+      const feedbackRequest = {
+        messageToken,
+        origin,
+        feedback: {
+          type: feedbackType,
+          text: feedbackText
+        }
+      };
+      
+      try {
+        await submitConversationFeedback(dtClient, feedbackRequest);
+        return `✅ Feedback submitted successfully!\n\n**Type:** ${feedbackType}\n**Message Token:** ${messageToken}\n${feedbackText ? `**Feedback:** ${feedbackText}` : ''}`;
+      } catch (error) {
+        return `❌ Failed to submit feedback: ${error.message}`;
+      }
     }
   )
 
