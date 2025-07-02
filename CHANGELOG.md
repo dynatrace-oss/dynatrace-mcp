@@ -1,5 +1,10 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## 0.3.0
+
+- Provide version of dynatrace-mcp-server on startup
+- Define HTTP user-agent of dynatrace-mcp-server
+
 ## 0.2.0
 
 - Added new tool `get_entity_by_name` which allows to find the entity ID of a monitored entity by its name
