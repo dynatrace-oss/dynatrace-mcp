@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/dynatrace-oss-dynatrace-mcp-badge.png)](https://mseep.ai/app/dynatrace-oss-dynatrace-mcp)
+
 # Dynatrace MCP Server
 
 This remote MCP server allows interaction with the [Dynatrace](https://www.dynatrace.com/) observability platform.
