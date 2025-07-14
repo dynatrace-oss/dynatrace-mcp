@@ -5,36 +5,24 @@ import {
   RequestBodyTypes,
 } from '@dynatrace-sdk/http-client';
 import { getSSOUrl } from 'dt-app';
-import { version as VERSION } from '../package.json';
-
-// Define the OAuthTokenResponse interface to match the expected structure of the response
-export interface OAuthTokenResponse {
-  scope?: string;
-  token_type?: string;
-  expires_in?: number;
-  access_token?: string;
-  errorCode?: number;
-  message?: string;
-  issueId?: string;
-  error?: string;
-  error_description?: string;
-}
+import { version as VERSION } from '../../package.json';
+import { OAuthTokenResponse } from './types';
 
 /**
- * Uses the provided oauth Client ID and Secret and requests a token
+ * Uses the provided oauth Client ID and Secret and requests a token via client-credentials flow
  * @param clientId - OAuth Client ID for Dynatrace
  * @param clientSecret - Oauth Client Secret for Dynatrace
- * @param authUrl - SSO Authentication URL
+ * @param ssoAuthUrl - SSO Authentication URL
  * @param scopes - List of requested scopes
  * @returns
  */
 const requestToken = async (
   clientId: string,
   clientSecret: string,
-  authUrl: string,
+  ssoAuthUrl: string,
   scopes: string[],
 ): Promise<OAuthTokenResponse> => {
-  const res = await fetch(authUrl, {
+  const res = await fetch(ssoAuthUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -83,7 +71,9 @@ export class ExtendedOauthClient extends _OAuthHttpClient {
   }
 }
 
-/** Create an Oauth Client based on clientId, clientSecret, environmentUrl and scopes */
+/** Create an Oauth Client based on clientId, clientSecret, environmentUrl and scopes
+ * This uses a client-credentials flow to request a token from the SSO endpoint.
+ */
 export const createOAuthClient = async (
   clientId: string,
   clientSecret: string,
@@ -129,29 +119,4 @@ export const createOAuthClient = async (
     },
     userAgent,
   );
-};
-
-/** Helper function to call an app-function via platform-api */
-export const callAppFunction = async (
-  dtClient: _OAuthHttpClient,
-  appId: string,
-  functionName: string,
-  payload: any,
-) => {
-  console.error(`Sending payload ${JSON.stringify(payload)}`);
-
-  const response = await dtClient.send({
-    url: `/platform/app-engine/app-functions/v1/apps/${appId}/api/${functionName}`,
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: payload,
-    statusValidator: (status: number) => {
-      return [200].includes(status);
-    },
-  });
-
-  return await response.body('json');
 };

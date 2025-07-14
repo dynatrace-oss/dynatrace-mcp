@@ -20,7 +20,7 @@ import { config } from 'dotenv';
 import { z, ZodRawShape, ZodTypeAny } from 'zod';
 
 import { version as VERSION } from '../package.json';
-import { createOAuthClient } from './dynatrace-clients';
+import { createOAuthClient } from './authentication/dynatrace-clients';
 import { listVulnerabilities } from './capabilities/list-vulnerabilities';
 import { listProblems } from './capabilities/list-problems';
 import { getProblemDetails } from './capabilities/get-problem-details';

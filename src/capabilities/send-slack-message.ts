@@ -1,5 +1,5 @@
 import { _OAuthHttpClient } from '@dynatrace-sdk/http-client';
-import { callAppFunction } from '../dynatrace-clients';
+import { callAppFunction } from './call-app-function';
 
 export const sendSlackMessage = async (
   dtClient: _OAuthHttpClient,
