@@ -90,7 +90,9 @@ export const createOAuthClient = async (
     throw new Error('Failed to retrieve environment URL from env "DT_ENVIRONMENT"');
   }
 
-  console.error(`Trying to authenticate API Calls to ${environmentUrl} via OAuthClientId ${clientId}`);
+  console.error(
+    `Trying to authenticate API Calls to ${environmentUrl} via OAuthClientId ${clientId} with the following scopes: ${scopes.join(', ')}`,
+  );
 
   const ssoBaseUrl = await getSSOUrl(environmentUrl);
   const ssoAuthUrl = new URL('/sso/oauth2/token', ssoBaseUrl).toString();
@@ -102,7 +104,7 @@ export const createOAuthClient = async (
   // in case we didn't get a token, or error / error_description / issueId is set, we throw an error
   if (!tokenResponse.access_token || tokenResponse.error || tokenResponse.error_description || tokenResponse.issueId) {
     throw new Error(
-      `Failed to retrieve OAuth token (IssueId: ${tokenResponse.issueId}): ${tokenResponse.error} - ${tokenResponse.error_description}. Note: Your OAuth client is most likely not configured correctly.`,
+      `Failed to retrieve OAuth token (IssueId: ${tokenResponse.issueId}): ${tokenResponse.error} - ${tokenResponse.error_description}. Note: Your OAuth client is most likely not configured correctly and/or is missing scopes.`,
     );
   }
   console.error(`Successfully retrieved token from SSO!`);
