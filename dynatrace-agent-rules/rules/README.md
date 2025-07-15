@@ -5,12 +5,15 @@ This directory contains rule files that guide the AI assistant in analyzing Dyna
 ## 🚀 Installation Instructions
 
 ### 1. Install Dynatrace MCP Server
+
 Ensure the Dynatrace MCP server is correctly installed and configured with your Dynatrace environment credentials.
 
 ### 2. Copy Integration Rules
+
 Place all 5 integration rule files in your IDE's AI plugin rules folder:
 
 **IDE-Specific Locations:**
+
 - **Amazon Q**: `.amazonq/rules/` (project) or `~/.aws/amazonq/rules/` (global)
 - **Cursor**: `.cursor/rules/` (project) or via Settings → Rules (global)
 - **Windsurf**: `.windsurfrules/` (project) or via Customizations → Rules (global)
@@ -18,6 +21,7 @@ Place all 5 integration rule files in your IDE's AI plugin rules folder:
 - **GitHub Copilot**: `.github/copilot-instructions.md` (project only)
 
 **Required files:**
+
 - `DynatraceMcpIntegration.md`
 - `DynatraceQueryLanguage.md`
 - `DynatraceSecurityCompliance.md`
@@ -25,7 +29,9 @@ Place all 5 integration rule files in your IDE's AI plugin rules folder:
 - `DynatraceSecurityEventsDiagram.md`
 
 ### 3. Activate the Agent
+
 In your AI chat, type:
+
 ```
 load dynatrace mcp
 ```
@@ -40,11 +46,11 @@ graph TD
     A --> C[DynatraceSecurityCompliance.md]
     A --> D[DynatraceSecurityEvents.md]
     A --> E[DynatraceSecurityEventsDiagram.md]
-    
+
     C --> B
     C --> D
     D --> E
-    
+
     style A fill:#e1f5fe
     style B fill:#f3e5f5
     style C fill:#e8f5e8
@@ -55,6 +61,7 @@ graph TD
 ## Core Files
 
 ### 🔄 **DynatraceMcpIntegration.md** (Main Entry Point)
+
 - **Purpose**: Generic integration guide and analysis mode selector
 - **Key Features**:
   - 6 analysis modes (vulnerabilities, compliance, problems, entities, logs, custom DQL)
@@ -64,6 +71,7 @@ graph TD
 - **Dependencies**: References all other files for specific guidance
 
 ### 🔍 **DynatraceQueryLanguage.md** (DQL Foundation)
+
 - **Purpose**: Core DQL syntax and best practices for general use
 - **Key Features**:
   - Pipeline-based query structure
@@ -73,6 +81,7 @@ graph TD
 - **Used By**: All analysis modes requiring DQL syntax knowledge
 
 ### 🛡️ **DynatraceSecurityCompliance.md** (Security & Compliance Analysis)
+
 - **Purpose**: Complete security and compliance analysis guide
 - **Key Features**:
   - Security events architecture overview
@@ -88,6 +97,7 @@ graph TD
 ## Reference Files
 
 ### 📊 **DynatraceSecurityEvents.md** (Data Schema)
+
 - **Purpose**: Complete security events reference
 - **Key Features**:
   - Event types and attributes
@@ -96,6 +106,7 @@ graph TD
 - **Used By**: All security-related analysis modes
 
 ### 📈 **DynatraceSecurityEventsDiagram.md** (Visual Reference)
+
 - **Purpose**: Visual representation of event relationships
 - **Key Features**:
   - Event flow diagrams
@@ -120,9 +131,9 @@ graph TD
 
 ## Quick Reference
 
-| Analysis Type | Primary File | Supporting Files |
-|---------------|--------------|------------------|
-| Vulnerabilities | DynatraceMcpIntegration.md | DynatraceQueryLanguage.md, DynatraceSecurityEvents.md |
-| Compliance | DynatraceSecurityCompliance.md | DynatraceQueryLanguage.md, DynatraceSecurityEvents.md |
-| Custom DQL | DynatraceQueryLanguage.md | DynatraceSecurityEvents.md |
-| Event Understanding | DynatraceSecurityEvents.md | DynatraceSecurityEventsDiagram.md |
+| Analysis Type       | Primary File                   | Supporting Files                                      |
+| ------------------- | ------------------------------ | ----------------------------------------------------- |
+| Vulnerabilities     | DynatraceMcpIntegration.md     | DynatraceQueryLanguage.md, DynatraceSecurityEvents.md |
+| Compliance          | DynatraceSecurityCompliance.md | DynatraceQueryLanguage.md, DynatraceSecurityEvents.md |
+| Custom DQL          | DynatraceQueryLanguage.md      | DynatraceSecurityEvents.md                            |
+| Event Understanding | DynatraceSecurityEvents.md     | DynatraceSecurityEventsDiagram.md                     |

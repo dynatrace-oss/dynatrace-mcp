@@ -1,6 +1,7 @@
 # Dynatrace Security & Compliance Analysis Guide
 
 Use the Dynatrace MCP server to look up configuration issues. Here is how:
+
 - Call the Dynatrace DQL tool (execute_dql)
 - **FIRST**: Always analyze scan types to understand what data is available using COMPLIANCE_SCAN_COMPLETED events
 - Always start with a broad query and limit the amount of results, and only then filter down - this allows you to identify the available data fields and their content for filtering.
@@ -16,25 +17,29 @@ Dynatrace security events are stored in a dedicated bucket (`default_security_ev
 ### **Event Categories:**
 
 #### **Compliance Events**
+
 - **COMPLIANCE_SCAN_COMPLETED** - Scan completion notifications with `scan.id`
 - **COMPLIANCE_FINDING** - Individual compliance evaluation results linked by `scan.id`
 
 #### **Vulnerability Events**
+
 - **VULNERABILITY_FINDING** - Generic vulnerability findings with extensions
 - **VULNERABILITY_STATE_REPORT_EVENT** - Current vulnerability states (entity/vulnerability level)
 - **VULNERABILITY_STATUS_CHANGE_EVENT** - Status transitions and changes
 - **VULNERABILITY_ASSESSMENT_CHANGE_EVENT** - Assessment updates and modifications
 
 ### **Key Relationship Fields:**
+
 - **scan.id** - Links compliance scan completion to individual findings
 - **vulnerability.id** - Links all vulnerability events across types
 - **affected_entity.id** - Connects vulnerabilities to Dynatrace entities
 - **object.id** - Links compliance findings to specific infrastructure objects
-- **dt.entity.*** - Direct references to Dynatrace entity model
+- **dt.entity.\*** - Direct references to Dynatrace entity model
 
 ### **Critical Analysis Patterns:**
 
 **✅ CORRECT - Latest scan analysis:**
+
 ```dql
 // Get most recent scan first
 fetch events, from:now() - 24h
@@ -44,6 +49,7 @@ fetch events, from:now() - 24h
 ```
 
 **❌ WRONG - Time-based aggregation:**
+
 ```dql
 // This includes outdated findings from multiple scans!
 fetch events, from:now() - 7d
@@ -56,13 +62,14 @@ fetch events, from:now() - 7d
 **ALWAYS start compliance analysis by understanding what scan types are available:**
 
 ```dql
-fetch events, from:now() - 7d 
+fetch events, from:now() - 7d
 | filter event.type == "COMPLIANCE_SCAN_COMPLETED"
 | summarize scan_count = count(), by:{object.type}
 | sort scan_count desc
 ```
 
 **Use this information to:**
+
 1. Set appropriate timeframes for each platform
 2. Understand scan frequency patterns
 3. Identify which platforms have active scanning
@@ -70,65 +77,74 @@ fetch events, from:now() - 7d
 ## ⚠️ CRITICAL: Time Range Requirements for Compliance Findings
 
 **AWS/GCP/Azure Compliance Findings require extended time ranges (24h+) because:**
+
 - Cloud provider scans run infrequently (daily or less frequent)
 - All findings are generated in batches during scan time
 - Default 2-hour window often misses cloud findings
 
 **Kubernetes Compliance Findings work with default time range because:**
+
 - Kubernetes scans run more frequently
 - Findings are typically recent and within default window
 
 ### Recommended Query Patterns:
 
 **For AWS findings - ALWAYS use 24h+ timeframe:**
+
 ```dql
-fetch events, from:now() - 24h 
+fetch events, from:now() - 24h
 | filter event.type == "COMPLIANCE_FINDING" AND cloud.provider == "aws"
 ```
 
 **For Kubernetes findings - default timeframe works:**
+
 ```dql
-fetch events 
-| filter event.type == "COMPLIANCE_FINDING" 
+fetch events
+| filter event.type == "COMPLIANCE_FINDING"
 | filter compliance.result.object.type startsWith "k8s"
 ```
 
 **For comprehensive compliance analysis - use extended timeframe:**
+
 ```dql
-fetch events, from:now() - 7d 
+fetch events, from:now() - 7d
 | filter event.type == "COMPLIANCE_FINDING"
 ```
 
 ## Example Queries for AWS Compliance Findings
 
 All AWS compliance findings (with proper timeframe):
+
 ```dql
-fetch events, from:now() - 24h 
+fetch events, from:now() - 24h
 | filter event.type == "COMPLIANCE_FINDING" AND cloud.provider == "aws"
 ```
 
 AWS findings by compliance standard:
+
 ```dql
-fetch events, from:now() - 24h 
-| filter event.type == "COMPLIANCE_FINDING" AND cloud.provider == "aws" 
+fetch events, from:now() - 24h
+| filter event.type == "COMPLIANCE_FINDING" AND cloud.provider == "aws"
 | summarize count = count(), by:{compliance.standard.short_name}
 ```
 
 AWS S3 bucket specific findings:
+
 ```dql
-fetch events, from:now() - 24h 
-| filter event.type == "COMPLIANCE_FINDING" 
+fetch events, from:now() - 24h
+| filter event.type == "COMPLIANCE_FINDING"
 | filter cloud.provider == "aws" AND object.type == "awsbucket"
 | fields timestamp, compliance.rule.severity.level, compliance.standard.short_name, compliance.rule.title, compliance.result.object.evidence_json
 ```
 
 AWS failed findings by severity:
+
 ```dql
-fetch events, from:now() - 24h 
-| filter event.type == "COMPLIANCE_FINDING" 
-| filter compliance.result.status.level == "FAILED" 
-| filter cloud.provider == "aws" 
-| sort compliance.rule.severity.level asc 
+fetch events, from:now() - 24h
+| filter event.type == "COMPLIANCE_FINDING"
+| filter compliance.result.status.level == "FAILED"
+| filter cloud.provider == "aws"
+| sort compliance.rule.severity.level asc
 | fields timestamp, cloud.provider, compliance.rule.severity.level, compliance.standard.short_name, compliance.rule.title, object.type, compliance.result.object.evidence_json
 ```
 
@@ -143,14 +159,16 @@ fetch events, from:now() - 24h
 ### **CRITICAL RULE: Focus on Latest Scan Only**
 
 **❌ WRONG - Aggregating over time:**
+
 ```dql
 // This creates thousands of outdated findings!
-fetch events, from:now() - 7d 
+fetch events, from:now() - 7d
 | filter event.type == "COMPLIANCE_FINDING"
 | summarize count = count(), by:{compliance.rule.title}
 ```
 
 **✅ CORRECT - Latest scan findings:**
+
 ```dql
 // Get the most recent scan first
 fetch events, from:now() - 24h
@@ -161,6 +179,7 @@ fetch events, from:now() - 24h
 ```
 
 Then use that `scan.id` to get current findings:
+
 ```dql
 fetch events, from:now() - 24h
 | filter event.type == "COMPLIANCE_FINDING" AND scan.id == "<latest_scan_id>"
@@ -168,6 +187,7 @@ fetch events, from:now() - 24h
 ```
 
 ### Troubleshooting Missing Findings:
+
 1. **No cloud provider findings?** → Use `from:now() - 24h` or longer
 2. **No recent findings?** → Check if scans are running with COMPLIANCE_SCAN_COMPLETED query
 3. **Partial results?** → Extend timeframe to capture full scan cycles
@@ -181,6 +201,7 @@ fetch events, from:now() - 24h
 **"Based on these compliance findings, what would you like me to help you with next?"**
 
 ### Quick Options:
+
 - **🔥 Immediate action plan** for critical/high severity findings
 - **🛠️ Infrastructure templates** (CloudFormation, Terraform, K8s)
 - **📊 Monitoring setup** (Dashboards, alerts)
@@ -192,22 +213,26 @@ fetch events, from:now() - 24h
 ### 🎯 **Team-Specific Remediation Guidance**
 
 #### **Security Teams**
+
 - **Focus**: Critical and high-severity findings requiring immediate attention
-- **Deliverables**: 
+- **Deliverables**:
   - Prioritized remediation roadmap
   - Security policy updates
   - Incident response procedures
   - Risk assessment documentationn
 
 #### **DevOps/Platform Teams**
+
 - **Focus**: Infrastructure automation and configuration management
 - **Deliverables**: Infrastructure-as-Code templates, CI/CD security enhancements, automated compliance integration
 
 #### **Development Teams**
+
 - **Focus**: Application-level security and secure coding practices
 - **Deliverables**: Secure coding guidelines, dependency management, security testing integration
 
 #### **Compliance/Audit Teams**
+
 - **Focus**: Documentation, reporting, and governance
 - **Deliverables**: Compliance reports, audit documentation, policy frameworks
 
@@ -220,6 +245,7 @@ fetch events, from:now() - 24h
 ### **Vulnerability Analysis Patterns**
 
 **Open vulnerabilities by library/component:**
+
 ```dql
 fetch security.events
 | filter dt.system.bucket == "default_securityevents_builtin"
@@ -255,6 +281,7 @@ fetch security.events
 ```
 
 **Vulnerabilities on a specific host:**
+
 ```dql
 fetch security.events
 | filter dt.system.bucket == "default_securityevents_builtin"
@@ -290,6 +317,7 @@ fetch security.events
 ```
 
 **Top 10 affected entities by vulnerability count:**
+
 ```dql
 fetch security.events
 | filter dt.system.bucket == "default_securityevents_builtin"
@@ -314,6 +342,7 @@ fetch security.events
 ### **Container Security Analysis**
 
 **Total number of critical vulnerability findings:**
+
 ```dql
 fetch security.events
 | filter dt.system.bucket == "default_securityevents"
@@ -327,6 +356,7 @@ fetch security.events
 ```
 
 **Total number of vulnerable container images:**
+
 ```dql
 fetch security.events
 | filter dt.system.bucket == "default_securityevents"
@@ -340,6 +370,7 @@ fetch security.events
 ```
 
 **Most recent vulnerability findings:**
+
 ```dql
 fetch security.events
 | filter dt.system.bucket == "default_securityevents"
@@ -353,6 +384,7 @@ fetch security.events
 ### **Advanced Compliance Analysis Patterns**
 
 **Latest compliance results for all covered systems:**
+
 ```dql
 fetch security.events
 | filter dt.system.bucket == "default_securityevents_builtin"
@@ -368,6 +400,7 @@ fetch security.events
 ```
 
 **Latest analysis results for a specific system:**
+
 ```dql
 fetch security.events
 | filter dt.system.bucket == "default_securityevents_builtin"
@@ -406,6 +439,7 @@ fetch security.events
 ### **Advanced Entity Analysis with Ownership**
 
 **Top 10 process groups with owners:**
+
 ```dql
 fetch security.events
 | filter dt.system.bucket == "default_securityevents_builtin"
@@ -437,6 +471,7 @@ fetch security.events
 ```
 
 **Vulnerable software components of a host with owners:**
+
 ```dql
 fetch security.events
 | filter dt.system.bucket == "default_securityevents_builtin"
