@@ -7,10 +7,10 @@ Bring real-time observability data directly into your development workflow.
 
 ## Use cases
 
-- Real-time observability, fetch production-level data for early detection.
-- Fix issues in the context from monitored exceptions, logs, and anomalies.
-- More context on security level issues
-- Natural language to query log data
+- **Real-time observability** - Fetch production-level data for early detection and proactive monitoring
+- **Contextual debugging** - Fix issues with full context from monitored exceptions, logs, and anomalies
+- **Security insights** - Get detailed vulnerability analysis and security problem tracking
+- **Natural language queries** - Use AI-powered DQL generation and explanation
 
 ## Capabilities
 
@@ -21,6 +21,15 @@ Bring real-time observability data directly into your development workflow.
 - Set up notification Workflow (via Dynatrace [AutomationEngine](https://docs.dynatrace.com/docs/discover-dynatrace/platform/automationengine))
 - Get more information about a monitored entity
 - Get Ownership of an entity
+
+### AI-Powered Assistance (Preview)
+
+- **Natural Language to DQL** - Convert plain English queries to Dynatrace Query Language
+- **DQL Explanation** - Get plain English explanations of complex DQL queries
+- **AI Chat Assistant** - Get contextual help and guidance for Dynatrace questions
+- **Feedback System** - Provide feedback to improve AI responses over time
+
+> **Note:** While Davis CoPilot AI is generally available (GA), the Davis CoPilot APIs are currently in preview. For more information, visit the [Davis CoPilot Preview Community](https://dt-url.net/copilot-community).
 
 ## Quickstart
 
@@ -144,6 +153,9 @@ Depending on the features you are using, the following scopes are needed:
 - `storage:system:read` - needed for `execute_dql` tool to read System Data from Grail
 - `storage:user.events:read` - needed for `execute_dql` tool to read User events from Grail
 - `storage:user.sessions:read` - needed for `execute_dql` tool to read User sessions from Grail
+- `davis-copilot:conversations:execute` - execute conversational skill (chat with Copilot)
+- `davis-copilot:nl2dql:execute` - execute Davis Copilot Natural Language (NL) to DQL skill
+- `davis-copilot:dql2nl:execute` - execute DQL to Natural Language (NL) skill
 - `settings:objects:read` - needed for reading ownership information and Guardians (SRG) from settings
 
   **Note**: Please ensure that `settings:objects:read` is used, and _not_ the similarly named scope `app-settings:objects:read`.
@@ -152,6 +164,25 @@ Depending on the features you are using, the following scopes are needed:
 
 Use these example prompts as a starting point. Just copy them into your IDE or agent setup, adapt them to your services/stack/architecture,
 and extend them as needed. They’re here to help you imagine how real-time observability and automation work together in the MCP context in your IDE.
+
+**Write a DQL query from natural language:**
+
+```
+Show me error rates for the payment service in the last hour
+```
+
+**Explain a DQL query:**
+
+```
+What does this DQL do?
+fetch logs | filter dt.source_entity == 'SERVICE-123' | summarize count(), by:{severity} | sort count() desc
+```
+
+**Chat with Davis CoPilot:**
+
+```
+How can I investigate slow database queries in Dynatrace?
+```
 
 **Find open vulnerabilities on production, setup alert.**
 

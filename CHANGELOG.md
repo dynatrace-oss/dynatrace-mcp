@@ -3,6 +3,8 @@
 ## Unreleased changes
 
 - Added support for Authorization via Platform Tokens via environment variable `DT_PLATFORM_TOKENS`
+- Added Copilot Natural Language 2 DQL Endpoint
+- Added Copilot Chat Skill
 
 ## 0.4.0
 
