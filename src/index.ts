@@ -413,6 +413,7 @@ const main = async () => {
           'storage:system:read', // Read System Data from Grail
           'storage:user.events:read', // Read User events from Grail
           'storage:user.sessions:read', // Read User sessions from Grail
+          'storage:security.events:read', // Read Security events from Grail
         ),
       );
       const response = await executeDql(dtClient, dqlStatement);

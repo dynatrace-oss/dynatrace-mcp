@@ -1,5 +1,10 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## unreleased
+
+- Improve Authentication - fine-grained OAuth calls per tool
+- Fixed: Missing scope `storage:security.events:read` for execute DQL
+
 ## 0.3.0
 
 - Provide version of dynatrace-mcp-server on startup
