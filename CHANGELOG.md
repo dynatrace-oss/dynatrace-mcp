@@ -1,6 +1,6 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
-## unreleased
+## 0.4.0
 
 - Improve Authentication - fine-grained OAuth calls per tool
 - Fixed: Missing scope `storage:security.events:read` for execute DQL
