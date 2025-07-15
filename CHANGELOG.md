@@ -1,5 +1,10 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## Unreleased changes
+
+- Added Copilot Natural Language 2 DQL Endpoint
+- Added Copilot Chat Skill
+
 ## 0.4.0
 
 - Improve Authentication - fine-grained OAuth calls per tool
