@@ -1,4 +1,7 @@
 .env
 dist/*
 node_modules/
-.vscode/
+/.vscode/*
+!/.vscode/mcp.json
+
+tsconfig.tsbuildinfo

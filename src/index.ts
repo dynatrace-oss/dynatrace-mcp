@@ -20,7 +20,7 @@ import { config } from 'dotenv';
 import { z, ZodRawShape, ZodTypeAny } from 'zod';
 
 import { version as VERSION } from '../package.json';
-import { createOAuthClient } from './dynatrace-clients';
+import { createOAuthClient } from './authentication/dynatrace-clients';
 import { listVulnerabilities } from './capabilities/list-vulnerabilities';
 import { listProblems } from './capabilities/list-problems';
 import { getProblemDetails } from './capabilities/get-problem-details';
@@ -413,6 +413,7 @@ const main = async () => {
           'storage:system:read', // Read System Data from Grail
           'storage:user.events:read', // Read User events from Grail
           'storage:user.sessions:read', // Read User sessions from Grail
+          'storage:security.events:read', // Read Security events from Grail
         ),
       );
       const response = await executeDql(dtClient, dqlStatement);
