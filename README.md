@@ -129,6 +129,7 @@ and set up the following environment variables in order for this MCP to work:
   - `storage:spans:read` - Read spans from Grail
   - `storage:entities:read` - Read Entities from Grail
   - `storage:events:read` - Read Events from Grail
+  - `storage:security.events:read`- Read Security Events from Grail
   - `storage:system:read` - Read System Data from Grail
   - `storage:user.events:read` - Read User events from Grail
   - `storage:user.sessions:read` - Read User sessions from Grail
