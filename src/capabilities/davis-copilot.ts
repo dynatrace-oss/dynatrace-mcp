@@ -21,6 +21,7 @@ import { _OAuthHttpClient } from '@dynatrace-sdk/http-client';
  */
 
 // TypeScript interfaces based on OpenAPI spec
+// ToDo: Once @dynatrace-sdk/client-davis-copilot is available, we need to refactor this file.
 export type Status = 'SUCCESSFUL' | 'SUCCESSFUL_WITH_WARNINGS' | 'FAILED';
 
 export interface Nl2DqlRequest {

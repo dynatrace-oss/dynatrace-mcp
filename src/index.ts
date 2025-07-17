@@ -447,7 +447,7 @@ const main = async () => {
 
   tool(
     'generate_dql_from_natural_language',
-    "Convert natural language queries to Dynatrace Query Language (DQL) using Davis CoPilot AI. DQL is the most powerful way to query any data in Dynatrace, including problem events, security issues, logs, metrics, spans, and custom data. This helps you write powerful DQL queries without knowing the exact syntax. Workflow: 1) Generate DQL, 2) Verify with verify_dql tool, 3) Execute with execute_dql tool, 4) Iterate if results don't match expectations. *(Note: Davis CoPilot AI is GA, but the Davis CoPilot APIs are in preview)*",
+    "Convert natural language queries to Dynatrace Query Language (DQL) using Davis CoPilot AI. You can ask for problem events, security issues, logs, metrics, spans, and custom data. Workflow: 1) Generate DQL, 2) Verify with verify_dql tool, 3) Execute with execute_dql tool, 4) Iterate if results don't match expectations.",
     {
       text: z
         .string()
@@ -489,7 +489,7 @@ const main = async () => {
 
   tool(
     'chat_with_davis_copilot',
-    'Use this tool in case no specific tool is available. Get an answer to any Dynatrace related question, a well as troubleshooting, and guidance. *(Note: Davis CoPilot AI is GA, but the Davis CoPilot APIs are in preview)*',
+    'Use this tool in case no specific tool is available. Get an answer to any Dynatrace related question as well as troubleshooting, and guidance. *(Note: Davis CoPilot AI is GA, but the Davis CoPilot APIs are in preview)*',
     {
       text: z.string().describe('Your question or request for Davis CoPilot'),
       context: z.string().optional().describe('Optional context to provide additional information'),
