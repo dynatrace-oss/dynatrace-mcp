@@ -2,8 +2,8 @@
 
 ## Unreleased changes
 
-- Added Copilot Natural Language 2 DQL Endpoint
-- Added Copilot Chat Skill
+- Added tool to translate between natural language and DQL via Davis CoPilot
+- Added tool to chat with Davis CoPilot
 
 ## 0.4.0
 
