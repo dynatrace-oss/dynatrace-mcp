@@ -20,7 +20,7 @@ import { config } from 'dotenv';
 import { z, ZodRawShape, ZodTypeAny } from 'zod';
 
 import { version as VERSION } from '../package.json';
-import { createOAuthClient } from './authentication/dynatrace-clients';
+import { createDtHttpClient } from './authentication/dynatrace-clients';
 import { listVulnerabilities } from './capabilities/list-vulnerabilities';
 import { listProblems } from './capabilities/list-problems';
 import { getProblemDetails } from './capabilities/get-problem-details';
@@ -30,7 +30,6 @@ import { getLogsForEntity } from './capabilities/get-logs-for-entity';
 import { getEventsForCluster } from './capabilities/get-events-for-cluster';
 import { createWorkflowForProblemNotification } from './capabilities/create-workflow-for-problem-notification';
 import { updateWorkflow } from './capabilities/update-workflow';
-import { _OAuthHttpClient } from '@dynatrace-sdk/http-client';
 import { getVulnerabilityDetails } from './capabilities/get-vulnerability-details';
 import { executeDql, verifyDqlStatement } from './capabilities/execute-dql';
 import { sendSlackMessage } from './capabilities/send-slack-message';
@@ -53,7 +52,8 @@ const main = async () => {
     console.error((err as Error).message);
     process.exit(1);
   }
-  const { oauthClient, oauthClientSecret, dtEnvironment, slackConnectionId } = dynatraceEnv;
+  console.error(`Initializing Dynatrace MCP Server v${VERSION}...`);
+  const { oauthClientId, oauthClientSecret, dtEnvironment, dtPlatformToken, slackConnectionId } = dynatraceEnv;
 
   console.error(`Starting Dynatrace MCP Server v${VERSION}...`);
   const server = new McpServer(
@@ -114,7 +114,13 @@ const main = async () => {
 
   tool('get_environment_info', 'Get information about the connected Dynatrace Environment (Tenant)', {}, async ({}) => {
     // create an oauth-client
-    const dtClient = await createOAuthClient(oauthClient, oauthClientSecret, dtEnvironment, scopesBase);
+    const dtClient = await createDtHttpClient(
+      dtEnvironment,
+      scopesBase,
+      oauthClientId,
+      oauthClientSecret,
+      dtPlatformToken,
+    );
     const environmentInformationClient = new EnvironmentInformationClient(dtClient);
 
     const environmentInfo = await environmentInformationClient.getEnvironmentInformation();
@@ -127,11 +133,12 @@ const main = async () => {
   });
 
   tool('list_vulnerabilities', 'List all vulnerabilities from Dynatrace', {}, async ({}) => {
-    const dtClient = await createOAuthClient(
-      oauthClient,
-      oauthClientSecret,
+    const dtClient = await createDtHttpClient(
       dtEnvironment,
       scopesBase.concat('environment-api:security-problems:read'),
+      oauthClientId,
+      oauthClientSecret,
+      dtPlatformToken,
     );
     const result = await listVulnerabilities(dtClient);
     if (!result || result.length === 0) {
@@ -154,11 +161,12 @@ const main = async () => {
       securityProblemId: z.string().optional(),
     },
     async ({ securityProblemId }) => {
-      const dtClient = await createOAuthClient(
-        oauthClient,
-        oauthClientSecret,
+      const dtClient = await createDtHttpClient(
         dtEnvironment,
         scopesBase.concat('environment-api:security-problems:read'),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
       );
       const result = await getVulnerabilityDetails(dtClient, securityProblemId);
 
@@ -215,11 +223,12 @@ const main = async () => {
   );
 
   tool('list_problems', 'List all problems known on Dynatrace', {}, async ({}) => {
-    const dtClient = await createOAuthClient(
-      oauthClient,
-      oauthClientSecret,
+    const dtClient = await createDtHttpClient(
       dtEnvironment,
       scopesBase.concat('environment-api:problems:read'),
+      oauthClientId,
+      oauthClientSecret,
+      dtPlatformToken,
     );
     const result = await listProblems(dtClient);
     if (!result || result.length === 0) {
@@ -235,11 +244,12 @@ const main = async () => {
       problemId: z.string().optional(),
     },
     async ({ problemId }) => {
-      const dtClient = await createOAuthClient(
-        oauthClient,
-        oauthClientSecret,
+      const dtClient = await createDtHttpClient(
         dtEnvironment,
         scopesBase.concat('environment-api:problems:read'),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
       );
       const result = await getProblemDetails(dtClient, problemId);
 
@@ -279,11 +289,12 @@ const main = async () => {
       entityName: z.string(),
     },
     async ({ entityName }) => {
-      const dtClient = await createOAuthClient(
-        oauthClient,
-        oauthClientSecret,
+      const dtClient = await createDtHttpClient(
         dtEnvironment,
         scopesBase.concat('environment-api:entities:read', 'storage:entities:read'),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
       );
       const entityResponse = await findMonitoredEntityByName(dtClient, entityName);
       return entityResponse;
@@ -297,11 +308,12 @@ const main = async () => {
       entityId: z.string().optional(),
     },
     async ({ entityId }) => {
-      const dtClient = await createOAuthClient(
-        oauthClient,
-        oauthClientSecret,
+      const dtClient = await createDtHttpClient(
         dtEnvironment,
         scopesBase.concat('environment-api:entities:read'),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
       );
       const entityDetails = await getMonitoredEntityDetails(dtClient, entityId);
 
@@ -331,11 +343,12 @@ const main = async () => {
       message: z.string().optional(),
     },
     async ({ channel, message }) => {
-      const dtClient = await createOAuthClient(
-        oauthClient,
-        oauthClientSecret,
+      const dtClient = await createDtHttpClient(
         dtEnvironment,
         scopesBase.concat('app-settings:objects:read'),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
       );
       const response = await sendSlackMessage(dtClient, slackConnectionId, channel, message);
 
@@ -350,11 +363,12 @@ const main = async () => {
       entityName: z.string().optional(),
     },
     async ({ entityName }) => {
-      const dtClient = await createOAuthClient(
-        oauthClient,
-        oauthClientSecret,
+      const dtClient = await createDtHttpClient(
         dtEnvironment,
         scopesBase.concat('storage:logs:read'),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
       );
       const logs = await getLogsForEntity(dtClient, entityName);
 
@@ -369,7 +383,13 @@ const main = async () => {
       dqlStatement: z.string(),
     },
     async ({ dqlStatement }) => {
-      const dtClient = await createOAuthClient(oauthClient, oauthClientSecret, dtEnvironment, scopesBase);
+      const dtClient = await createDtHttpClient(
+        dtEnvironment,
+        scopesBase,
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
+      );
       const response = await verifyDqlStatement(dtClient, dqlStatement);
 
       let resp = 'DQL Statement Verification:\n';
@@ -398,9 +418,7 @@ const main = async () => {
       dqlStatement: z.string(),
     },
     async ({ dqlStatement }) => {
-      const dtClient = await createOAuthClient(
-        oauthClient,
-        oauthClientSecret,
+      const dtClient = await createDtHttpClient(
         dtEnvironment,
         scopesBase.concat(
           'storage:buckets:read', // Read all system data stored on Grail
@@ -415,6 +433,9 @@ const main = async () => {
           'storage:user.sessions:read', // Read User sessions from Grail
           'storage:security.events:read', // Read Security events from Grail
         ),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
       );
       const response = await executeDql(dtClient, dqlStatement);
 
@@ -432,11 +453,12 @@ const main = async () => {
       isPrivate: z.boolean().optional().default(false),
     },
     async ({ problemType, teamName, channel, isPrivate }) => {
-      const dtClient = await createOAuthClient(
-        oauthClient,
-        oauthClientSecret,
+      const dtClient = await createDtHttpClient(
         dtEnvironment,
         scopesBase.concat('automation:workflows:write', 'automation:workflows:read', 'automation:workflows:run'),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
       );
       const response = await createWorkflowForProblemNotification(dtClient, teamName, channel, problemType, isPrivate);
 
@@ -463,11 +485,12 @@ const main = async () => {
       workflowId: z.string().optional(),
     },
     async ({ workflowId }) => {
-      const dtClient = await createOAuthClient(
-        oauthClient,
-        oauthClientSecret,
+      const dtClient = await createDtHttpClient(
         dtEnvironment,
         scopesBase.concat('automation:workflows:write', 'automation:workflows:read', 'automation:workflows:run'),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
       );
       const response = await updateWorkflow(dtClient, workflowId, {
         isPrivate: false,
@@ -489,11 +512,12 @@ const main = async () => {
         ),
     },
     async ({ clusterId }) => {
-      const dtClient = await createOAuthClient(
-        oauthClient,
-        oauthClientSecret,
+      const dtClient = await createDtHttpClient(
         dtEnvironment,
         scopesBase.concat('storage:events:read'),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
       );
       const events = await getEventsForCluster(dtClient, clusterId);
 
@@ -508,11 +532,12 @@ const main = async () => {
       entityIds: z.string().optional().describe('Comma separated list of entityIds'),
     },
     async ({ entityIds }) => {
-      const dtClient = await createOAuthClient(
-        oauthClient,
-        oauthClientSecret,
+      const dtClient = await createDtHttpClient(
         dtEnvironment,
         scopesBase.concat('environment-api:entities:read', 'settings:objects:read'),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
       );
       console.error(`Fetching ownership for ${entityIds}`);
       const ownershipInformation = await getOwnershipInformation(dtClient, entityIds);

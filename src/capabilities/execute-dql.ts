@@ -1,7 +1,7 @@
-import { _OAuthHttpClient } from '@dynatrace-sdk/http-client';
+import { HttpClient } from '@dynatrace-sdk/http-client';
 import { QueryExecutionClient, QueryAssistanceClient, QueryResult } from '@dynatrace-sdk/client-query';
 
-export const verifyDqlStatement = async (dtClient: _OAuthHttpClient, dqlStatement: string) => {
+export const verifyDqlStatement = async (dtClient: HttpClient, dqlStatement: string) => {
   const queryAssistanceClient = new QueryAssistanceClient(dtClient);
 
   const response = await queryAssistanceClient.queryVerify({
@@ -14,7 +14,7 @@ export const verifyDqlStatement = async (dtClient: _OAuthHttpClient, dqlStatemen
 };
 
 export const executeDql = async (
-  dtClient: _OAuthHttpClient,
+  dtClient: HttpClient,
   dqlStatement: string,
 ): Promise<QueryResult['records'] | undefined> => {
   const queryExecutionClient = new QueryExecutionClient(dtClient);

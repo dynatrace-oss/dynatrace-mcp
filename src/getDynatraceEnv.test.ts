@@ -5,6 +5,7 @@ describe('getDynatraceEnv', () => {
     OAUTH_CLIENT_ID: 'dt0s02.SAMPLE',
     OAUTH_CLIENT_SECRET: 'dt0s02.SAMPLE.abcd1234',
     DT_ENVIRONMENT: 'https://abc123.apps.dynatrace.com',
+    DT_PLATFORM_TOKEN: 'dt0s16.SAMPLE.abcd1234',
     SLACK_CONNECTION_ID: 'slack-conn-id',
   };
 
@@ -12,9 +13,10 @@ describe('getDynatraceEnv', () => {
     const env = { ...baseEnv };
     const result = getDynatraceEnv(env);
     expect(result).toEqual({
-      oauthClient: env.OAUTH_CLIENT_ID,
+      oauthClientId: env.OAUTH_CLIENT_ID,
       oauthClientSecret: env.OAUTH_CLIENT_SECRET,
       dtEnvironment: env.DT_ENVIRONMENT,
+      dtPlatformToken: env.DT_PLATFORM_TOKEN,
       slackConnectionId: env.SLACK_CONNECTION_ID,
     });
   });
@@ -25,14 +27,14 @@ describe('getDynatraceEnv', () => {
     expect(result.slackConnectionId).toBe('fake-slack-connection-id');
   });
 
-  it('throws if OAUTH_CLIENT_ID is missing', () => {
-    const env = { ...baseEnv, OAUTH_CLIENT_ID: undefined };
+  it('throws if environment variables for auth credentials are missing', () => {
+    const env = {
+      ...baseEnv,
+      OAUTH_CLIENT_ID: undefined,
+      OAUTH_CLIENT_SECRET: undefined,
+      DT_PLATFORM_TOKEN: undefined,
+    };
     expect(() => getDynatraceEnv(env)).toThrow(/OAUTH_CLIENT_ID/);
-  });
-
-  it('throws if OAUTH_CLIENT_SECRET is missing', () => {
-    const env = { ...baseEnv, OAUTH_CLIENT_SECRET: undefined };
-    expect(() => getDynatraceEnv(env)).toThrow(/OAUTH_CLIENT_SECRET/);
   });
 
   it('throws if DT_ENVIRONMENT is missing', () => {

@@ -1,5 +1,9 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## Unreleased changes
+
+- Added support for Authorization via Platform Tokens via environment variable `DT_PLATFORM_TOKENS`
+
 ## 0.4.0
 
 - Improve Authentication - fine-grained OAuth calls per tool

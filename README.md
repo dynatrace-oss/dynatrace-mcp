@@ -24,8 +24,6 @@ Bring real-time observability data directly into your development workflow.
 
 ## Quickstart
 
-**Work in progress**
-
 You can add this MCP server (using STDIO) to your MCP Client like VS Code, Claude, Cursor, Amazon Q Developer CLI, Windsurf Github Copilot via the package `@dynatrace-oss/dynatrace-mcp-server`.
 
 We recommend to always set it up for your current workspace instead of using it globally.
@@ -106,40 +104,49 @@ This configuration should be stored in `<your-repo>/.amazonq/mcp.json`.
 
 ## Environment Variables
 
-A **Dynatrace OAuth Client** is needed to communicate with your Dynatrace Environment. Please follow the documentation about
-[creating an Oauth Client in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/oauth-clients),
-and set up the following environment variables in order for this MCP to work:
+You can set up authentication via **OAuth Client** or **Platform Tokens** via the following environment variables:
 
 - `DT_ENVIRONMENT` (string, e.g., https://abc12345.apps.dynatrace.com) - URL to your Dynatrace Platform (do not use Dynatrace classic URLs like `abc12345.live.dynatrace.com`)
 - `OAUTH_CLIENT_ID` (string, e.g., `dt0s02.SAMPLE`) - Dynatrace OAuth Client ID
 - `OAUTH_CLIENT_SECRET` (string, e.g., `dt0s02.SAMPLE.abcd1234`) - Dynatrace OAuth Client Secret
-- OAuth Client Scopes:
-  - `app-engine:apps:run` - needed for environmentInformationClient
-  - `app-engine:functions:run` - needed for environmentInformationClient
-  - `hub:catalog:read` - get details about installed Apps on Dynatrace Environment
-  - `environment-api:security-problems:read` - needed for reading security problems
-  - `environment-api:entities:read` - read monitored entities
-  - `environment-api:problems:read` - get problems
-  - `environment-api:metrics:read` - read metrics
-  - `environment-api:slo:read` - read SLOs
-  - `storage:buckets:read` - Read all system data stored on Grail
-  - `storage:logs:read` - Read logs for reliability guardian validations
-  - `storage:metrics:read` - Read metrics for reliability guardian validations
-  - `storage:bizevents:read` - Read bizevents for reliability guardian validations
-  - `storage:spans:read` - Read spans from Grail
-  - `storage:entities:read` - Read Entities from Grail
-  - `storage:events:read` - Read Events from Grail
-  - `storage:security.events:read`- Read Security Events from Grail
-  - `storage:system:read` - Read System Data from Grail
-  - `storage:user.events:read` - Read User events from Grail
-  - `storage:user.sessions:read` - Read User sessions from Grail
-  - `settings:objects:read` - needed for reading ownership information and Guardians (SRG) from settings
+- `DT_PLATFORM_TOKEN` (string, e.g., `dt0s16.SAMPLE.abcd1234`) - Dynatrace Platform Token (limited support as not all scopes are available)
 
-    **Note**: Please ensure that `settings:objects:read` is used, and _not_ the similarly named scope `app-settings:objects:read`.
+For more information, please have a look at the documentation about
+[creating an Oauth Client in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/oauth-clients), as well as
+[creating a Platform Token in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens).
 
 In addition, depending on the features you use, the following variables can be configured:
 
 - `SLACK_CONNECTION_ID` (string) - connection ID of a [Slack Connection](https://docs.dynatrace.com/docs/analyze-explore-automate/workflows/actions/slack)
+
+### Scopes for Authentication
+
+Depending on the features you are using, the following scopes are needed:
+
+- `app-engine:apps:run` - needed for almost all tools
+- `app-engine:functions:run` - needed for for almost all tools
+- `environment-api:security-problems:read` - needed for reading security problems (currently not available for Platform Tokens)
+- `environment-api:entities:read` - read monitored entities (currently not available for Platform Tokens)
+- `environment-api:problems:read` - get problems (currently not available for Platform Tokens)
+- `environment-api:metrics:read` - read metrics (currently not available for Platform Tokens)
+- `environment-api:slo:read` - read SLOs (currently not available for Platform Tokens)
+- `automation:workflows:read` - read Workflows
+- `automation:workflows:write` - create and update Workflows
+- `automation:workflows:run` - run Workflows
+- `storage:buckets:read` - needed for `execute_dql` tool to read all system data stored on Grail
+- `storage:logs:read` - needed for `execute_dql` tool to read logs for reliability guardian validations
+- `storage:metrics:read` - needed for `execute_dql` tool to read metrics for reliability guardian validations
+- `storage:bizevents:read` - needed for `execute_dql` tool to read bizevents for reliability guardian validations
+- `storage:spans:read` - needed for `execute_dql` tool to read spans from Grail
+- `storage:entities:read` - needed for `execute_dql` tool to read Entities from Grail
+- `storage:events:read` - needed for `execute_dql` tool to read Events from Grail
+- `storage:security.events:read`- needed for `execute_dql` tool to read Security Events from Grail
+- `storage:system:read` - needed for `execute_dql` tool to read System Data from Grail
+- `storage:user.events:read` - needed for `execute_dql` tool to read User events from Grail
+- `storage:user.sessions:read` - needed for `execute_dql` tool to read User sessions from Grail
+- `settings:objects:read` - needed for reading ownership information and Guardians (SRG) from settings
+
+  **Note**: Please ensure that `settings:objects:read` is used, and _not_ the similarly named scope `app-settings:objects:read`.
 
 ## ✨ Example prompts ✨
 
