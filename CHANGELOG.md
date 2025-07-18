@@ -1,5 +1,10 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## Unreleased changes
+
+- Added tool to translate between natural language and DQL via Davis CoPilot
+- Added tool to chat with Davis CoPilot
+
 ## 0.4.0
 
 - Improve Authentication - fine-grained OAuth calls per tool
