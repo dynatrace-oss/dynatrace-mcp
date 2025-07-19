@@ -1,5 +1,5 @@
 import { _OAuthHttpClient } from '@dynatrace-sdk/http-client';
-import { callAppFunction } from '../dynatrace-clients';
+import { callAppFunction } from './call-app-function';
 
 export const getOwnershipInformation = async (dtClient: _OAuthHttpClient, entityIds: string) => {
   const ownershipResponse = await callAppFunction(dtClient, 'dynatrace.ownership', 'get-ownership-from-entity', {

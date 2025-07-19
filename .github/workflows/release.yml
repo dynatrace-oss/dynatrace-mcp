@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write # Required for creating releases
+  id-token: write # Required for npm publishing with provenance
 
 jobs:
   release:
@@ -21,6 +22,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: npm ci
@@ -60,6 +62,19 @@ jobs:
           echo "$CHANGELOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
+        run: |
+          # Publish to npm with provenance
+          if [[ "${{ steps.version.outputs.version }}" == *"-"* ]]; then
+            # Pre-release version - publish with next tag
+            npm publish --tag next --provenance --access public
+          else
+            # Stable release - publish with latest tag
+            npm publish --provenance --access public
+          fi
+
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -70,10 +85,10 @@ jobs:
 
           ${{ steps.changelog.outputs.changelog }}
 
-          ## Installation
+          ## Usage
 
           ```bash
-          npm install @dynatrace-oss/dynatrace-mcp-server@${{ steps.version.outputs.version }}
+          npx -y @dynatrace-oss/dynatrace-mcp-server@${{ steps.version.outputs.version }}
           ```
           EOF
 
