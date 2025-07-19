@@ -55,6 +55,9 @@ const main = async () => {
   }
   const { oauthClient, oauthClientSecret, dtEnvironment, slackConnectionId } = dynatraceEnv;
 
+  // create an oauth-client
+  const dtClient = await createOAuthClient(oauthClient, oauthClientSecret, dtEnvironment, scopesBase);
+
   console.error(`Starting Dynatrace MCP Server v${VERSION}...`);
   const server = new McpServer(
     {
@@ -113,8 +116,7 @@ const main = async () => {
   };
 
   tool('get_environment_info', 'Get information about the connected Dynatrace Environment (Tenant)', {}, async ({}) => {
-    // create an oauth-client
-    const dtClient = await createOAuthClient(oauthClient, oauthClientSecret, dtEnvironment, scopesBase);
+    
     const environmentInformationClient = new EnvironmentInformationClient(dtClient);
 
     const environmentInfo = await environmentInformationClient.getEnvironmentInformation();
