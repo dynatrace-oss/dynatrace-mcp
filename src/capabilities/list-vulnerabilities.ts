@@ -1,7 +1,7 @@
-import { _OAuthHttpClient } from '@dynatrace-sdk/http-client';
+import { HttpClient } from '@dynatrace-sdk/http-client';
 import { SecurityProblemsClient } from '@dynatrace-sdk/client-classic-environment-v2';
 
-export const listVulnerabilities = async (dtClient: _OAuthHttpClient) => {
+export const listVulnerabilities = async (dtClient: HttpClient) => {
   const securityProblemsClient = new SecurityProblemsClient(dtClient);
 
   const response = await securityProblemsClient.getSecurityProblems({

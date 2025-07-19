@@ -1,9 +1,4 @@
-import {
-  _OAuthHttpClient,
-  HttpClientRequestOptions,
-  HttpClientResponse,
-  RequestBodyTypes,
-} from '@dynatrace-sdk/http-client';
+import { HttpClient, PlatformHttpClient } from '@dynatrace-sdk/http-client';
 import { getSSOUrl } from 'dt-app';
 import { version as VERSION } from '../../package.json';
 import { OAuthTokenResponse } from './types';
@@ -44,42 +39,54 @@ const requestToken = async (
 };
 
 /**
- * ExtendedOAuthClient that takes parameters for clientId, secret, scopes, environmentUrl, authUrl, and the version of the dynatrace-mcp-server
+ * Create a Dynatrace Http Client (from the http-client SDK) based on the provided authentication credentails
+ * @param environmentUrl
+ * @param scopes
+ * @param clientId
+ * @param clientSecret
+ * @param dtPlatformToken
+ * @returns
  */
-export class ExtendedOauthClient extends _OAuthHttpClient {
-  constructor(
-    config: {
-      clientId: string;
-      secret: string;
-      scopes: string[];
-      environmentUrl: string;
-      authUrl: string;
-    },
-    protected userAgent: string,
-  ) {
-    super(config);
+export const createDtHttpClient = async (
+  environmentUrl: string,
+  scopes: string[],
+  clientId?: string,
+  clientSecret?: string,
+  dtPlatformToken?: string,
+): Promise<HttpClient> => {
+  if (clientId && clientSecret) {
+    // create an OAuth client if clientId and clientSecret are provided
+    return createOAuthHttpClient(environmentUrl, scopes, clientId, clientSecret);
   }
+  if (dtPlatformToken) {
+    // create a simple HTTP client if only the platform token is provided
+    return createBearerTokenHttpClient(environmentUrl, dtPlatformToken);
+  }
+  throw new Error(
+    'Failed to create Dynatrace HTTP Client: Please provide either clientId and clientSecret or dtPlatformToken',
+  );
+};
 
-  send<T extends keyof RequestBodyTypes = 'json'>(options: HttpClientRequestOptions<T>): Promise<HttpClientResponse> {
-    // add the user-agent header to the request
-    options.headers = {
-      ...options.headers,
-      'User-Agent': this.userAgent,
-    };
-    // call the parent send method
-    return super.send(options);
-  }
-}
+/** Creates an HTTP Client based on environmentUrl and a platform token */
+const createBearerTokenHttpClient = async (environmentUrl: string, dtPlatformToken: string): Promise<HttpClient> => {
+  return new PlatformHttpClient({
+    baseUrl: environmentUrl,
+    defaultHeaders: {
+      'Authorization': `Bearer ${dtPlatformToken}`,
+      'User-Agent': `dynatrace-mcp-server/v${VERSION} (${process.platform}-${process.arch})`,
+    },
+  });
+};
 
 /** Create an Oauth Client based on clientId, clientSecret, environmentUrl and scopes
  * This uses a client-credentials flow to request a token from the SSO endpoint.
  */
-export const createOAuthClient = async (
-  clientId: string,
-  clientSecret: string,
+const createOAuthHttpClient = async (
   environmentUrl: string,
   scopes: string[],
-): Promise<_OAuthHttpClient> => {
+  clientId: string,
+  clientSecret: string,
+): Promise<HttpClient> => {
   if (!clientId) {
     throw new Error('Failed to retrieve OAuth client id from env "DT_APP_OAUTH_CLIENT_ID"');
   }
@@ -109,16 +116,5 @@ export const createOAuthClient = async (
   }
   console.error(`Successfully retrieved token from SSO!`);
 
-  const userAgent = `dynatrace-mcp-server/v${VERSION} (${process.platform}-${process.arch})`;
-
-  return new ExtendedOauthClient(
-    {
-      scopes,
-      clientId,
-      secret: clientSecret,
-      environmentUrl,
-      authUrl: ssoAuthUrl,
-    },
-    userAgent,
-  );
+  return createBearerTokenHttpClient(environmentUrl, tokenResponse.access_token);
 };

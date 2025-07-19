@@ -1,7 +1,8 @@
 // Helper to validate and extract required environment variables for Dynatrace MCP
 export interface DynatraceEnv {
-  oauthClient: string;
-  oauthClientSecret: string;
+  oauthClientId?: string;
+  oauthClientSecret?: string;
+  dtPlatformToken?: string;
   dtEnvironment: string;
   slackConnectionId: string;
 }
@@ -11,13 +12,20 @@ export interface DynatraceEnv {
  * Throws an Error if validation fails.
  */
 export function getDynatraceEnv(env: NodeJS.ProcessEnv = process.env): DynatraceEnv {
-  const oauthClient = env.OAUTH_CLIENT_ID;
+  const oauthClientId = env.OAUTH_CLIENT_ID;
   const oauthClientSecret = env.OAUTH_CLIENT_SECRET;
+  const dtPlatformToken = env.DT_PLATFORM_TOKEN;
   const dtEnvironment = env.DT_ENVIRONMENT;
   const slackConnectionId = env.SLACK_CONNECTION_ID || 'fake-slack-connection-id';
 
-  if (!oauthClient || !oauthClientSecret || !dtEnvironment) {
-    throw new Error('Please set OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET and DT_ENVIRONMENT environment variables');
+  if (!dtEnvironment) {
+    throw new Error('Please set DT_ENVIRONMENT environment variable to your Dynatrace Platform Environment');
+  }
+
+  if (!oauthClientId && !oauthClientSecret && !dtPlatformToken) {
+    throw new Error(
+      'Please set either OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET, or DT_PLATFORM_TOKEN environment variables',
+    );
   }
 
   if (!dtEnvironment.startsWith('https://')) {
@@ -32,5 +40,5 @@ export function getDynatraceEnv(env: NodeJS.ProcessEnv = process.env): Dynatrace
     );
   }
 
-  return { oauthClient, oauthClientSecret, dtEnvironment, slackConnectionId };
+  return { oauthClientId, oauthClientSecret, dtPlatformToken, dtEnvironment, slackConnectionId };
 }

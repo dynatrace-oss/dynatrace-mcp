@@ -1,10 +1,8 @@
-import { _OAuthHttpClient } from '@dynatrace-sdk/http-client';
-import { MonitoredEntitiesClient } from '@dynatrace-sdk/client-classic-environment-v2';
+import { HttpClient } from '@dynatrace-sdk/http-client';
 import { EventTriggerConfig, WorkflowCreate, WorkflowsClient } from '@dynatrace-sdk/client-automation';
-import { randomUUID } from 'crypto';
 
 export const createWorkflowForProblemNotification = async (
-  dtClient: _OAuthHttpClient,
+  dtClient: HttpClient,
   teamName: string,
   channel: string,
   problemType: string,
