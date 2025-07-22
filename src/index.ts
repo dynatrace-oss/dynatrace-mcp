@@ -456,11 +456,12 @@ const main = async () => {
         ),
     },
     async ({ text }) => {
-      const dtClient = await createOAuthClient(
-        oauthClient,
-        oauthClientSecret,
+      const dtClient = await createDtHttpClient(
         dtEnvironment,
-        scopesBase.concat('davis-copilot:conversations:execute', 'davis-copilot:nl2dql:execute'), // ToDo: Check which scopes are needed
+        scopesBase.concat('davis-copilot:nl2dql:execute'),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
       );
 
       const response = await generateDqlFromNaturalLanguage(dtClient, text);
@@ -496,11 +497,12 @@ const main = async () => {
       instruction: z.string().optional().describe('Optional instruction for how to format the response'),
     },
     async ({ text, context, instruction }) => {
-      const dtClient = await createOAuthClient(
-        oauthClient,
-        oauthClientSecret,
+      const dtClient = await createDtHttpClient(
         dtEnvironment,
-        scopesBase.concat('davis-copilot:conversations:execute', 'davis-copilot:nl2dql:execute'), // ToDo: Check which scopes are needed
+        scopesBase.concat('davis-copilot:conversations:execute'),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
       );
 
       const conversationContext: any[] = [];

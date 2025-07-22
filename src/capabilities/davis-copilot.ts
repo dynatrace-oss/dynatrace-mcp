@@ -1,4 +1,4 @@
-import { _OAuthHttpClient } from '@dynatrace-sdk/http-client';
+import { HttpClient } from '@dynatrace-sdk/http-client';
 
 /**
  * Davis CoPilot API Integration
@@ -169,10 +169,7 @@ export interface ConversationImprovedSummary {
  * DQL is the most powerful way to query any data in Dynatrace, including problem events,
  * security issues, logs, metrics, spans, and custom data.
  */
-export const generateDqlFromNaturalLanguage = async (
-  dtClient: _OAuthHttpClient,
-  text: string,
-): Promise<Nl2DqlResponse> => {
+export const generateDqlFromNaturalLanguage = async (dtClient: HttpClient, text: string): Promise<Nl2DqlResponse> => {
   const request: Nl2DqlRequest = { text };
 
   const response = await dtClient.send({
@@ -194,7 +191,7 @@ export const generateDqlFromNaturalLanguage = async (
  * Helps users understand what powerful DQL statements do, including
  * queries for problem events, security issues, and performance metrics.
  */
-export const explainDqlInNaturalLanguage = async (dtClient: _OAuthHttpClient, dql: string): Promise<Dql2NlResponse> => {
+export const explainDqlInNaturalLanguage = async (dtClient: HttpClient, dql: string): Promise<Dql2NlResponse> => {
   const request: Dql2NlRequest = { dql };
 
   const response = await dtClient.send({
@@ -211,7 +208,7 @@ export const explainDqlInNaturalLanguage = async (dtClient: _OAuthHttpClient, dq
 };
 
 export const chatWithDavisCopilot = async (
-  dtClient: _OAuthHttpClient,
+  dtClient: HttpClient,
   text: string,
   context?: ConversationContext[],
   annotations?: Record<string, string>,
