@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { EnvironmentInformationClient } from '@dynatrace-sdk/client-platform-management-service';
-import { _OAuthHttpClient } from '@dynatrace-sdk/http-client';
 import {
   ClientRequestError,
   isApiClientError,
@@ -35,7 +34,11 @@ import { getVulnerabilityDetails } from './capabilities/get-vulnerability-detail
 import { executeDql, verifyDqlStatement } from './capabilities/execute-dql';
 import { sendSlackMessage } from './capabilities/send-slack-message';
 import { findMonitoredEntityByName } from './capabilities/find-monitored-entity-by-name';
-import { chatWithDavisCopilot, generateDqlFromNaturalLanguage } from './capabilities/davis-copilot';
+import {
+  chatWithDavisCopilot,
+  explainDqlInNaturalLanguage,
+  generateDqlFromNaturalLanguage,
+} from './capabilities/davis-copilot';
 import { DynatraceEnv, getDynatraceEnv } from './getDynatraceEnv';
 
 config();
@@ -483,6 +486,41 @@ const main = async () => {
       resp += `1. Use "verify_dql" tool to validate this query\n`;
       resp += `2. Use "execute_dql" tool to run the query\n`;
       resp += `3. If results don't match expectations, refine your natural language description and try again\n`;
+
+      return resp;
+    },
+  );
+
+  tool(
+    'explain_dql_in_natural_language',
+    'Explain Dynatrace Query Language (DQL) statements in natural language using Davis CoPilot AI.',
+    {
+      dql: z.string().describe('The DQL statement to explain'),
+    },
+    async ({ dql }) => {
+      const dtClient = await createDtHttpClient(
+        dtEnvironment,
+        scopesBase.concat('davis-copilot:dql2nl:execute'),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
+      );
+
+      const response = await explainDqlInNaturalLanguage(dtClient, dql);
+
+      let resp = `📝 DQL to Natural Language:\n\n`;
+      resp += `**DQL Query:**\n\`\`\`\n${dql}\n\`\`\`\n\n`;
+      resp += `**Summary:** ${response.summary}\n\n`;
+      resp += `**Detailed Explanation:**\n${response.explanation}\n\n`;
+      resp += `**Status:** ${response.status}\n`;
+      resp += `**Message Token:** ${response.messageToken}\n`;
+
+      if (response.metadata?.notifications && response.metadata.notifications.length > 0) {
+        resp += `\n**Notifications:**\n`;
+        response.metadata.notifications.forEach((notification) => {
+          resp += `- ${notification.severity}: ${notification.message}\n`;
+        });
+      }
 
       return resp;
     },

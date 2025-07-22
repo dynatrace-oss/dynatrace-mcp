@@ -23,7 +23,7 @@ jobs:
         run: npm run prettier
 
       - name: Test
-        run: npm run test
+        run: npm run test:unit
 
       - name: Build
         run: npm run build

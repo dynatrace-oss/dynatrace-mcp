@@ -38,6 +38,8 @@
     "prepare": "npm run build",
     "watch": "tsc --watch",
     "test": "jest",
+    "test:unit": "jest --selectProjects unit",
+    "test:integration": "jest --selectProjects integration --runInBand",
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write ."
   },

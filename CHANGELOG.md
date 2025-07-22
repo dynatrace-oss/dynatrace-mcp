@@ -3,7 +3,7 @@
 ## Unreleased changes
 
 - Added support for Authorization via Platform Tokens via environment variable `DT_PLATFORM_TOKENS`
-- Added tool to translate between natural language and DQL via Davis CoPilot
+- Added tools to translate between natural language and DQL via Davis CoPilot
 - Added tool to chat with Davis CoPilot
 
 ## 0.4.0

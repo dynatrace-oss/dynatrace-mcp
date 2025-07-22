@@ -201,7 +201,7 @@ export const explainDqlInNaturalLanguage = async (dtClient: HttpClient, dql: str
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     },
-    body: JSON.stringify(request),
+    body: request, // Not sure why this does not need JSON.stringify, but it only works like this; once we have the SDK, this will be consistent
   });
 
   return await response.body('json');
