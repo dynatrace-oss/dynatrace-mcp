@@ -1,8 +1,8 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
-## Unreleased changes
+## 0.5.0 (Release Candidate 1)
 
-- Added support for Authorization via Platform Tokens via environment variable `DT_PLATFORM_TOKENS`
+- Added support for Authorization via Platform Tokens via environment variable `DT_PLATFORM_TOKEN`
 - Added tools to translate between natural language and DQL via Davis CoPilot
 - Added tool to chat with Davis CoPilot
 

@@ -113,12 +113,12 @@ This configuration should be stored in `<your-repo>/.amazonq/mcp.json`.
 
 ## Environment Variables
 
-You can set up authentication via **OAuth Client** or **Platform Tokens** via the following environment variables:
+You can set up authentication via **OAuth Client** or **Platform Tokens** (v0.5.0 and newer) via the following environment variables:
 
 - `DT_ENVIRONMENT` (string, e.g., https://abc12345.apps.dynatrace.com) - URL to your Dynatrace Platform (do not use Dynatrace classic URLs like `abc12345.live.dynatrace.com`)
 - `OAUTH_CLIENT_ID` (string, e.g., `dt0s02.SAMPLE`) - Dynatrace OAuth Client ID
 - `OAUTH_CLIENT_SECRET` (string, e.g., `dt0s02.SAMPLE.abcd1234`) - Dynatrace OAuth Client Secret
-- `DT_PLATFORM_TOKEN` (string, e.g., `dt0s16.SAMPLE.abcd1234`) - Dynatrace Platform Token (limited support as not all scopes are available)
+- With v0.5.0 and newer: `DT_PLATFORM_TOKEN` (string, e.g., `dt0s16.SAMPLE.abcd1234`) - Dynatrace Platform Token (limited support, as not all scopes are available; see below)
 
 For more information, please have a look at the documentation about
 [creating an Oauth Client in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/oauth-clients), as well as
@@ -134,11 +134,11 @@ Depending on the features you are using, the following scopes are needed:
 
 - `app-engine:apps:run` - needed for almost all tools
 - `app-engine:functions:run` - needed for for almost all tools
-- `environment-api:security-problems:read` - needed for reading security problems (currently not available for Platform Tokens)
-- `environment-api:entities:read` - read monitored entities (currently not available for Platform Tokens)
-- `environment-api:problems:read` - get problems (currently not available for Platform Tokens)
-- `environment-api:metrics:read` - read metrics (currently not available for Platform Tokens)
-- `environment-api:slo:read` - read SLOs (currently not available for Platform Tokens)
+- `environment-api:security-problems:read` - needed for reading security problems (_currently not available for Platform Tokens_)
+- `environment-api:entities:read` - read monitored entities (_currently not available for Platform Tokens_)
+- `environment-api:problems:read` - get problems (_currently not available for Platform Tokens_)
+- `environment-api:metrics:read` - read metrics (_currently not available for Platform Tokens_)
+- `environment-api:slo:read` - read SLOs (_currently not available for Platform Tokens_)
 - `automation:workflows:read` - read Workflows
 - `automation:workflows:write` - create and update Workflows
 - `automation:workflows:run` - run Workflows
