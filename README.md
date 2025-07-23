@@ -136,7 +136,6 @@ Depending on the features you are using, the following scopes are needed:
 - `app-engine:functions:run` - needed for for almost all tools
 - `environment-api:security-problems:read` - needed for reading security problems (_currently not available for Platform Tokens_)
 - `environment-api:entities:read` - read monitored entities (_currently not available for Platform Tokens_)
-- `environment-api:problems:read` - get problems (_currently not available for Platform Tokens_)
 - `environment-api:metrics:read` - read metrics (_currently not available for Platform Tokens_)
 - `environment-api:slo:read` - read SLOs (_currently not available for Platform Tokens_)
 - `automation:workflows:read` - read Workflows

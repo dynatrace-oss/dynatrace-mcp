@@ -13,15 +13,29 @@ export const verifyDqlStatement = async (dtClient: HttpClient, dqlStatement: str
   return response;
 };
 
+/**
+ * Execute a DQL statement against the Dynatrace API.
+ * If the result is immediately available, it will be returned.
+ * If the result is not immediately available, it will poll for the result until it is available.
+ * @param dtClient
+ * @param dqlStatement - The DQL statement to execute.
+ * @param maxResultRecords - Optional: The maximum number of result records to return.
+ * @param maxResultBytes - Optional: The maximum number of result bytes to return.
+ * @returns the result without metadata and without notifications, or undefined if the query failed or no result was returned.
+ */
 export const executeDql = async (
   dtClient: HttpClient,
   dqlStatement: string,
+  maxResultRecords?: number,
+  maxResultBytes?: number,
 ): Promise<QueryResult['records'] | undefined> => {
   const queryExecutionClient = new QueryExecutionClient(dtClient);
 
   const response = await queryExecutionClient.queryExecute({
     body: {
       query: dqlStatement,
+      maxResultRecords, // optional
+      maxResultBytes, // optional
     },
   });
 
