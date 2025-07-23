@@ -3,7 +3,7 @@
     "my-dynatrace-mcp-server": {
       "command": "node",
       "cwd": "${workspaceFolder}",
-      "args": ["${workspaceFolder}/dist/index.js"],
+      "args": ["--watch", "${workspaceFolder}/dist/index.js"],
       "envFile": "${workspaceFolder}/.env"
     }
   }

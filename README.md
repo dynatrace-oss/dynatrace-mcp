@@ -285,6 +285,8 @@ First, enable Copilot for your Workspace `.vscode/settings.json`:
 }
 ```
 
+and make sure that you are using Agent Mode in CoPilot.
+
 Second, add the MCP to `.vscode/mcp.json`:
 
 ```json
@@ -292,7 +294,7 @@ Second, add the MCP to `.vscode/mcp.json`:
   "servers": {
     "my-dynatrace-mcp-server": {
       "command": "node",
-      "args": ["${workspaceFolder}/dist/index.js"],
+      "args": ["--watch", "${workspaceFolder}/dist/index.js"],
       "envFile": "${workspaceFolder}/.env"
     }
   }
@@ -301,7 +303,7 @@ Second, add the MCP to `.vscode/mcp.json`:
 
 Third, create a `.env` file in this repository (you can copy from `.env.template`) and configure environment variables as [described above](#environment-variables).
 
-Last but not least, switch to Agent Mode in CoPilot and reload tools.
+Finally, make changes to your code and compile it with `npm run build` or just run `npm run watch` and it auto-compiles.
 
 ## Notes
 
