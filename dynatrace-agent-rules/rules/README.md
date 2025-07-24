@@ -7,7 +7,7 @@ This directory contains comprehensive workflow rules for AI-assisted Dynatrace a
 ### 1. Install Dynatrace MCP Server
 
 ```bash
-npm install -g @dynatrace/mcp-server
+npm install -g @dynatrace-oss/dynatrace-mcp-server
 # Configure with your Dynatrace environment credentials
 ```
 

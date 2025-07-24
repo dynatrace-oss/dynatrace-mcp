@@ -335,7 +335,7 @@ fetch spans, from:now() - 4h  // Adjust based on problem timeframe
 ```dql
 // Correlate span trace IDs with log entries
 fetch logs, from:now() - 4h
-| filter trace_id == "162aaed047f724043441c38744bcf37d"  // From span analysis
+| filter trace.id == "162aaed047f724043441c38744bcf37d"  // From span analysis
 | fields timestamp, content, exception.message, k8s.pod.name
 | sort timestamp desc
 ```
@@ -449,7 +449,7 @@ fetch events, from:now() - 24h
 
 ```dql
 // Service filtering by entity ID (most reliable)
-| filter dt.entity.service == "SERVICE-BECA49FB15C72B6A"
+| filter dt.entity.service == "SERVICE-PLACEHOLDER"
 
 // Service filtering by name (may not always work)
 | filter service.name == "payment"           // Sometimes works

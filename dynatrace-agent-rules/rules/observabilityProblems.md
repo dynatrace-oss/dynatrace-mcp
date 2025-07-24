@@ -327,7 +327,7 @@ fetch events, from:now() - 24h
 | sort timestamp desc
 ```
 
-| limit 10
+
 
 ````
 
