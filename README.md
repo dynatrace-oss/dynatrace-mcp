@@ -181,7 +181,7 @@ fetch logs | filter dt.source_entity == 'SERVICE-123' | summarize count(), by:{s
 How can I investigate slow database queries in Dynatrace?
 ```
 
-**Find open vulnerabilities on production, setup alert.**
+**Find open vulnerabilities on production, setup alert:**
 
 ```
 I have this code snippet here in my IDE, where I get a dependency vulnerability warning for my code.
@@ -190,7 +190,7 @@ Analyze a specific production problem.
 Setup a workflow that sends Slack alerts to the #devops-alerts channel when availability problems occur.
 ```
 
-**Debug intermittent 503 errors.**
+**Debug intermittent 503 errors:**
 
 ```
 Our load balancer is intermittently returning 503 errors during peak traffic.
@@ -199,7 +199,7 @@ run a query to correlate error rates with service instance health indicators.
 I suspect we have circuit breakers triggering, but need confirmation from the telemetry data.
 ```
 
-**Correlate memory issue with logs.**
+**Correlate memory issue with logs:**
 
 ```
 There's a problem with high memory usage on one of our hosts.
@@ -207,7 +207,7 @@ Get the problem details and then fetch related logs to help understand
 what's causing the memory spike? Which file in this repo is this related to?
 ```
 
-**Trace request flow analysis.**
+**Trace request flow analysis:**
 
 ```
 Our users are experiencing slow checkout processes.
@@ -215,7 +215,7 @@ Can you execute a DQL query to show me the full request trace for our checkout f
 so I can identify which service is causing the bottleneck?
 ```
 
-**Analyze Kubernetes cluster events.**
+**Analyze Kubernetes cluster events:**
 
 ```
 Our application deployments seem to be failing intermittently.
