@@ -228,7 +228,7 @@ const main = async () => {
 
   tool(
     'list_problems',
-    'List all problems (dt.davis.problems) known on Dynatrace, sorted by their recency. An additional filter can be provided using DQL filter.',
+    'List all problems (dt.davis.problems) known on Dynatrace, sorted by their recency, for the last 12h. An additional filter can be provided using DQL filter.',
     {
       additionalFilter: z
         .string()

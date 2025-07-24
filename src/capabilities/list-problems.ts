@@ -2,8 +2,8 @@ import { HttpClient } from '@dynatrace-sdk/http-client';
 import { executeDql } from './execute-dql';
 
 export const listProblems = async (dtClient: HttpClient, additionalFilter?: string) => {
-  // DQL Statement from Problems App to fetch all Davis Problems for the last 2 hours to now
-  const dql = `fetch dt.davis.problems, from: now()-10h, to: now()
+  // DQL Statement from Problems App to fetch all Davis Problems for the last 12 hours to now
+  const dql = `fetch dt.davis.problems, from: now()-12h, to: now()
 | filter isNull(dt.davis.is_duplicate) OR not(dt.davis.is_duplicate)
 ${additionalFilter ? `| filter ${additionalFilter}` : ''}
 | fieldsAdd
