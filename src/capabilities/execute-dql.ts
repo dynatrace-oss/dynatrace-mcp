@@ -1,5 +1,5 @@
 import { HttpClient } from '@dynatrace-sdk/http-client';
-import { QueryExecutionClient, QueryAssistanceClient, QueryResult } from '@dynatrace-sdk/client-query';
+import { QueryExecutionClient, QueryAssistanceClient, QueryResult, ExecuteRequest } from '@dynatrace-sdk/client-query';
 
 export const verifyDqlStatement = async (dtClient: HttpClient, dqlStatement: string) => {
   const queryAssistanceClient = new QueryAssistanceClient(dtClient);
@@ -18,26 +18,16 @@ export const verifyDqlStatement = async (dtClient: HttpClient, dqlStatement: str
  * If the result is immediately available, it will be returned.
  * If the result is not immediately available, it will poll for the result until it is available.
  * @param dtClient
- * @param dqlStatement - The DQL statement to execute.
- * @param maxResultRecords - Optional: The maximum number of result records to return.
- * @param maxResultBytes - Optional: The maximum number of result bytes to return.
+ * @param body - Contains the DQL statement to execute, and optional parameters like maxResultRecords and maxResultBytes
  * @returns the result without metadata and without notifications, or undefined if the query failed or no result was returned.
  */
 export const executeDql = async (
   dtClient: HttpClient,
-  dqlStatement: string,
-  maxResultRecords?: number,
-  maxResultBytes?: number,
+  body: ExecuteRequest,
 ): Promise<QueryResult['records'] | undefined> => {
   const queryExecutionClient = new QueryExecutionClient(dtClient);
 
-  const response = await queryExecutionClient.queryExecute({
-    body: {
-      query: dqlStatement,
-      maxResultRecords, // optional
-      maxResultBytes, // optional
-    },
-  });
+  const response = await queryExecutionClient.queryExecute({ body });
 
   if (response.result) {
     // return response result immediately

@@ -434,7 +434,7 @@ const main = async () => {
         oauthClientSecret,
         dtPlatformToken,
       );
-      const response = await executeDql(dtClient, dqlStatement);
+      const response = await executeDql(dtClient, { query: dqlStatement });
 
       return `DQL Response: ${JSON.stringify(response)}`;
     },

@@ -8,7 +8,7 @@ export const findMonitoredEntityByName = async (dtClient: HttpClient, entityName
                 | append [fetch dt.entity.process_group | search "*${entityName}*" | fieldsAdd entity.type]
                 | append [fetch dt.entity.cloud_application | search "*${entityName}*" | fieldsAdd entity.type]`;
 
-  const dqlResponse = await executeDql(dtClient, dql);
+  const dqlResponse = await executeDql(dtClient, { query: dql });
 
   if (dqlResponse && dqlResponse.length > 0) {
     let resp = 'The following monitored entities were found:\n';

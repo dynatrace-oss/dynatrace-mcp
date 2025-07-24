@@ -23,5 +23,5 @@ ${additionalFilter ? `| filter ${additionalFilter}` : ''}
 | sort event.status asc, event.start desc
 `;
 
-  return await executeDql(dtClient, dql, 5000, /* 5MB */ 5000000);
+  return await executeDql(dtClient, { query: dql, maxResultRecords: 5000, maxResultBytes: /* 5 MB */ 5000000 });
 };
