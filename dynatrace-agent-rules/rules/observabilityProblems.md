@@ -327,10 +327,6 @@ fetch events, from:now() - 24h
 | sort timestamp desc
 ```
 
-
-
-````
-
 ## **✅ VERIFIED: Working Examples from Real Data**
 
 ### Payment Service JavaScript Error Investigation (P-25071250)
@@ -338,6 +334,7 @@ fetch events, from:now() - 24h
 **Context**: Complete problem analysis showing 57.65% error rate with root cause in astroshop-payment service.
 
 #### Step 1: Get Complete Problem Details via DQL
+
 ```dql
 fetch events, from:now() - 24h
 | filter event.kind == "DAVIS_PROBLEM"
@@ -346,7 +343,7 @@ fetch events, from:now() - 24h
         affected_entity_ids, root_cause_entity_name, root_cause_entity_id,
         event.start, event.end, resolved_problem_duration
 | limit 1
-````
+```
 
 **✅ VERIFIED Results from Real Data**:
 

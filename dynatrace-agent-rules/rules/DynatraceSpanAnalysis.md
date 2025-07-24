@@ -435,7 +435,7 @@ fetch events, from:now() - 24h
 
 ```dql
 // Proper field names and references
-| filter dt.trace_id == "trace-id"           // Correct trace ID field
+| filter dt.trace.id == "trace-id"           // Correct trace ID field
 | summarize avg_duration = avg(duration), count()
 | sort avg_duration desc                     // Named field works
 | sort `count()` desc                        // Or use backticks for functions

@@ -161,7 +161,7 @@ fetch logs, from:now() - 2h
 When analyzing a specific problem timeframe (e.g., 11:54 AM - 12:29 PM):
 
 ```dql
-fetch logs, from:now() - 4h
+fetch logs, from:"2025-07-24T01:54:00Z", to:"2025-07-24T12:29:00Z"
 | filter matchesPhrase(k8s.pod.name, "payment-6977fffc7-2r2hb")
 | filter loglevel == "WARN" or loglevel == "ERROR"
 | fields timestamp, content, exception.message
