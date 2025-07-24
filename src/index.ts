@@ -246,7 +246,7 @@ const main = async () => {
         oauthClientSecret,
         dtPlatformToken,
       );
-      // get problems (uses fetch )
+      // get problems (uses fetch)
       const result = await listProblems(dtClient, additionalFilter);
       if (result && result.length > 0) {
         let resp = `Found ${result.length} problems! Displaying the top ${maxProblemsToDisplay} problems:\n`;
