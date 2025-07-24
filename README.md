@@ -1,6 +1,6 @@
 # Dynatrace MCP Server
 
-This remote MCP server allows interaction with the [Dynatrace](https://www.dynatrace.com/) observability platform.
+This local MCP server allows interaction with the [Dynatrace](https://www.dynatrace.com/) observability platform.
 Bring real-time observability data directly into your development workflow.
 
 <img width="1046" alt="image" src="/assets/dynatrace-mcp-arch.png" />
@@ -136,8 +136,6 @@ Depending on the features you are using, the following scopes are needed:
 - `app-engine:functions:run` - needed for for almost all tools
 - `environment-api:security-problems:read` - needed for reading security problems (_currently not available for Platform Tokens_)
 - `environment-api:entities:read` - read monitored entities (_currently not available for Platform Tokens_)
-- `environment-api:metrics:read` - read metrics (_currently not available for Platform Tokens_)
-- `environment-api:slo:read` - read SLOs (_currently not available for Platform Tokens_)
 - `automation:workflows:read` - read Workflows
 - `automation:workflows:write` - create and update Workflows
 - `automation:workflows:run` - run Workflows
@@ -284,7 +282,7 @@ First, enable Copilot for your Workspace `.vscode/settings.json`:
 }
 ```
 
-and make sure that you are using Agent Mode in CoPilot.
+and make sure that you are using Agent Mode in Copilot.
 
 Second, add the MCP to `.vscode/mcp.json`:
 

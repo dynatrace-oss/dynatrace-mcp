@@ -1,5 +1,9 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## Unreleased changes
+
+- Removed unneeded scopes `environment-api:slo:read` (no tool is using this) and `environment-api:metrics:read` (anyway handled via execute DQL tool)
+
 ## 0.5.0 (Release Candidate 2)
 
 - Improved "List Problems" tool to use a DQL statement to retrieve data from Dynatrace, and provide better next steps
