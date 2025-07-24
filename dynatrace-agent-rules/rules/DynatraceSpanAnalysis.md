@@ -7,6 +7,7 @@ This guide covers comprehensive span analysis using DQL for root cause analysis,
 ## Core DQL Pattern for Spans
 
 ### Basic Span Query Structure
+
 ```dql
 fetch spans, from:now() - 2h
 | filter service.name == "your-service"
@@ -18,6 +19,7 @@ fetch spans, from:now() - 2h
 ## Available Data Points
 
 ### Primary Fields
+
 - **span.name** - Span operation name (e.g., "oteldemo.PaymentService/Charge")
 - **trace.id** - Distributed trace identifier
 - **span.id** - Unique span identifier
@@ -26,12 +28,14 @@ fetch spans, from:now() - 2h
 - **start_time** / **end_time** - Span timing boundaries
 
 ### Error Detection Fields
+
 - **request.is_failed** - Boolean indicating span failure
 - **span.status_code** - Status code ("ok", "error", etc.)
 - **span.is_exit_by_exception** - Boolean indicating exception exit
 - **dt.failure_detection.results** - Detailed failure analysis
 
 ### **🔍 Semantic Error Fields (Enhanced Analysis)**
+
 - **error.id** - Unique identifier for error grouping (16-byte hex ID)
 - **error.display_name** - Human-readable error identifier
 - **error.type** - Main error type (anr, crash, csp, exception, reported, request)
@@ -44,6 +48,7 @@ fetch spans, from:now() - 2h
 - **error.dropped_exception_count** - Exceptions not captured due to limits
 
 ### Exception Details
+
 - **span.events** - Array containing exception events
   - **exception.message** - Exception message text
   - **exception.type** - Exception class/type
@@ -53,6 +58,7 @@ fetch spans, from:now() - 2h
   - **exception.id** - Unique exception identifier
 
 ### Service Context Fields
+
 - **endpoint.name** - API endpoint name
 - **code.function** - Function name where span occurs
 - **code.filepath** - Source code file path
@@ -60,6 +66,7 @@ fetch spans, from:now() - 2h
 - **rpc.service** - RPC service name
 
 ### Kubernetes Context
+
 - **k8s.pod.name** - Pod generating the span
 - **k8s.namespace.name** - Kubernetes namespace
 - **k8s.container.name** - Container name
@@ -69,6 +76,7 @@ fetch spans, from:now() - 2h
 ## Common Query Patterns
 
 ### 1. Failed Spans Analysis
+
 ```dql
 fetch spans, from:now() - 2h
 | filter service.name == "payment"
@@ -79,6 +87,7 @@ fetch spans, from:now() - 2h
 ```
 
 ### 2. Exception Details Extraction
+
 ```dql
 fetch spans, from:now() - 4h
 | filter service.name == "payment" and request.is_failed == true
@@ -87,6 +96,7 @@ fetch spans, from:now() - 4h
 ```
 
 ### 3. Specific Exception Pattern Search
+
 ```dql
 fetch spans, from:now() - 4h
 | filter service.name == "payment"
@@ -96,6 +106,7 @@ fetch spans, from:now() - 4h
 ```
 
 ### 4. Performance Analysis of Failed Spans
+
 ```dql
 fetch spans, from:now() - 2h
 | filter request.is_failed == true
@@ -105,11 +116,12 @@ fetch spans, from:now() - 2h
 ```
 
 ### 5. Error Rate by Service
+
 ```dql
 fetch spans, from:now() - 1h
 | filter service.name == "payment"
 | fieldsAdd is_error = if(request.is_failed == true, 1, else: 0)
-| summarize 
+| summarize
     total_requests = count(),
     failed_requests = sum(is_error),
     by: {service.name, endpoint.name}
@@ -120,11 +132,12 @@ fetch spans, from:now() - 1h
 ### **🔍 Enhanced Error Analysis with Semantic Fields**
 
 #### Semantic Error Classification
+
 ```dql
 fetch spans, from:now() - 2h
 | filter service.name == "payment"
 | filter error.is_fatal == true  // Focus on fatal errors only
-| summarize 
+| summarize
     fatal_errors = count(),
     exception_count = sum(error.exception_count),
     by: {error.type, error.source, error.reason}
@@ -132,10 +145,11 @@ fetch spans, from:now() - 2h
 ```
 
 #### Error Grouping and Correlation
+
 ```dql
 fetch spans, from:now() - 4h
 | filter service.name == "payment" and isNotNull(error.id)
-| summarize 
+| summarize
     unique_errors = countDistinct(error.id),
     total_occurrences = count(),
     avg_exceptions_per_span = avg(aggregation.exception_count),
@@ -144,10 +158,11 @@ fetch spans, from:now() - 4h
 ```
 
 #### HTTP Error Classification
+
 ```dql
 fetch spans, from:now() - 2h
 | filter service.name == "payment"
-| summarize 
+| summarize
     http_4xx_errors = sum(error.http_4xx_count),
     http_5xx_errors = sum(error.http_5xx_count),
     http_other_errors = sum(error.http_other_count),
@@ -158,11 +173,12 @@ fetch spans, from:now() - 2h
 ```
 
 #### Exception Drop Rate Analysis
+
 ```dql
 fetch spans, from:now() - 1h
 | filter service.name == "payment"
 | filter error.exception_count > 0
-| summarize 
+| summarize
     total_exceptions = sum(error.exception_count),
     dropped_exceptions = sum(error.dropped_exception_count),
     by: {service.name, k8s.pod.name}
@@ -172,6 +188,7 @@ fetch spans, from:now() - 1h
 ```
 
 ### 6. Trace-Based Error Investigation
+
 ```dql
 fetch spans, from:now() - 2h
 | filter trace.id == "your-trace-id"
@@ -187,6 +204,7 @@ fetch spans, from:now() - 2h
 **Root Cause Found in Spans**: Business logic contradiction in credit card validation
 
 #### Step 1: Identify Failed Payment Spans
+
 ```dql
 fetch spans, from:now() - 4h
 | filter service.name == "payment" and request.is_failed == true
@@ -195,25 +213,31 @@ fetch spans, from:now() - 4h
 ```
 
 **Key Findings from Span Data**:
+
 ```json
 {
-  "span.events": [{
-    "span_event.name": "exception",
-    "exception.message": "Sorry, we cannot process American Express credit cards. Only Visa or Mastercard or American Express are accepted.",
-    "exception.type": "Error",
-    "exception.file.full": "/usr/src/app/charge.js",
-    "exception.line_number": "73",
-    "exception.stack_trace": "module.exports.charge (/usr/src/app/charge.js:73)\\nprocess.processTicksAndRejections (node:internal/process/task_queues:105)\\nasync (/usr/src/app/index.js:21)"
-  }],
+  "span.events": [
+    {
+      "span_event.name": "exception",
+      "exception.message": "Sorry, we cannot process American Express credit cards. Only Visa or Mastercard or American Express are accepted.",
+      "exception.type": "Error",
+      "exception.file.full": "/usr/src/app/charge.js",
+      "exception.line_number": "73",
+      "exception.stack_trace": "module.exports.charge (/usr/src/app/charge.js:73)\\nprocess.processTicksAndRejections (node:internal/process/task_queues:105)\\nasync (/usr/src/app/index.js:21)"
+    }
+  ],
   "span.status_code": "error",
-  "dt.failure_detection.results": [{
-    "verdict": "failure",
-    "reason": "exception"
-  }]
+  "dt.failure_detection.results": [
+    {
+      "verdict": "failure",
+      "reason": "exception"
+    }
+  ]
 }
 ```
 
 #### Step 2: Analyze Exception Pattern
+
 ```dql
 fetch spans, from:now() - 4h
 | filter service.name == "payment" and request.is_failed == true
@@ -223,16 +247,18 @@ fetch spans, from:now() - 4h
 ```
 
 **Business Logic Bug Confirmed**:
+
 - **Exact Location**: `/usr/src/app/charge.js:73`
 - **Logic Error**: "cannot process American Express" but then says "American Express are accepted"
 - **Impact**: All AmEx transactions failing with contradictory validation
 
 #### Step 3: Error Distribution Analysis
+
 ```dql
 fetch spans, from:now() - 4h
 | filter service.name == "payment"
 | fieldsAdd has_amex_error = if(matchesPhrase(span.events, "American Express"), 1, else: 0)
-| summarize 
+| summarize
     total_spans = count(),
     amex_errors = sum(has_amex_error),
     by: {k8s.pod.name}
@@ -243,11 +269,12 @@ fetch spans, from:now() - 4h
 ## Advanced Span Analysis Patterns
 
 ### Multi-Service Error Correlation
+
 ```dql
 fetch spans, from:now() - 2h
 | filter request.is_failed == true
 | filter matchesPhrase(k8s.namespace.name, "astroshop")
-| summarize 
+| summarize
     error_count = count(),
     unique_traces = countDistinct(trace.id),
     by: {service.name, span.events[0].exception.message}
@@ -255,6 +282,7 @@ fetch spans, from:now() - 2h
 ```
 
 ### Exception Propagation Analysis
+
 ```dql
 // Find root cause exceptions
 fetch spans, from:now() - 2h
@@ -266,11 +294,12 @@ fetch spans, from:now() - 2h
 ```
 
 ### Performance Impact of Errors
+
 ```dql
 fetch spans, from:now() - 2h
 | filter service.name == "payment"
 | fieldsAdd error_category = if(request.is_failed == true, "failed", else: "success")
-| summarize 
+| summarize
     avg_duration = avg(duration),
     p95_duration = percentile(duration, 95),
     count = count(),
@@ -283,6 +312,7 @@ fetch spans, from:now() - 2h
 ### Complete Investigation Workflow
 
 #### Phase 1: Problem Context Extraction
+
 ```dql
 // Start with problem identification
 fetch events, from:now() - 24h
@@ -291,6 +321,7 @@ fetch events, from:now() - 24h
 ```
 
 #### Phase 2: Span-Level Root Cause Analysis
+
 ```dql
 // Get detailed span exceptions during problem period
 fetch spans, from:now() - 4h  // Adjust based on problem timeframe
@@ -300,6 +331,7 @@ fetch spans, from:now() - 4h  // Adjust based on problem timeframe
 ```
 
 #### Phase 3: Cross-Reference with Logs
+
 ```dql
 // Correlate span trace IDs with log entries
 fetch logs, from:now() - 4h
@@ -311,6 +343,7 @@ fetch logs, from:now() - 4h
 ### Span-Log-Problem Correlation
 
 **Advantages of Span Analysis**:
+
 1. **Precise Exception Location**: Exact file and line number
 2. **Complete Stack Traces**: Full call stack for debugging
 3. **Failure Detection Results**: Automated root cause classification
@@ -318,6 +351,7 @@ fetch logs, from:now() - 4h
 5. **Distributed Context**: Complete trace relationships
 
 **Best Practice Integration**:
+
 ```dql
 // 1. Find failed spans
 fetch spans, from:now() - 2h
@@ -338,6 +372,7 @@ fetch events, from:now() - 24h
 ## String Matching for Span Analysis
 
 ### ✅ Effective Span Queries
+
 ```dql
 | filter matchesPhrase(span.events, "American Express")        // Exception content search
 | filter service.name == "payment"                             // Exact service match
@@ -346,6 +381,7 @@ fetch events, from:now() - 24h
 ```
 
 ### Exception Pattern Matching
+
 ```dql
 // Multiple exception types
 | filter matchesPhrase(span.events, "credit card") or matchesPhrase(span.events, "payment")
@@ -360,6 +396,7 @@ fetch events, from:now() - 24h
 ## Performance Considerations
 
 ### Optimizing Span Queries
+
 1. **Filter by service first**: `service.name == "payment"`
 2. **Use failure filters early**: `request.is_failed == true`
 3. **Limit timeframes**: `from:now() - 2h` for recent analysis
@@ -367,6 +404,7 @@ fetch events, from:now() - 24h
 5. **Target specific traces**: Use trace.id when available
 
 ### Query Timeframe Recommendations
+
 - **Real-time debugging**: 15-30 minutes
 - **Incident investigation**: 2-4 hours
 - **Performance analysis**: 1-24 hours
@@ -375,6 +413,7 @@ fetch events, from:now() - 24h
 ## Troubleshooting Span Queries
 
 ### Common Issues and Solutions
+
 1. **No timestamp in results**: Spans may not populate timestamp field consistently
 2. **Empty span.events**: Not all spans have exception events
 3. **Performance issues**: Reduce timeframe and add service filters
@@ -383,6 +422,7 @@ fetch events, from:now() - 24h
 ### **CRITICAL: Field Reference Issues Found During Investigation**
 
 **❌ WRONG - Invalid field references:**
+
 ```dql
 // These field names cause errors in DQL
 | filter dt.trace.id == "trace-id"           // Use dt.trace_id instead
@@ -392,8 +432,9 @@ fetch events, from:now() - 24h
 ```
 
 **✅ CORRECT - Working field references:**
+
 ```dql
-// Proper field names and references  
+// Proper field names and references
 | filter dt.trace_id == "trace-id"           // Correct trace ID field
 | summarize avg_duration = avg(duration), count()
 | sort avg_duration desc                     // Named field works
@@ -405,6 +446,7 @@ fetch events, from:now() - 24h
 ```
 
 ### **Entity Filter Patterns**
+
 ```dql
 // Service filtering by entity ID (most reliable)
 | filter dt.entity.service == "SERVICE-BECA49FB15C72B6A"
@@ -415,9 +457,11 @@ fetch events, from:now() - 24h
 ```
 
 ### **Large Result Set Issues**
+
 **Problem**: Span queries can return massive datasets exceeding token limits
 
 **❌ Causes token overflow:**
+
 ```dql
 fetch spans, from:now() - 6h
 | filter dt.entity.service == "SERVICE-BECA49FB15C72B6A"
@@ -425,13 +469,14 @@ fetch spans, from:now() - 6h
 ```
 
 **✅ SOLUTIONS - Reduce data volume:**
+
 ```dql
 // Option 1: Use summarize to aggregate
 fetch spans, from:now() - 6h
 | filter dt.entity.service == "SERVICE-BECA49FB15C72B6A"
 | summarize count(), avg(duration), by: {span.name, request.is_failed}
 
-// Option 2: Filter errors only  
+// Option 2: Filter errors only
 fetch spans, from:now() - 6h
 | filter dt.entity.service == "SERVICE-BECA49FB15C72B6A"
 | filter request.is_failed == true
@@ -445,6 +490,7 @@ fetch spans, from:now() - 2h
 ```
 
 ### Field Discovery for Spans
+
 ```dql
 fetch spans, from:now() - 1h
 | filter service.name == "payment" and request.is_failed == true
@@ -456,6 +502,7 @@ This returns the complete span structure with all available fields for investiga
 ## Key Insights from Real Data
 
 ### Payment Service Investigation Results
+
 - **Exception Location**: `/usr/src/app/charge.js:73` (precise line number)
 - **Business Logic Error**: Contradictory validation message
 - **Error Pattern**: Consistent across all failed American Express transactions
@@ -463,6 +510,7 @@ This returns the complete span structure with all available fields for investiga
 - **Performance Impact**: Failed spans had varying durations but consistent error pattern
 
 ### Span Analysis Advantages
+
 1. **Most Precise**: exact file and line number for exceptions
 2. **Complete Context**: full stack traces and failure detection
 3. **Performance Metrics**: duration and timing information

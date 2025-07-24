@@ -5,6 +5,7 @@ Dynatrace Query Language (DQL) is a powerful, pipeline-based query language desi
 ## 🎯 **Key Patterns & Best Practices Summary**
 
 ### **Essential Query Structure**
+
 ```dql
 fetch [data_source], from:now() - [timeframe]
 | filter [conditions]
@@ -15,6 +16,7 @@ fetch [data_source], from:now() - [timeframe]
 ```
 
 ### **Critical Best Practices**
+
 1. **Start Broad, Then Filter**: Begin with wide queries to discover available fields
 2. **Use Appropriate Timeframes**: 24h+ for cloud compliance, default for K8s/logs
 3. **Latest Snapshots Only**: Always use `dedup` for current state analysis
@@ -22,6 +24,7 @@ fetch [data_source], from:now() - [timeframe]
 5. **Leverage Pipeline Structure**: Build complex queries step by step
 
 ### **Security Data Patterns**
+
 ```dql
 // Standard security event filtering
 fetch security.events
@@ -36,12 +39,14 @@ fetch security.events
 ```
 
 ### **String Operations**
+
 - ✅ `matchesPhrase(field, "text")` - Text search
 - ✅ `field == "exact_value"` - Exact match
 - ✅ `field startsWith "prefix"` - Prefix match
 - ❌ `contains()`, `like()` - Not supported
 
 ### **Essential Functions**
+
 - `dedup` - Get latest snapshots
 - `takeFirst()` / `takeMax()` / `takeAny()` - Aggregation
 - `countDistinctExact()` - Precise counting
@@ -52,6 +57,7 @@ fetch security.events
 ### **🔍 Field Discovery with Semantic Dictionary**
 
 **Field Discovery Helper Pattern**:
+
 ```dql
 // Discover available fields for any concept or data type
 fetch dt.semantic_dictionary.fields
@@ -62,6 +68,7 @@ fetch dt.semantic_dictionary.fields
 ```
 
 **Examples of Field Discovery**:
+
 ```dql
 // Find all error-related fields
 fetch dt.semantic_dictionary.fields
@@ -69,7 +76,7 @@ fetch dt.semantic_dictionary.fields
 | fields name, type, stability, description
 | sort stability, name
 
-// Find all Kubernetes context fields  
+// Find all Kubernetes context fields
 fetch dt.semantic_dictionary.fields
 | filter matchesPhrase(name, "k8s") or matchesPhrase(description, "kubernetes")
 | fields name, type, stability, description
@@ -82,6 +89,7 @@ fetch dt.semantic_dictionary.fields
 ```
 
 **Entity Relationship Mapping**:
+
 ```dql
 // Complete stable entity hierarchy
 fetch dt.semantic_dictionary.fields
@@ -91,9 +99,10 @@ fetch dt.semantic_dictionary.fields
 ```
 
 **Field Stability Check**:
+
 ```dql
 // Check field stability before using in production
-fetch dt.semantic_dictionary.fields  
+fetch dt.semantic_dictionary.fields
 | filter name == "your_field_name"
 | fields name, type, stability, description
 ```
@@ -101,6 +110,7 @@ fetch dt.semantic_dictionary.fields
 ### **🏗️ Entity Relationship Mapping with Semantic Fields**
 
 **Complete Entity Hierarchy**:
+
 ```dql
 // Discover all available entity types and their relationships
 fetch dt.semantic_dictionary.fields
@@ -110,6 +120,7 @@ fetch dt.semantic_dictionary.fields
 ```
 
 **Entity Cross-Reference Patterns**:
+
 ```dql
 // Join problems with entity details using semantic entity fields
 fetch events, from:now() - 24h
@@ -122,11 +133,12 @@ fetch events, from:now() - 24h
 ```
 
 **Multi-Entity Problem Correlation**:
+
 ```dql
 // Correlate problems across entity hierarchy
 fetch events, from:now() - 24h
 | filter event.kind == "DAVIS_PROBLEM"
-| summarize 
+| summarize
     problems = count(),
     services = countDistinct(dt.entity.service),
     hosts = countDistinct(dt.entity.host),
@@ -137,6 +149,7 @@ fetch events, from:now() - 24h
 ```
 
 **Entity Type Distribution Analysis**:
+
 ```dql
 // Understand which entity types are most represented in your data
 fetch dt.semantic_dictionary.fields
@@ -146,6 +159,7 @@ fetch dt.semantic_dictionary.fields
 ```
 
 ### **Risk Level Mapping**
+
 ```dql
 | fieldsAdd risk_level = if(score >= 9, "CRITICAL",
     else: if(score >= 7, "HIGH",
@@ -166,34 +180,43 @@ fetch dt.semantic_dictionary.fields
 ## 🧱 **Basic Syntax and Commands**
 
 ### 1. **`fetch`** – Load data
+
 ```dql
 fetch logs
 ```
+
 Loads all logs within the default time range (2 hours unless specified).
 
 ### 2. **`filter`** – Narrow down results
+
 ```dql
 fetch logs | filter loglevel == "ERROR"
 ```
+
 Filters logs to only include those with log level "ERROR".
 
 ### 3. **`summarize`** – Aggregate data
+
 ```dql
 fetch logs | filter loglevel == "ERROR" | summarize numErr = count()
 ```
+
 Counts the number of error logs.
 
 ### 4. **`fields` / `fieldsAdd`** – Select or add fields
+
 ```dql
 fetch logs | fields timestamp, loglevel, content
 ```
 
 ### 5. **`sort`** – Order results
+
 ```dql
 fetch logs | sort timestamp desc
 ```
 
 ### 6. **`makeTimeseries`** – Create time series for visualization
+
 ```dql
 fetch logs | filter loglevel == "ERROR" | makeTimeseries count = count(), by:loglevel, interval:5m
 ```
@@ -203,10 +226,13 @@ fetch logs | filter loglevel == "ERROR" | makeTimeseries count = count(), by:log
 ## 🕒 **Time Range Control**
 
 You can override the default time range:
+
 ```dql
 fetch logs, from:now() - 24h, to:now() - 2h
 ```
+
 Or use absolute time:
+
 ```dql
 fetch logs, timeframe:"2025-06-01T00:00:00Z/2025-06-10T00:00:00Z"
 ```
@@ -214,6 +240,7 @@ fetch logs, timeframe:"2025-06-01T00:00:00Z/2025-06-10T00:00:00Z"
 ---
 
 ## 📊 **Advanced Example: Business Hours Aggregation**
+
 ```dql
 fetch bizevents
 | filter event.type == "booking.process.started"
@@ -221,6 +248,7 @@ fetch bizevents
 | filterOut (day_of_week == "Sat" or day_of_week == "Sun") or (toLong(hour) <= 08 or toLong(hour) >= 17)
 | summarize numStarts = count(), by:{product}
 ```
+
 This query counts booking events during business hours on weekdays.
 
 ## Best Practices
@@ -235,7 +263,9 @@ This query counts booking events during business hours on weekdays.
 ## ⚠️ **CRITICAL: Field Reference and Data Access Issues**
 
 ### **Metrics Data Access**
+
 **❌ WRONG - Invalid data objects:**
+
 ```dql
 // These data objects DO NOT exist in DQL
 fetch metrics, from:now() - 6h              // metrics not valid
@@ -243,16 +273,19 @@ fetch dt.metrics, from:now() - 6h           // dt.metrics not valid
 ```
 
 **✅ CORRECT - Valid data sources:**
+
 ```dql
 // Use these supported data sources
 fetch logs, from:now() - 6h
-fetch events, from:now() - 6h  
+fetch events, from:now() - 6h
 fetch spans, from:now() - 6h
 fetch bizevents, from:now() - 6h
 ```
 
 ### **Field Reference Issues**
+
 **❌ WRONG - Invalid field references:**
+
 ```dql
 // These field names DO NOT work
 | sort avg_duration_ms desc                  // Field doesn't exist after summarize
@@ -261,6 +294,7 @@ fetch bizevents, from:now() - 6h
 ```
 
 **✅ CORRECT - Proper field references:**
+
 ```dql
 // Correct summarize and sort syntax
 | summarize avg_duration = avg(duration_ms), count()
@@ -273,13 +307,16 @@ fetch spans, from:now() - 6h                // Use timeframe in fetch
 ```
 
 ### **Aggregation Function References**
+
 **❌ WRONG - Incorrect function field names:**
+
 ```dql
 | summarize avg(duration), count()
 | sort avg_duration desc                     // Field doesn't exist
 ```
 
 **✅ CORRECT - Reference aggregated fields:**
+
 ```dql
 | summarize avg_duration = avg(duration), count()
 | sort avg_duration desc                     // Named field works
@@ -293,6 +330,7 @@ fetch spans, from:now() - 6h                // Use timeframe in fetch
 ### **String Matching and Filtering**
 
 **❌ WRONG - Unsupported operators:**
+
 ```dql
 // These operators DO NOT work in DQL
 filter vulnerability.title contains "log4j"          // contains not supported
@@ -301,6 +339,7 @@ filter vulnerability.id in ["123", "456"]            // string array filtering i
 ```
 
 **✅ CORRECT - Supported string operations:**
+
 ```dql
 // Use matchesPhrase() for text searching
 filter matchesPhrase(vulnerability.title, "log4j")
@@ -318,6 +357,7 @@ filter object.type startsWith "k8s"
 ### **Array and Multi-Value Field Filtering**
 
 **✅ CORRECT - Working with arrays:**
+
 ```dql
 // For array fields like vulnerability.references.cve
 filter vulnerability.references.cve == "CVE-2021-44228"  // checks if array contains value
@@ -332,14 +372,15 @@ filter object.type in ["awsbucket", "awsvpc", "awsinstance"]
 ### **Vulnerability Search Patterns**
 
 **Comprehensive vulnerability search (Log4Shell example):**
+
 ```dql
 fetch events, from:now() - 7d
 | filter event.kind == "SECURITY_EVENT"
 | filter event.type == "VULNERABILITY_STATE_REPORT_EVENT"
 | filter (
-    vulnerability.references.cve == "CVE-2021-44228" or 
-    vulnerability.id == "CVE-2021-44228" or 
-    matchesPhrase(vulnerability.title, "log4j") or 
+    vulnerability.references.cve == "CVE-2021-44228" or
+    vulnerability.id == "CVE-2021-44228" or
+    matchesPhrase(vulnerability.title, "log4j") or
     matchesPhrase(vulnerability.title, "Log4Shell") or
     matchesPhrase(vulnerability.description, "log4j")
   )
@@ -347,6 +388,7 @@ fetch events, from:now() - 7d
 ```
 
 **Component-based vulnerability search:**
+
 ```dql
 fetch events, from:now() - 7d
 | filter event.kind == "SECURITY_EVENT"
@@ -367,6 +409,7 @@ fetch events, from:now() - 7d
 ### **Correct Approach: Latest Scan Analysis**
 
 **Step 1: Identify Latest Scan**
+
 ```dql
 fetch events, from:now() - 24h
 | filter event.type == "COMPLIANCE_SCAN_COMPLETED" AND object.type == "AWS"
@@ -376,6 +419,7 @@ fetch events, from:now() - 24h
 ```
 
 **Step 2: Analyze Current Findings from Latest Scan**
+
 ```dql
 fetch events, from:now() - 24h
 | filter event.type == "COMPLIANCE_FINDING" AND scan.id == "<latest_scan_id>"
@@ -384,6 +428,7 @@ fetch events, from:now() - 24h
 ```
 
 **❌ WRONG - Time-based aggregation:**
+
 ```dql
 // This includes outdated findings from multiple scans!
 fetch events, from:now() - 7d
@@ -392,6 +437,7 @@ fetch events, from:now() - 7d
 ```
 
 **✅ CORRECT - Scan-specific analysis:**
+
 ```dql
 // Current compliance state from latest scan only
 fetch events, from:now() - 24h
@@ -406,6 +452,7 @@ fetch events, from:now() - 24h
 ### **Compliance Monitoring Dashboards**
 
 **Real-time Compliance Status (Latest Scan Only):**
+
 ```dql
 // First get latest scan IDs by provider
 fetch events, from:now() - 24h
@@ -422,7 +469,7 @@ fetch events, from:now() - 24h
     fetch events, from:now() - 24h
     | filter event.type == "COMPLIANCE_FINDING"
 ], on:{scan.id: scan_scan.id}, prefix:"finding_"
-| summarize 
+| summarize
     total_findings = count(),
     failed_findings = countIf(finding_compliance.result.status.level == "FAILED"),
     critical_findings = countIf(finding_compliance.rule.severity.level == "CRITICAL"),
@@ -431,6 +478,7 @@ fetch events, from:now() - 24h
 ```
 
 **Remediation Progress Tracking (Compare Latest vs Previous Scan):**
+
 ```dql
 // Get current scan findings
 fetch events, from:now() - 24h
@@ -449,7 +497,7 @@ fetch events, from:now() - 24h
     | filter event.type == "COMPLIANCE_FINDING"
     | filter compliance.result.status.level == "FAILED"
 ], on:{scan.id: current_scan_id OR scan.id: previous_scan_id}
-| summarize 
+| summarize
     current_critical = countIf(scan.id == current_scan_id AND compliance.rule.severity.level == "CRITICAL"),
     previous_critical = countIf(scan.id == previous_scan_id AND compliance.rule.severity.level == "CRITICAL"),
     by:{cloud.provider}
@@ -459,6 +507,7 @@ fetch events, from:now() - 24h
 ### **Alert-Worthy Queries for Proactive Monitoring**
 
 **New Critical Findings from Latest Scan (for immediate alerts):**
+
 ```dql
 // Get most recent scan
 fetch events, from:now() - 2h
@@ -475,16 +524,17 @@ fetch events, from:now() - 2h
 ```
 
 **Configuration Drift Detection:**
+
 ```dql
 fetch events, from:now() - 24h
 | filter event.type == "COMPLIANCE_FINDING"
-| summarize 
+| summarize
     current_failed = countIf(compliance.result.status.level == "FAILED"),
     by:{object.id, compliance.rule.title}
 | join [
     fetch events, from:now() - 48h, to:now() - 24h
     | filter event.type == "COMPLIANCE_FINDING"
-    | summarize 
+    | summarize
         previous_failed = countIf(compliance.result.status.level == "FAILED"),
         by:{object.id, compliance.rule.title}
 ], on:{object.id, compliance.rule.title}
@@ -494,6 +544,7 @@ fetch events, from:now() - 24h
 ### **Team-Specific Reporting Queries**
 
 **Security Team Dashboard:**
+
 ```dql
 fetch events, from:now() - 24h
 | filter event.type == "COMPLIANCE_FINDING" AND compliance.result.status.level == "FAILED"
@@ -503,6 +554,7 @@ fetch events, from:now() - 24h
 ```
 
 **DevOps Team Infrastructure Focus:**
+
 ```dql
 fetch events, from:now() - 24h
 | filter event.type == "COMPLIANCE_FINDING" AND compliance.result.status.level == "FAILED"
@@ -514,11 +566,12 @@ fetch events, from:now() - 24h
 ### **SLO and Performance Metrics**
 
 **Remediation Time SLO:**
+
 ```dql
 fetch events, from:now() - 30d
 | filter event.type == "COMPLIANCE_FINDING"
 | filter compliance.rule.severity.level == "CRITICAL"
-| summarize 
+| summarize
     avg_resolution_time = avg(resolution_time_hours),
     slo_target = 24, // 24 hours for critical findings
     by:{cloud.provider}
@@ -526,12 +579,12 @@ fetch events, from:now() - 30d
 ```
 
 **Compliance Trend Analysis:**
+
 ```dql
 fetch events, from:now() - 90d
 | filter event.type == "COMPLIANCE_FINDING"
-| makeTimeseries 
+| makeTimeseries
     compliance_score = round((count() - countIf(compliance.result.status.level == "FAILED")) / count() * 100, 1),
     by:{cloud.provider}, interval:1d
 | fieldsAdd trend = if(compliance_score > lag(compliance_score, 1), "IMPROVING", "DECLINING")
 ```
-

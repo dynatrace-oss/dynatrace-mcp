@@ -7,6 +7,7 @@ This guide covers comprehensive log analysis using DQL (Dynatrace Query Language
 ## Core DQL Pattern for Logs
 
 ### Basic Log Query Structure
+
 ```dql
 fetch logs, from:now() - 2h
 | filter loglevel == "ERROR" or loglevel == "WARN"
@@ -18,6 +19,7 @@ fetch logs, from:now() - 2h
 ## Available Data Points
 
 ### Primary Fields
+
 - **content** - The actual log message content
 - **loglevel** - Log level (ERROR, WARN, INFO, DEBUG, TRACE)
 - **timestamp** - When the log entry was created
@@ -25,6 +27,7 @@ fetch logs, from:now() - 2h
 - **log.source** - Source of the log (e.g., "Container Output")
 
 ### Kubernetes Context Fields
+
 - **k8s.pod.name** - Pod name generating the log
 - **k8s.namespace.name** - Kubernetes namespace
 - **k8s.container.name** - Container name within the pod
@@ -33,18 +36,21 @@ fetch logs, from:now() - 2h
 - **k8s.workload.name** - Workload (deployment/statefulset) name
 
 ### Dynatrace Entity Fields
+
 - **dt.entity.service** - Service entity ID
 - **dt.entity.process_group_instance** - Process group instance entity ID
 - **dt.entity.host** - Host entity ID
 - **dt.entity.kubernetes_cluster** - Kubernetes cluster entity ID
 
 ### Trace Correlation Fields
+
 - **trace_id** - Distributed trace ID
 - **span_id** - Span ID within the trace
 - **dt.trace_id** - Dynatrace trace ID
 - **dt.span_id** - Dynatrace span ID
 
 ### Error Context Fields
+
 - **exception.message** - Exception message text
 - **exception.type** - Exception type/class
 - **exception.stack_trace** - Full stack trace
@@ -53,6 +59,7 @@ fetch logs, from:now() - 2h
 ## Common Query Patterns
 
 ### 1. Error Logs from Specific Service
+
 ```dql
 fetch logs, from:now() - 4h
 | filter dt.entity.service == "SERVICE-YOUR-ID"
@@ -63,6 +70,7 @@ fetch logs, from:now() - 4h
 ```
 
 ### 2. Application Errors by Pod
+
 ```dql
 fetch logs, from:now() - 2h
 | filter matchesPhrase(k8s.pod.name, "payment")
@@ -73,6 +81,7 @@ fetch logs, from:now() - 2h
 ```
 
 ### 3. Logs with Stack Traces
+
 ```dql
 fetch logs, from:now() - 6h
 | filter exception.stack_trace != ""
@@ -82,6 +91,7 @@ fetch logs, from:now() - 6h
 ```
 
 ### 4. Deployment-Related Logs
+
 ```dql
 fetch logs, from:now() - 1h
 | filter matchesPhrase(content, "deployment") or matchesPhrase(content, "restart") or matchesPhrase(content, "startup")
@@ -91,6 +101,7 @@ fetch logs, from:now() - 1h
 ```
 
 ### 5. High-Frequency Error Analysis
+
 ```dql
 fetch logs, from:now() - 2h
 | filter loglevel == "ERROR"
@@ -101,6 +112,7 @@ fetch logs, from:now() - 2h
 ```
 
 ### 6. Trace-Correlated Logs
+
 ```dql
 fetch logs, from:now() - 1h
 | filter trace_id == "your-trace-id"
@@ -111,6 +123,7 @@ fetch logs, from:now() - 1h
 ## Business Logic Error Detection
 
 ### Credit Card Processing Errors (Real Example)
+
 ```dql
 fetch logs, from:now() - 4h
 | filter matchesPhrase(content, "credit card") or matchesPhrase(content, "payment")
@@ -121,6 +134,7 @@ fetch logs, from:now() - 4h
 ```
 
 ### Payment Service Specific Analysis
+
 ```dql
 fetch logs, from:now() - 4h
 | filter matchesPhrase(k8s.pod.name, "payment") and matchesPhrase(content, "American Express")
@@ -132,6 +146,7 @@ fetch logs, from:now() - 4h
 ## Integration with Problem Analysis
 
 ### Correlating Logs with Problems
+
 ```dql
 fetch logs, from:now() - 2h
 | filter loglevel == "ERROR" or loglevel == "WARN"
@@ -142,7 +157,9 @@ fetch logs, from:now() - 2h
 ```
 
 ### Problem Timeline Correlation
+
 When analyzing a specific problem timeframe (e.g., 11:54 AM - 12:29 PM):
+
 ```dql
 fetch logs, from:now() - 4h
 | filter matchesPhrase(k8s.pod.name, "payment-6977fffc7-2r2hb")
@@ -155,6 +172,7 @@ fetch logs, from:now() - 4h
 ## Advanced Analysis Patterns
 
 ### Log Rate Analysis
+
 ```dql
 fetch logs, from:now() - 2h
 | filter loglevel == "ERROR"
@@ -164,6 +182,7 @@ fetch logs, from:now() - 2h
 ```
 
 ### Multi-Service Error Correlation
+
 ```dql
 fetch logs, from:now() - 2h
 | filter loglevel == "ERROR"
@@ -173,6 +192,7 @@ fetch logs, from:now() - 2h
 ```
 
 ### Performance Issue Detection
+
 ```dql
 fetch logs, from:now() - 1h
 | filter matchesPhrase(content, "timeout") or matchesPhrase(content, "slow") or matchesPhrase(content, "performance")
@@ -184,6 +204,7 @@ fetch logs, from:now() - 1h
 ## String Matching Best Practices
 
 ### ✅ Correct String Operations for Logs
+
 ```dql
 | filter matchesPhrase(content, "payment")              // Text search in content
 | filter loglevel == "ERROR"                            // Exact level match
@@ -192,12 +213,14 @@ fetch logs, from:now() - 1h
 ```
 
 ### ❌ Unsupported Operations
+
 ```dql
 | filter contains(content, "error")                     // NOT supported
 | filter content like "%payment%"                       // NOT supported
 ```
 
 ### Content Search Techniques
+
 ```dql
 // Multiple keyword search
 | filter matchesPhrase(content, "error") or matchesPhrase(content, "exception") or matchesPhrase(content, "failed")
@@ -212,6 +235,7 @@ fetch logs, from:now() - 1h
 ## Real-World Investigation Examples
 
 ### Payment Service American Express Bug Investigation
+
 **Context**: 57.95% error rate during deployment
 **Timeline**: 11:54 AM - 12:29 PM
 
@@ -225,12 +249,14 @@ fetch logs, from:now() - 4h
 ```
 
 **Key Findings from Real Data**:
+
 - **Error Location**: `/usr/src/app/charge.js:73:11`
 - **Business Logic Bug**: "Sorry, we cannot process American Express credit cards. Only Visa or Mastercard or American Express are accepted."
 - **Trace Correlation**: Each error has associated trace_id for transaction tracking
 - **Pod Consistency**: All errors from same pod `payment-6977fffc7-2r2hb`
 
 ### Deployment Impact Analysis
+
 ```dql
 fetch logs, from:now() - 4h
 | filter matchesPhrase(k8s.namespace.name, "astroshop")
@@ -243,7 +269,9 @@ fetch logs, from:now() - 4h
 ## Structured Log Analysis
 
 ### JSON Log Parsing
+
 For structured JSON logs, the content field contains JSON that can be analyzed:
+
 ```dql
 fetch logs, from:now() - 2h
 | filter matchesPhrase(content, "level")
@@ -253,6 +281,7 @@ fetch logs, from:now() - 2h
 ```
 
 ### Extracting Values from JSON Logs
+
 ```dql
 fetch logs, from:now() - 1h
 | filter matchesPhrase(content, "\"level\":\"warn\"")
@@ -263,6 +292,7 @@ fetch logs, from:now() - 1h
 ## Performance Considerations
 
 ### Optimizing Log Queries
+
 1. **Always include timeframe**: `from:now() - 2h` (avoid overly broad searches)
 2. **Filter early**: Apply restrictive filters first
 3. **Use entity filters**: Filter by specific pods/services when possible
@@ -270,6 +300,7 @@ fetch logs, from:now() - 1h
 5. **Sort efficiently**: Sort by timestamp desc for recent logs
 
 ### Query Timeframe Recommendations
+
 - **Real-time debugging**: 15-30 minutes
 - **Incident investigation**: 2-4 hours
 - **Deployment analysis**: 1-2 hours around deployment time
@@ -279,12 +310,14 @@ fetch logs, from:now() - 1h
 ## Troubleshooting Log Queries
 
 ### Common Issues
+
 1. **Empty Results**: Check timeframe, pod names, and filter criteria
 2. **Performance Issues**: Reduce timeframe or add more specific filters
 3. **Missing Logs**: Verify log ingestion and entity IDs
 4. **Field Access**: Use `| limit 1` to explore available fields
 
 ### Field Discovery Technique
+
 ```dql
 fetch logs, from:now() - 1h
 | filter matchesPhrase(k8s.pod.name, "your-pod-name")
@@ -292,6 +325,7 @@ fetch logs, from:now() - 1h
 ```
 
 ### Debugging Query Performance
+
 ```dql
 fetch logs, from:now() - 30m  // Shorter timeframe
 | filter k8s.pod.name == "specific-pod-name"  // Exact match
@@ -302,7 +336,9 @@ fetch logs, from:now() - 30m  // Shorter timeframe
 ## Integration with MCP Tools
 
 ### Using Logs After Entity Discovery
+
 After finding entities with MCP tools, use their names in log queries:
+
 ```dql
 fetch logs, from:now() - 2h
 | filter dt.entity.service == "SERVICE-BECA49FB15C72B6A"  // From MCP entity lookup
@@ -313,6 +349,7 @@ fetch logs, from:now() - 2h
 ```
 
 ### Cross-Referencing with Problems
+
 1. **Find problems** with `fetch events | filter event.kind == "DAVIS_PROBLEM"`
 2. **Extract affected entities** from problem results
 3. **Query logs** for those specific entities during problem timeframe
@@ -321,6 +358,7 @@ fetch logs, from:now() - 2h
 ## Follow-up Analysis Workflows
 
 ### After Finding Error Logs
+
 1. **Extract stack traces** for deeper code analysis
 2. **Find related spans** using trace IDs
 3. **Check entity health** for affected services
@@ -328,6 +366,7 @@ fetch logs, from:now() - 2h
 5. **Search for similar errors** across other pods/services
 
 ### Log-Driven Root Cause Analysis Process
+
 1. **Start with problem timeframe** from Davis AI analysis
 2. **Filter logs to error level** during that period
 3. **Identify error patterns** and affected components
