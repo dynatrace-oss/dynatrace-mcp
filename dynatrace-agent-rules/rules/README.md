@@ -2,6 +2,8 @@
 
 This directory contains comprehensive workflow rules for AI-assisted Dynatrace analysis through the MCP (Model Context Protocol) integration. The rules enable complete observability analysis across security, compliance, problems, logs, and distributed tracing.
 
+_Disclaimer: For the best results, we recommend using Claude Sonnet 4 as the base model._ 
+
 ## 🚀 **Quick Start**
 
 ### 1. Install Dynatrace MCP Server
