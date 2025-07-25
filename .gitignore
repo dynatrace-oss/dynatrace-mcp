@@ -3,5 +3,6 @@ dist/*
 node_modules/
 /.vscode/*
 !/.vscode/mcp.json
+.DS_Store
 
 tsconfig.tsbuildinfo

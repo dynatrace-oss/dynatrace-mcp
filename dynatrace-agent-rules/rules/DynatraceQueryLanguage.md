@@ -54,6 +54,110 @@ fetch security.events
 - `coalesce()` - Handle nulls
 - `lookup` - Join with entity data
 
+### **🔍 Field Discovery with Semantic Dictionary**
+
+**Field Discovery Helper Pattern**:
+
+```dql
+// Discover available fields for any concept or data type
+fetch dt.semantic_dictionary.fields
+| filter matchesPhrase(name, "your_search_term") or matchesPhrase(description, "your_concept")
+| fields name, type, stability, description, examples
+| sort stability, name
+| limit 20
+```
+
+**Examples of Field Discovery**:
+
+```dql
+// Find all error-related fields
+fetch dt.semantic_dictionary.fields
+| filter matchesPhrase(name, "error") or matchesPhrase(description, "error")
+| fields name, type, stability, description
+| sort stability, name
+
+// Find all Kubernetes context fields
+fetch dt.semantic_dictionary.fields
+| filter matchesPhrase(name, "k8s") or matchesPhrase(description, "kubernetes")
+| fields name, type, stability, description
+
+// Find all entity reference fields
+fetch dt.semantic_dictionary.fields
+| filter startsWith(name, "dt.entity.")
+| filter stability == "stable"
+| fields name, description, examples
+```
+
+**Entity Relationship Mapping**:
+
+```dql
+// Complete stable entity hierarchy
+fetch dt.semantic_dictionary.fields
+| filter startsWith(name, "dt.entity.") and stability == "stable"
+| summarize entity_types = count(), by: {type}
+| sort entity_types desc
+```
+
+**Field Stability Check**:
+
+```dql
+// Check field stability before using in production
+fetch dt.semantic_dictionary.fields
+| filter name == "your_field_name"
+| fields name, type, stability, description
+```
+
+### **🏗️ Entity Relationship Mapping with Semantic Fields**
+
+**Complete Entity Hierarchy**:
+
+```dql
+// Discover all available entity types and their relationships
+fetch dt.semantic_dictionary.fields
+| filter startsWith(name, "dt.entity.") and stability == "stable"
+| fields name, description
+| sort name
+```
+
+**Entity Cross-Reference Patterns**:
+
+```dql
+// Join problems with entity details using semantic entity fields
+fetch events, from:now() - 24h
+| filter event.kind == "DAVIS_PROBLEM"
+| lookup [
+    fetch dt.semantic_dictionary.fields
+    | filter startsWith(name, "dt.entity.service") and stability == "stable"
+], sourceField:affected_entity_ids, lookupField:name
+| fields display_id, event.name, affected_entity_ids, description
+```
+
+**Multi-Entity Problem Correlation**:
+
+```dql
+// Correlate problems across entity hierarchy
+fetch events, from:now() - 24h
+| filter event.kind == "DAVIS_PROBLEM"
+| summarize
+    problems = count(),
+    services = countDistinct(dt.entity.service),
+    hosts = countDistinct(dt.entity.host),
+    clusters = countDistinct(dt.entity.kubernetes_cluster),
+    by: {k8s.namespace.name}
+| fieldsAdd entity_diversity = services + hosts + clusters
+| sort entity_diversity desc
+```
+
+**Entity Type Distribution Analysis**:
+
+```dql
+// Understand which entity types are most represented in your data
+fetch dt.semantic_dictionary.fields
+| filter startsWith(name, "dt.entity.") and stability == "stable"
+| summarize entity_count = count(), by: {type}
+| sort entity_count desc
+```
+
 ### **Risk Level Mapping**
 
 ```dql
@@ -153,6 +257,71 @@ This query counts booking events during business hours on weekdays.
 - This allows you to identify the available data fields and their content for filtering
 - Use appropriate time ranges based on your data source and requirements
 - Leverage the pipeline structure to build complex queries step by step
+
+---
+
+## ⚠️ **CRITICAL: Field Reference and Data Access Issues**
+
+### **Metrics Data Access**
+
+**❌ WRONG - Invalid data objects:**
+
+```dql
+// These data objects DO NOT exist in DQL
+fetch metrics, from:now() - 6h              // metrics not valid
+fetch dt.metrics, from:now() - 6h           // dt.metrics not valid
+```
+
+**✅ CORRECT - Valid data sources:**
+
+```dql
+// Use these supported data sources
+fetch logs, from:now() - 6h
+fetch events, from:now() - 6h
+fetch spans, from:now() - 6h
+fetch bizevents, from:now() - 6h
+```
+
+### **Field Reference Issues**
+
+**❌ WRONG - Invalid field references:**
+
+```dql
+// These field names DO NOT work
+| sort avg_duration_ms desc                  // Field doesn't exist after summarize
+| sort count desc                           // Use `count()` with backticks
+| filter timestamp > now() - 1h             // Use timeframe parameter instead
+```
+
+**✅ CORRECT - Proper field references:**
+
+```dql
+// Correct summarize and sort syntax
+| summarize avg_duration = avg(duration_ms), count()
+| sort `avg_duration` desc                   // Reference calculated fields correctly
+| sort `count()` desc                        // Use backticks for function names
+
+// Correct time filtering
+fetch spans, from:now() - 6h                // Use timeframe in fetch
+| filter start_time > "2025-01-01"          // Or filter by time fields
+```
+
+### **Aggregation Function References**
+
+**❌ WRONG - Incorrect function field names:**
+
+```dql
+| summarize avg(duration), count()
+| sort avg_duration desc                     // Field doesn't exist
+```
+
+**✅ CORRECT - Reference aggregated fields:**
+
+```dql
+| summarize avg_duration = avg(duration), count()
+| sort avg_duration desc                     // Named field works
+| sort `count()` desc                        // Or use backticks for functions
+```
 
 ---
 
