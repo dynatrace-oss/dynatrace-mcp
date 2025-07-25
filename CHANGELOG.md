@@ -2,7 +2,17 @@
 
 ## Unreleased changes
 
-- Added support for Authorization via Platform Tokens via environment variable `DT_PLATFORM_TOKENS`
+- Removed unneeded scopes `environment-api:slo:read` (no tool is using this) and `environment-api:metrics:read` (anyway handled via execute DQL tool)
+
+## 0.5.0 (Release Candidate 2)
+
+- Improved "List Problems" tool to use a DQL statement to retrieve data from Dynatrace, and provide better next steps
+- Removed "Get Problem Details" tool, as the same can be achieved with a simple "execute_dql" call
+- Removed scope `environment-api:problems:read` as it's no longer needed
+
+## 0.5.0 (Release Candidate 1)
+
+- Added support for Authorization via Platform Tokens via environment variable `DT_PLATFORM_TOKEN`
 - Added tools to translate between natural language and DQL via Davis CoPilot
 - Added tool to chat with Davis CoPilot
 

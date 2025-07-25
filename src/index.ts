@@ -23,7 +23,6 @@ import { version as VERSION } from '../package.json';
 import { createDtHttpClient } from './authentication/dynatrace-clients';
 import { listVulnerabilities } from './capabilities/list-vulnerabilities';
 import { listProblems } from './capabilities/list-problems';
-import { getProblemDetails } from './capabilities/get-problem-details';
 import { getMonitoredEntityDetails } from './capabilities/get-monitored-entity-details';
 import { getOwnershipInformation } from './capabilities/get-ownership-information';
 import { getLogsForEntity } from './capabilities/get-logs-for-entity';
@@ -227,63 +226,56 @@ const main = async () => {
     },
   );
 
-  tool('list_problems', 'List all problems known on Dynatrace', {}, async ({}) => {
-    const dtClient = await createDtHttpClient(
-      dtEnvironment,
-      scopesBase.concat('environment-api:problems:read'),
-      oauthClientId,
-      oauthClientSecret,
-      dtPlatformToken,
-    );
-    const result = await listProblems(dtClient);
-    if (!result || result.length === 0) {
-      return 'No problems found';
-    }
-    return `Found these problems: ${result.join(',')}`;
-  });
-
   tool(
-    'get_problem_details',
-    'Get details of a problem on Dynatrace',
+    'list_problems',
+    'List all problems (dt.davis.problems) known on Dynatrace, sorted by their recency, for the last 12h. An additional filter can be provided using DQL filter.',
     {
-      problemId: z.string().optional(),
+      additionalFilter: z
+        .string()
+        .optional()
+        .describe(
+          'Additional filter for DQL statement for dt.davis.problems, e.g., \'entity_tags == array("dt.owner:team-foobar", "tag:tag")\'',
+        ),
+      maxProblemsToDisplay: z.number().default(10).describe('Maximum number of problems to display in the response.'),
     },
-    async ({ problemId }) => {
+    async ({ additionalFilter, maxProblemsToDisplay }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
-        scopesBase.concat('environment-api:problems:read'),
+        scopesBase.concat('storage:events:read', 'storage:buckets:read'),
         oauthClientId,
         oauthClientSecret,
         dtPlatformToken,
       );
-      const result = await getProblemDetails(dtClient, problemId);
-
-      let resp =
-        `The problem ${result.displayId} with the title ${result.title} (ID: ${result.problemId}).` +
-        `The severity is ${result.severityLevel}, and it affects ${result.affectedEntities.length} entities:`;
-
-      for (const entity of result.affectedEntities) {
-        resp += `\n- ${entity.name} (please refer to this entity with \`entityId\` ${entity.entityId?.id})`;
-      }
-
-      resp += `The problem first appeared at ${result.startTime}\n`;
-      if (result.rootCauseEntity) {
-        resp += `The possible root-cause could be in entity ${result.rootCauseEntity?.name} with \`entityId\` ${result.rootCauseEntity?.entityId?.id}.\n`;
-      }
-
-      if (result.impactAnalysis) {
-        let estimatedAffectedUsers = 0;
-
-        result.impactAnalysis.impacts.forEach((impact) => {
-          estimatedAffectedUsers += impact.estimatedAffectedUsers;
+      // get problems (uses fetch)
+      const result = await listProblems(dtClient, additionalFilter);
+      if (result && result.length > 0) {
+        let resp = `Found ${result.length} problems! Displaying the top ${maxProblemsToDisplay} problems:\n`;
+        // iterate over dqlResponse and create a string with the problem details, but only show the top maxProblemsToDisplay problems
+        result.slice(0, maxProblemsToDisplay).forEach((problem) => {
+          if (problem) {
+            resp += `Problem ${problem['display_id']} (please refer to this problem with \`problemId\` or \`event.id\` ${problem['problem_id']}))
+                  with event.status ${problem['event.status']}, event.category ${problem['event.category']}: ${problem['event.name']} -
+                  affects ${problem['affected_users_count']} users and ${problem['affected_entity_count']} entities for a duration of ${problem['duration']}\n`;
+          }
         });
 
-        resp += `The problem is estimated to affect ${estimatedAffectedUsers} users.\n`;
+        resp +=
+          `\nNext Steps:` +
+          `\n1. Use "execute_dql" tool with the following query to get more details about a specific problem:
+          "fetch dt.davis.problems, from: now()-10h, to: now() | filter event.id == \"<problem-id>\" | fields event.description, event.status, event.category, event.start, event.end,
+            root_cause_entity_id, root_cause_entity_name, duration, affected_entities_count,
+            event_count, affected_users_count, problem_id, dt.davis.mute.status, dt.davis.mute.user,
+            entity_tags, labels.alerting_profile, maintenance.is_under_maintenance,
+            aws.account.id, azure.resource.group, azure.subscription, cloud.provider, cloud.region,
+            dt.cost.costcenter, dt.cost.product, dt.host_group.id, dt.security_context, gcp.project.id,
+            host.name, k8s.cluster.name, k8s.cluster.uid, k8s.container.name, k8s.namespace.name, k8s.node.name, k8s.pod.name, k8s.service.name, k8s.workload.kind, k8s.workload.name"` +
+          `\n2. Use "chat_with_davis_copilot" tool and provide \`problemId\` as context, to get insights about a specific problem via Davis Copilot.` +
+          `\n3. Tell the user to visit ${dtEnvironment}/ui/apps/dynatrace.davis.problems/problem/<problem-id> for more details.`;
+
+        return resp;
+      } else {
+        return 'No problems found';
       }
-
-      resp += `Tell the user to access the link ${dtEnvironment}/ui/apps/dynatrace.davis.problems/problem/${result.problemId} to get more insights into the problem.\n`;
-
-      return resp;
     },
   );
 
@@ -442,7 +434,7 @@ const main = async () => {
         oauthClientSecret,
         dtPlatformToken,
       );
-      const response = await executeDql(dtClient, dqlStatement);
+      const response = await executeDql(dtClient, { query: dqlStatement });
 
       return `DQL Response: ${JSON.stringify(response)}`;
     },

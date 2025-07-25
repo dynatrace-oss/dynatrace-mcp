@@ -1,6 +1,6 @@
 # Dynatrace MCP Server
 
-This remote MCP server allows interaction with the [Dynatrace](https://www.dynatrace.com/) observability platform.
+This local MCP server allows interaction with the [Dynatrace](https://www.dynatrace.com/) observability platform.
 Bring real-time observability data directly into your development workflow.
 
 <img width="1046" alt="image" src="/assets/dynatrace-mcp-arch.png" />
@@ -113,12 +113,12 @@ This configuration should be stored in `<your-repo>/.amazonq/mcp.json`.
 
 ## Environment Variables
 
-You can set up authentication via **OAuth Client** or **Platform Tokens** via the following environment variables:
+You can set up authentication via **OAuth Client** or **Platform Tokens** (v0.5.0 and newer) via the following environment variables:
 
 - `DT_ENVIRONMENT` (string, e.g., https://abc12345.apps.dynatrace.com) - URL to your Dynatrace Platform (do not use Dynatrace classic URLs like `abc12345.live.dynatrace.com`)
 - `OAUTH_CLIENT_ID` (string, e.g., `dt0s02.SAMPLE`) - Dynatrace OAuth Client ID
 - `OAUTH_CLIENT_SECRET` (string, e.g., `dt0s02.SAMPLE.abcd1234`) - Dynatrace OAuth Client Secret
-- `DT_PLATFORM_TOKEN` (string, e.g., `dt0s16.SAMPLE.abcd1234`) - Dynatrace Platform Token (limited support as not all scopes are available)
+- With v0.5.0 and newer: `DT_PLATFORM_TOKEN` (string, e.g., `dt0s16.SAMPLE.abcd1234`) - Dynatrace Platform Token (limited support, as not all scopes are available; see below)
 
 For more information, please have a look at the documentation about
 [creating an Oauth Client in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/oauth-clients), as well as
@@ -134,11 +134,8 @@ Depending on the features you are using, the following scopes are needed:
 
 - `app-engine:apps:run` - needed for almost all tools
 - `app-engine:functions:run` - needed for for almost all tools
-- `environment-api:security-problems:read` - needed for reading security problems (currently not available for Platform Tokens)
-- `environment-api:entities:read` - read monitored entities (currently not available for Platform Tokens)
-- `environment-api:problems:read` - get problems (currently not available for Platform Tokens)
-- `environment-api:metrics:read` - read metrics (currently not available for Platform Tokens)
-- `environment-api:slo:read` - read SLOs (currently not available for Platform Tokens)
+- `environment-api:security-problems:read` - needed for reading security problems (_currently not available for Platform Tokens_)
+- `environment-api:entities:read` - read monitored entities (_currently not available for Platform Tokens_)
 - `automation:workflows:read` - read Workflows
 - `automation:workflows:write` - create and update Workflows
 - `automation:workflows:run` - run Workflows
@@ -184,7 +181,7 @@ fetch logs | filter dt.source_entity == 'SERVICE-123' | summarize count(), by:{s
 How can I investigate slow database queries in Dynatrace?
 ```
 
-**Find open vulnerabilities on production, setup alert.**
+**Find open vulnerabilities on production, setup alert:**
 
 ```
 I have this code snippet here in my IDE, where I get a dependency vulnerability warning for my code.
@@ -193,7 +190,7 @@ Analyze a specific production problem.
 Setup a workflow that sends Slack alerts to the #devops-alerts channel when availability problems occur.
 ```
 
-**Debug intermittent 503 errors.**
+**Debug intermittent 503 errors:**
 
 ```
 Our load balancer is intermittently returning 503 errors during peak traffic.
@@ -202,7 +199,7 @@ run a query to correlate error rates with service instance health indicators.
 I suspect we have circuit breakers triggering, but need confirmation from the telemetry data.
 ```
 
-**Correlate memory issue with logs.**
+**Correlate memory issue with logs:**
 
 ```
 There's a problem with high memory usage on one of our hosts.
@@ -210,7 +207,7 @@ Get the problem details and then fetch related logs to help understand
 what's causing the memory spike? Which file in this repo is this related to?
 ```
 
-**Trace request flow analysis.**
+**Trace request flow analysis:**
 
 ```
 Our users are experiencing slow checkout processes.
@@ -218,7 +215,7 @@ Can you execute a DQL query to show me the full request trace for our checkout f
 so I can identify which service is causing the bottleneck?
 ```
 
-**Analyze Kubernetes cluster events.**
+**Analyze Kubernetes cluster events:**
 
 ```
 Our application deployments seem to be failing intermittently.
@@ -285,7 +282,7 @@ First, enable Copilot for your Workspace `.vscode/settings.json`:
 }
 ```
 
-and make sure that you are using Agent Mode in CoPilot.
+and make sure that you are using Agent Mode in Copilot.
 
 Second, add the MCP to `.vscode/mcp.json`:
 
