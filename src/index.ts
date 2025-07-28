@@ -47,6 +47,28 @@ let scopesBase = [
   'app-engine:functions:run', // needed for environmentInformationClient
 ];
 
+/**
+ * Performs a connection test to the Dynatrace environment.
+ * Throws an error if the connection or authentication fails.
+ */
+async function testDynatraceConnection(
+  dtEnvironment: string,
+  oauthClientId?: string,
+  oauthClientSecret?: string,
+  dtPlatformToken?: string,
+) {
+  const dtClient = await createDtHttpClient(
+    dtEnvironment,
+    scopesBase,
+    oauthClientId,
+    oauthClientSecret,
+    dtPlatformToken,
+  );
+  const environmentInformationClient = new EnvironmentInformationClient(dtClient);
+  // This call will fail if authentication is incorrect.
+  await environmentInformationClient.getEnvironmentInformation();
+}
+
 const main = async () => {
   // read Environment variables
   let dynatraceEnv: DynatraceEnv;
@@ -58,6 +80,31 @@ const main = async () => {
   }
   console.error(`Initializing Dynatrace MCP Server v${VERSION}...`);
   const { oauthClientId, oauthClientSecret, dtEnvironment, dtPlatformToken, slackConnectionId } = dynatraceEnv;
+
+  // Test connection on startup
+  try {
+    console.error(`Testing connection to Dynatrace environment: ${dtEnvironment}...`);
+    await testDynatraceConnection(dtEnvironment, oauthClientId, oauthClientSecret, dtPlatformToken);
+    console.error(`Successfully connected to the Dynatrace environment at ${dtEnvironment}.`);
+  } catch (error: any) {
+    console.error(`Fatal: Could not connect to the Dynatrace environment.`);
+    if (isClientRequestError(error)) {
+      const e: ClientRequestError = error;
+      let additionalErrorInformation = '';
+      if (e.response.status == 403) {
+        additionalErrorInformation =
+          'Note: Your user or service-user is most likely lacking the necessary permissions/scopes for this API Call.';
+      }
+      console.error(
+        `Client Request Error: ${e.message} with HTTP status: ${
+          e.response.status
+        }. ${additionalErrorInformation} (body: ${JSON.stringify(e.body)})`,
+      );
+    } else {
+      console.error(`Error: ${error.message}`);
+    }
+    process.exit(1);
+  }
 
   console.error(`Starting Dynatrace MCP Server v${VERSION}...`);
   const server = new McpServer(
@@ -135,6 +182,18 @@ const main = async () => {
 
     return resp;
   });
+
+  tool(
+    'test_connection',
+    'Tests the connection to the Dynatrace environment and verifies authentication.',
+    {},
+    async () => {
+      // The tool wrapper will catch any errors and format them.
+      await testDynatraceConnection(dtEnvironment, oauthClientId, oauthClientSecret, dtPlatformToken);
+
+      return `Successfully connected to the Dynatrace environment at ${dtEnvironment}.`;
+    },
+  );
 
   tool('list_vulnerabilities', 'List all vulnerabilities from Dynatrace', {}, async ({}) => {
     const dtClient = await createDtHttpClient(
