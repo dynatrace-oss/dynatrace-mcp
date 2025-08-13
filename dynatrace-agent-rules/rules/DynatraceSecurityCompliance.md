@@ -36,6 +36,27 @@ Dynatrace security events are stored in a dedicated bucket (`default_security_ev
 - **object.id** - Links compliance findings to specific infrastructure objects
 - **dt.entity.\*** - Direct references to Dynatrace entity model
 
+### **🔍 Semantic Compliance & Security Fields**
+
+#### **Compliance Analysis Fields**
+
+- **compliance.standard.short_name** - Standard identifier (DISA STIG, NIST, CIS)
+- **compliance.standard.url** - Official documentation link
+- **compliance.rule.id** - Unique rule identifier (e.g., "CIS-66577")
+- **compliance.rule.title** - Short rule description
+- **compliance.rule.severity.level** - Original severity (CRITICAL, HIGH, MEDIUM, LOW)
+- **compliance.result.status.level** - Evaluation result (FAILED, PASSED, MANUAL, NOT_RELEVANT)
+- **compliance.result.status.score** - Numeric score (10=FAILED, 7=MANUAL, 4=PASSED, 1=NOT_RELEVANT)
+- **compliance.result.description** - Detailed result explanation
+- **compliance.result.object.type** - Object type evaluated (k8scluster, k8spod, awsbucket)
+- **compliance.result.object.evidence_json** - Evidence/reasoning for compliance status
+
+#### **Security Risk Fields**
+
+- **dt.security.risk.score** - Normalized risk score by Dynatrace (0-10)
+- **dt.security.risk.level** - Risk level (CRITICAL, HIGH, MEDIUM, LOW, NONE, NOT_AVAILABLE)
+- **dt.security.rap.action** - Runtime Application Protection action (BLOCKED, ALLOWLISTED, AUDITED)
+
 ### **Critical Analysis Patterns:**
 
 **✅ CORRECT - Latest scan analysis:**
@@ -55,6 +76,62 @@ fetch events, from:now() - 24h
 fetch events, from:now() - 7d
 | filter event.type == "COMPLIANCE_FINDING"
 | summarize count = count()
+```
+
+### **🔍 Enhanced Compliance Analysis with Semantic Fields**
+
+#### **Severity-Based Risk Assessment**
+
+```dql
+fetch events, from:now() - 24h
+| filter event.type == "COMPLIANCE_FINDING"
+| filter compliance.result.status.level == "FAILED"
+| summarize
+    critical_failures = countIf(compliance.rule.severity.level == "CRITICAL"),
+    high_failures = countIf(compliance.rule.severity.level == "HIGH"),
+    risk_score = avg(compliance.result.status.score),
+    by: {compliance.standard.short_name, compliance.result.object.type}
+| fieldsAdd total_high_risk = critical_failures + high_failures
+| sort total_high_risk desc
+```
+
+#### **Evidence-Based Investigation**
+
+```dql
+fetch events, from:now() - 24h
+| filter event.type == "COMPLIANCE_FINDING"
+| filter compliance.rule.severity.level == "CRITICAL"
+| filter compliance.result.status.level == "FAILED"
+| fields compliance.rule.title, compliance.result.description,
+        compliance.result.object.evidence_json, compliance.standard.short_name
+| limit 10
+```
+
+#### **Security Risk Correlation**
+
+```dql
+fetch events, from:now() - 24h
+| filter isNotNull(dt.security.risk.score)
+| summarize
+    avg_risk_score = avg(dt.security.risk.score),
+    max_risk_score = max(dt.security.risk.score),
+    count_by_level = count(),
+    by: {dt.security.risk.level, compliance.standard.short_name}
+| sort avg_risk_score desc
+```
+
+#### **Runtime Protection Analysis**
+
+```dql
+fetch events, from:now() - 24h
+| filter isNotNull(dt.security.rap.action)
+| summarize
+    blocked_count = countIf(dt.security.rap.action == "BLOCKED"),
+    audited_count = countIf(dt.security.rap.action == "AUDITED"),
+    allowlisted_count = countIf(dt.security.rap.action == "ALLOWLISTED"),
+    by: {dt.security.risk.level}
+| fieldsAdd total_actions = blocked_count + audited_count + allowlisted_count
+| sort blocked_count desc
 ```
 
 ## 🔍 **Step 1: Analyze Available Scan Types**

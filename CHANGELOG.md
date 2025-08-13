@@ -3,6 +3,8 @@
 ## Unreleased changes
 
 - Removed unneeded scopes `environment-api:slo:read` (no tool is using this) and `environment-api:metrics:read` (anyway handled via execute DQL tool)
+- Removed `metrics` from `execute_dql` example with `fetch`.
+- Clarified usage of `verify_dql` to avoid unnecessary tool calls.
 
 ## 0.5.0 (Release Candidate 2)
 
