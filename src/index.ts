@@ -324,7 +324,7 @@ const main = async () => {
     async ({ entityName }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
-        scopesBase.concat('environment-api:entities:read', 'storage:entities:read'),
+        scopesBase.concat('storage:entities:read'),
         oauthClientId,
         oauthClientSecret,
         dtPlatformToken,

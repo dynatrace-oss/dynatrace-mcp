@@ -20,6 +20,7 @@
 - Removed unneeded scopes `environment-api:slo:read` (no tool is using this) and `environment-api:metrics:read` (anyway handled via execute DQL tool)
 - Removed `metrics` from `execute_dql` example with `fetch`.
 - Clarified usage of `verify_dql` to avoid unnecessary tool calls.
+- Adapted `find_entity_by_name` tool to include all entities from the smartscape topology.
 
 ## 0.5.0 (Release Candidate 2)
 
