@@ -421,7 +421,7 @@ const main = async () => {
 
   tool(
     'verify_dql',
-    'Verify a Dynatrace Query Language (DQL) statement on Dynatrace GRAIL before executing it. This is useful to ensure that the DQL statement is valid and can be executed without errors.',
+    'Verify a Dynatrace Query Language (DQL) statement on Dynatrace GRAIL before executing it. This step is recommended for DQL statements that have been dynamically created by non-expert tools. For statements coming from the `generate_dql_from_natural_language` tool as well as from documentation, this step can be omitted.',
     {
       dqlStatement: z.string(),
     },
@@ -456,7 +456,7 @@ const main = async () => {
 
   tool(
     'execute_dql',
-    'Get Logs, Metrics, Spans or Events from Dynatrace GRAIL by executing a Dynatrace Query Language (DQL) statement. Always use "verify_dql" tool before you execute a DQL statement. A valid statement looks like this: "fetch [logs, metrics, spans, events] | filter <some-filter> | summarize count(), by:{some-fields}. Adapt filters for certain attributes: `traceId` could be `trace_id` or `trace.id`.',
+    'Get Logs, Metrics, Spans or Events from Dynatrace GRAIL by executing a Dynatrace Query Language (DQL) statement. It\'s recommended to use "verify_dql" tool before you execute a DQL statement. A valid statement looks like this: "fetch [logs, spans, events] | filter <some-filter> | summarize count(), by:{some-fields}. Adapt filters for certain attributes: `traceId` could be `trace_id` or `trace.id`.',
     {
       dqlStatement: z.string(),
     },
@@ -488,7 +488,7 @@ const main = async () => {
 
   tool(
     'generate_dql_from_natural_language',
-    "Convert natural language queries to Dynatrace Query Language (DQL) using Davis CoPilot AI. You can ask for problem events, security issues, logs, metrics, spans, and custom data. Workflow: 1) Generate DQL, 2) Verify with verify_dql tool, 3) Execute with execute_dql tool, 4) Iterate if results don't match expectations.",
+    'Convert natural language queries to Dynatrace Query Language (DQL) using Davis CoPilot AI. You can ask for problem events, security issues, logs, metrics, spans, and custom data.',
     {
       text: z
         .string()
@@ -521,9 +521,8 @@ const main = async () => {
       }
 
       resp += `\n💡 **Next Steps:**\n`;
-      resp += `1. Use "verify_dql" tool to validate this query\n`;
-      resp += `2. Use "execute_dql" tool to run the query\n`;
-      resp += `3. If results don't match expectations, refine your natural language description and try again\n`;
+      resp += `1. Use "execute_dql" tool to run the query (you can omit running the "verify_dql" tool)\n`;
+      resp += `2. If results don't match expectations, refine your natural language description and try again\n`;
 
       return resp;
     },
