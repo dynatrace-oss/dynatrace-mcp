@@ -72,7 +72,8 @@ async function testDynatraceConnection(
 function handleClientRequestError(error: ClientRequestError): string {
   let additionalErrorInformation = '';
   if (error.response.status === 403) {
-    additionalErrorInformation = 'Note: Your user or service-user is most likely lacking the necessary permissions/scopes for this API Call.';
+    additionalErrorInformation =
+      'Note: Your user or service-user is most likely lacking the necessary permissions/scopes for this API Call.';
   }
   return `Client Request Error: ${error.message} with HTTP status: ${error.response.status}. ${additionalErrorInformation} (body: ${JSON.stringify(error.body)})`;
 }
@@ -94,7 +95,9 @@ const main = async () => {
   const maxRetries = 5;
   while (true) {
     try {
-      console.error(`Testing connection to Dynatrace environment: ${dtEnvironment}... (Attempt ${retryCount + 1} of ${maxRetries})`);
+      console.error(
+        `Testing connection to Dynatrace environment: ${dtEnvironment}... (Attempt ${retryCount + 1} of ${maxRetries})`,
+      );
       await testDynatraceConnection(dtEnvironment, oauthClientId, oauthClientSecret, dtPlatformToken);
       console.error(`Successfully connected to the Dynatrace environment at ${dtEnvironment}.`);
       break;
@@ -112,7 +115,7 @@ const main = async () => {
       }
       const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
       console.error(`Retrying in ${delay / 1000} seconds...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 
@@ -162,25 +165,30 @@ const main = async () => {
     server.tool(name, description, paramsSchema, (args) => wrappedCb(args));
   };
 
-  tool('get_environment_info', 'Get information about the connected Dynatrace Environment (Tenant) and verify the connection and authentication.', {}, async ({}) => {
-    // create an oauth-client
-    const dtClient = await createDtHttpClient(
-      dtEnvironment,
-      scopesBase,
-      oauthClientId,
-      oauthClientSecret,
-      dtPlatformToken,
-    );
-    const environmentInformationClient = new EnvironmentInformationClient(dtClient);
+  tool(
+    'get_environment_info',
+    'Get information about the connected Dynatrace Environment (Tenant) and verify the connection and authentication.',
+    {},
+    async ({}) => {
+      // create an oauth-client
+      const dtClient = await createDtHttpClient(
+        dtEnvironment,
+        scopesBase,
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
+      );
+      const environmentInformationClient = new EnvironmentInformationClient(dtClient);
 
-    const environmentInfo = await environmentInformationClient.getEnvironmentInformation();
-    let resp = `Environment Information (also referred to as tenant):
+      const environmentInfo = await environmentInformationClient.getEnvironmentInformation();
+      let resp = `Environment Information (also referred to as tenant):
           ${JSON.stringify(environmentInfo)}\n`;
 
-    resp += `You can reach it via ${dtEnvironment}\n`;
+      resp += `You can reach it via ${dtEnvironment}\n`;
 
-    return resp;
-  });
+      return resp;
+    },
+  );
 
   tool('list_vulnerabilities', 'List all vulnerabilities from Dynatrace', {}, async ({}) => {
     const dtClient = await createDtHttpClient(
