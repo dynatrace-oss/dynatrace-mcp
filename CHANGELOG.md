@@ -1,6 +1,6 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
-## Unreleased changes
+## 0.5.0 (Release Candidate 3)
 
 - Improved `list_vulnerabilities` tool to use DQL statement instead of classic API, and aligned parameters with `list_problems` tool
 - Removed `get_vulnerability_details` tool as the same can now be achieved with a simple `execute_dql` call
