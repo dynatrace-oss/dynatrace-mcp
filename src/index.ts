@@ -69,6 +69,14 @@ async function testDynatraceConnection(
   await environmentInformationClient.getEnvironmentInformation();
 }
 
+function handleClientRequestError(error: ClientRequestError): string {
+  let additionalErrorInformation = '';
+  if (error.response.status === 403) {
+    additionalErrorInformation = 'Note: Your user or service-user is most likely lacking the necessary permissions/scopes for this API Call.';
+  }
+  return `Client Request Error: ${error.message} with HTTP status: ${error.response.status}. ${additionalErrorInformation} (body: ${JSON.stringify(error.body)})`;
+}
+
 const main = async () => {
   // read Environment variables
   let dynatraceEnv: DynatraceEnv;
@@ -82,28 +90,30 @@ const main = async () => {
   const { oauthClientId, oauthClientSecret, dtEnvironment, dtPlatformToken, slackConnectionId } = dynatraceEnv;
 
   // Test connection on startup
-  try {
-    console.error(`Testing connection to Dynatrace environment: ${dtEnvironment}...`);
-    await testDynatraceConnection(dtEnvironment, oauthClientId, oauthClientSecret, dtPlatformToken);
-    console.error(`Successfully connected to the Dynatrace environment at ${dtEnvironment}.`);
-  } catch (error: any) {
-    console.error(`Fatal: Could not connect to the Dynatrace environment.`);
-    if (isClientRequestError(error)) {
-      const e: ClientRequestError = error;
-      let additionalErrorInformation = '';
-      if (e.response.status == 403) {
-        additionalErrorInformation =
-          'Note: Your user or service-user is most likely lacking the necessary permissions/scopes for this API Call.';
+  let retryCount = 0;
+  const maxRetries = 5;
+  while (true) {
+    try {
+      console.error(`Testing connection to Dynatrace environment: ${dtEnvironment}... (Attempt ${retryCount + 1} of ${maxRetries})`);
+      await testDynatraceConnection(dtEnvironment, oauthClientId, oauthClientSecret, dtPlatformToken);
+      console.error(`Successfully connected to the Dynatrace environment at ${dtEnvironment}.`);
+      break;
+    } catch (error: any) {
+      console.error(`Error: Could not connect to the Dynatrace environment.`);
+      if (isClientRequestError(error)) {
+        console.error(handleClientRequestError(error));
+      } else {
+        console.error(`Error: ${error.message}`);
       }
-      console.error(
-        `Client Request Error: ${e.message} with HTTP status: ${
-          e.response.status
-        }. ${additionalErrorInformation} (body: ${JSON.stringify(e.body)})`,
-      );
-    } else {
-      console.error(`Error: ${error.message}`);
+      retryCount++;
+      if (retryCount >= maxRetries) {
+        console.error(`Fatal: Maximum number of connection retries (${maxRetries}) exceeded. Exiting.`);
+        process.exit(1);
+      }
+      const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+      console.error(`Retrying in ${delay / 1000} seconds...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
-    process.exit(1);
   }
 
   console.error(`Starting Dynatrace MCP Server v${VERSION}...`);
@@ -135,19 +145,8 @@ const main = async () => {
       } catch (error: any) {
         // check if it's an error originating from the Dynatrace SDK / API Gateway and provide an appropriate message to the user
         if (isClientRequestError(error)) {
-          const e: ClientRequestError = error;
-          let additionalErrorInformation = '';
-          if (e.response.status == 403) {
-            additionalErrorInformation =
-              'Note: Your user or service-user is most likely lacking the necessary permissions/scopes for this API Call.';
-          }
           return {
-            content: [
-              {
-                type: 'text',
-                text: `Client Request Error: ${e.message} with HTTP status: ${e.response.status}. ${additionalErrorInformation} (body: ${JSON.stringify(e.body)})`,
-              },
-            ],
+            content: [{ type: 'text', text: handleClientRequestError(error) }],
             isError: true,
           };
         }
@@ -163,7 +162,7 @@ const main = async () => {
     server.tool(name, description, paramsSchema, (args) => wrappedCb(args));
   };
 
-  tool('get_environment_info', 'Get information about the connected Dynatrace Environment (Tenant)', {}, async ({}) => {
+  tool('get_environment_info', 'Get information about the connected Dynatrace Environment (Tenant) and verify the connection and authentication.', {}, async ({}) => {
     // create an oauth-client
     const dtClient = await createDtHttpClient(
       dtEnvironment,
@@ -182,18 +181,6 @@ const main = async () => {
 
     return resp;
   });
-
-  tool(
-    'test_connection',
-    'Tests the connection to the Dynatrace environment and verifies authentication.',
-    {},
-    async () => {
-      // The tool wrapper will catch any errors and format them.
-      await testDynatraceConnection(dtEnvironment, oauthClientId, oauthClientSecret, dtPlatformToken);
-
-      return `Successfully connected to the Dynatrace environment at ${dtEnvironment}.`;
-    },
-  );
 
   tool('list_vulnerabilities', 'List all vulnerabilities from Dynatrace', {}, async ({}) => {
     const dtClient = await createDtHttpClient(
