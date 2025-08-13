@@ -12,7 +12,7 @@
 ## 0.5.0 (Release Candidate 2)
 
 - Improved `list_problems` tool to use a DQL statement to retrieve data from Dynatrace, and provide better next steps
-- Removed "Get Problem Details" tool, as the same can be achieved with a simple "execute_dql" call
+- Removed `get_problem_details` tool, as the same can be achieved with a simple "execute_dql" call
 - Removed scope `environment-api:problems:read` as it's no longer needed
 
 ## 0.5.0 (Release Candidate 1)
