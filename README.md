@@ -11,6 +11,11 @@ Bring real-time observability data directly into your development workflow.
 - **Contextual debugging** - Fix issues with full context from monitored exceptions, logs, and anomalies
 - **Security insights** - Get detailed vulnerability analysis and security problem tracking
 - **Natural language queries** - Use AI-powered DQL generation and explanation
+- **Multi-phase incident investigation** - Systematic 4-phase approach with automated impact assessment
+- **Advanced transaction analysis** - Precise root cause identification with file/line-level accuracy
+- **Cross-data source correlation** - Connect problems → spans → logs with trace ID correlation
+- **DevOps automation** - Deployment health gates with automated promotion/rollback logic
+- **Security compliance monitoring** - Multi-cloud compliance assessment with evidence-based investigation
 
 ## Capabilities
 
@@ -30,6 +35,97 @@ Bring real-time observability data directly into your development workflow.
 - **Feedback System** - Provide feedback to improve AI responses over time
 
 > **Note:** While Davis CoPilot AI is generally available (GA), the Davis CoPilot APIs are currently in preview. For more information, visit the [Davis CoPilot Preview Community](https://dt-url.net/copilot-community).
+
+## 🎯 AI-Powered Observability Workshop Rules
+
+Enhance your AI assistant with comprehensive Dynatrace observability analysis capabilities through our streamlined workshop rules. These rules provide hierarchical workflows for security, compliance, incident response, and distributed systems investigation.
+
+### **🚀 Quick Setup for AI Assistants**
+
+Copy the comprehensive rule files from the [`rules/`](./rules/) directory to your AI assistant's rules directory:
+
+**IDE-Specific Locations:**
+
+- **Amazon Q**: `.amazonq/rules/` (project) or `~/.aws/amazonq/rules/` (global)
+- **Cursor**: `.cursor/rules/` (project) or via Settings → Rules (global)
+- **Windsurf**: `.windsurfrules/` (project) or via Customizations → Rules (global)
+- **Cline**: `.clinerules/` (project) or `~/Documents/Cline/Rules/` (global)
+- **GitHub Copilot**: `.github/copilot-instructions.md` (project only)
+
+Then initialize the agent in your AI chat:
+
+```
+load dynatrace mcp
+```
+
+### **🏗️ Enhanced Analysis Capabilities**
+
+The workshop rules unlock advanced observability analysis modes:
+
+#### **🚨 Incident Response & Problem Investigation**
+
+- **4-phase structured investigation** workflow (Detection → Impact → Root Cause → Resolution)
+- **Cross-data source correlation** (problems → logs → spans → metrics)
+- **Kubernetes-aware incident analysis** with namespace and pod context
+- **User impact assessment** with Davis AI integration
+
+#### **📊 Comprehensive Data Investigation**
+
+- **Unified log-service-process analysis** in single workflow
+- **Business logic error detection** patterns
+- **Deployment correlation analysis** with ArgoCD/GitOps integration
+- **Golden signals monitoring** (Rate, Errors, Duration, Saturation)
+
+#### **🔗 Advanced Transaction Analysis**
+
+- **Precise root cause identification** with file/line numbers
+- **Exception stack trace analysis** with business context
+- **Multi-service cascade failure analysis**
+- **Performance impact correlation** across distributed systems
+
+#### **🛡️ Enhanced Security & Compliance**
+
+- **Latest-scan analysis** prevents outdated data aggregation
+- **Multi-cloud compliance** (AWS, Azure, GCP, Kubernetes)
+- **Evidence-based investigation** with detailed remediation paths
+- **Risk-based scoring** with team-specific guidance
+
+#### **⚡ DevOps Automation & SRE**
+
+- **Deployment health gates** with automated promotion/rollback
+- **SLO/SLI automation** with error budget calculations
+- **Infrastructure as Code remediation** with auto-generated templates
+- **Alert optimization workflows** with pattern recognition
+
+### **📁 Hierarchical Rule Architecture**
+
+The rules are organized in a context-window optimized structure:
+
+```
+rules/
+├── DynatraceMcpIntegration.md                    # 🎯 MAIN ORCHESTRATOR
+├── workflows/                                    # 🔧 ANALYSIS WORKFLOWS
+│   ├── incidentResponse.md                       # Core incident investigation
+│   ├── DynatraceSecurityCompliance.md           # Security & compliance analysis
+│   ├── DynatraceDevOpsIntegration.md            # CI/CD automation
+│   └── dataSourceGuides/                        # 📊 DATA ANALYSIS GUIDES
+│       ├── dataInvestigation.md                 # Logs, services, processes
+│       └── DynatraceSpanAnalysis.md             # Transaction tracing
+└── reference/                                   # 📚 TECHNICAL DOCUMENTATION
+    ├── DynatraceQueryLanguage.md                # DQL syntax foundation
+    ├── DynatraceExplore.md                      # Field discovery patterns
+    ├── DynatraceSecurityEvents.md               # Security events schema
+    └── DynatraceProblemsSpec.md                 # Problems schema reference
+```
+
+**Key Architectural Benefits:**
+
+- **All files under 6,500 tokens** - Compatible with most LLM context limits
+- **Hierarchical organization** - Clear entry points and specialized guides
+- **Eliminated circular references** - No more confusing cross-referencing webs
+- **DQL-first approach** - Prefer flexible queries over rigid MCP calls
+
+For detailed information about the workshop rules, see the [Rules README](./rules/README.md).
 
 ## Quickstart
 
@@ -184,7 +280,9 @@ Depending on the features you are using, the following scopes are needed:
 ## ✨ Example prompts ✨
 
 Use these example prompts as a starting point. Just copy them into your IDE or agent setup, adapt them to your services/stack/architecture,
-and extend them as needed. They’re here to help you imagine how real-time observability and automation work together in the MCP context in your IDE.
+and extend them as needed. They're here to help you imagine how real-time observability and automation work together in the MCP context in your IDE.
+
+### **Basic Queries & AI Assistance**
 
 **Write a DQL query from natural language:**
 
@@ -204,6 +302,85 @@ fetch logs | filter dt.source_entity == 'SERVICE-123' | summarize count(), by:{s
 ```
 How can I investigate slow database queries in Dynatrace?
 ```
+
+### **Advanced Incident Investigation**
+
+**Multi-phase incident response:**
+
+```
+Our checkout service is experiencing high error rates. Start a systematic 4-phase incident investigation:
+1. Detect and triage the active problems
+2. Assess user impact and affected services
+3. Perform cross-data source analysis (problems → spans → logs)
+4. Identify root cause with file/line-level precision
+```
+
+**Cross-service failure analysis:**
+
+```
+We have cascading failures across our microservices architecture.
+Analyze the entity relationships and trace the failure propagation from the initial problem
+through all downstream services. Show me the correlation timeline.
+```
+
+### **Security & Compliance Analysis**
+
+**Latest-scan vulnerability assessment:**
+
+```
+Perform a comprehensive security analysis using the latest scan data:
+- Check for new vulnerabilities in our production environment
+- Focus on critical and high-severity findings
+- Provide evidence-based remediation paths
+- Generate risk scores with team-specific guidance
+```
+
+**Multi-cloud compliance monitoring:**
+
+```
+Run a compliance assessment across our AWS, Azure, and Kubernetes environments.
+Check for configuration drift and security posture changes in the last 24 hours.
+```
+
+### **DevOps & SRE Automation**
+
+**Deployment health gate analysis:**
+
+```
+Our latest deployment is showing performance degradation.
+Run deployment health gate analysis with:
+- Golden signals monitoring (Rate, Errors, Duration, Saturation)
+- SLO/SLI validation with error budget calculations
+- Generate automated rollback recommendation if needed
+```
+
+**Infrastructure as Code remediation:**
+
+```
+Generate Infrastructure as Code templates to remediate the current alert patterns.
+Include automated scaling policies and resource optimization recommendations.
+```
+
+### **Deep Transaction Analysis**
+
+**Business logic error investigation:**
+
+```
+Our payment processing is showing intermittent failures.
+Perform advanced transaction analysis:
+- Extract exception details with full stack traces
+- Correlate with deployment events and ArgoCD changes
+- Identify the exact code location causing the issue
+```
+
+**Performance correlation analysis:**
+
+```
+Analyze the performance impact across our distributed system for the slow checkout flow.
+Show me the complete trace analysis with business context and identify bottlenecks.
+```
+
+### **Traditional Use Cases (Enhanced)**
 
 **Find open vulnerabilities on production, setup alert:**
 
