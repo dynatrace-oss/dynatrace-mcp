@@ -111,6 +111,31 @@ The [Amazon Q Developer CLI](https://docs.aws.amazon.com/amazonq/latest/qdevelop
 
 This configuration should be stored in `<your-repo>/.amazonq/mcp.json`.
 
+### Rule File
+
+For efficient result retrieval from Dynatrace, please consider creating a rule file (e.g., [.github/copilot-instructions.md](https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions), [.amazonq/rules/](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/context-project-rules.html)), instructing Copilot and Co on how to get more details for your component/app/service. Here is an example for [easytrade](https://github.com/Dynatrace/easytrade), please adapt the names and filters to fit your use-cases and components:
+
+```
+# Observability
+
+We use Dynatrace as an Observability solution. This document provides instructions on how to get data for easytrade from Dynatrace using DQL.
+
+## How to get any data for my App
+
+Depending on the query and tool used, the following filters can be applied to narrow down results:
+
+* `contains(entity.name, "easytrade")`
+* `contains(affected_entity.name, "easytrade")`
+* `contains(container.name, "easytrade")`
+
+For best results, you can combine these filters with an `OR` operator.
+
+## Logs
+
+To fetch logs for easytrade, execute `fetch logs | filter contains(container.name, "easyatrade")`.
+For fetching just error-logs, add `| filter loglevel == "ERROR"`.
+```
+
 ## Environment Variables
 
 You can set up authentication via **OAuth Client** or **Platform Tokens** (v0.5.0 and newer) via the following environment variables:
