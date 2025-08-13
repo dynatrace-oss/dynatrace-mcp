@@ -20,7 +20,7 @@ export const listVulnerabilities = async (dtClient: HttpClient, additionalFilter
   const response = await executeDql(dtClient, {
     query: dqlStatement,
     maxResultRecords: 5000,
-    maxResultBytes: /* 5 MB */ 5000000,
+    maxResultBytes: 5_000_000,  // 5 MB
   });
 
   if (!response || response.length === 0) {
