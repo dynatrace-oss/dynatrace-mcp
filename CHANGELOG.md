@@ -21,6 +21,7 @@
 - Removed `metrics` from `execute_dql` example with `fetch`.
 - Clarified usage of `verify_dql` to avoid unnecessary tool calls.
 - Adapted `find_entity_by_name` tool to include all entities from the smartscape topology.
+- Optimized `get_monitored_entity_details` tool to use direct entity type lookup for better performance
 
 ## 0.5.0 (Release Candidate 2)
 

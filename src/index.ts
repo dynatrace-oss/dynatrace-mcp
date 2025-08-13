@@ -317,9 +317,9 @@ const main = async () => {
 
   tool(
     'find_entity_by_name',
-    'Get the entityId of a monitored entity based on the name of the entity on Dynatrace',
+    'Get the entityId of a (monitored) entity (e.g., service, host, process-group) within the topology based on the name of the entity on Dynatrace',
     {
-      entityName: z.string(),
+      entityName: z.string().describe('Name of the entity to search for, e.g., "my-service" or "my-host"'),
     },
     async ({ entityName }) => {
       const dtClient = await createDtHttpClient(
@@ -343,16 +343,20 @@ const main = async () => {
     async ({ entityId }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
-        scopesBase.concat('environment-api:entities:read'),
+        scopesBase.concat('storage:entities:read'),
         oauthClientId,
         oauthClientSecret,
         dtPlatformToken,
       );
       const entityDetails = await getMonitoredEntityDetails(dtClient, entityId);
 
+      if (!entityDetails) {
+        return `No entity found with entityId: ${entityId}`;
+      }
+
       let resp =
         `Entity ${entityDetails.displayName} of type ${entityDetails.type} with \`entityId\` ${entityDetails.entityId}\n` +
-        `Properties: ${JSON.stringify(entityDetails.properties)}\n`;
+        `Properties: ${JSON.stringify(entityDetails.allProperties)}\n`;
 
       if (entityDetails.type == 'SERVICE') {
         resp += `You can find more information about the service at ${dtEnvironment}/ui/apps/dynatrace.services/explorer?detailsId=${entityDetails.entityId}&sidebarOpen=false`;
