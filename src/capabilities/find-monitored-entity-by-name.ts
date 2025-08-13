@@ -1,13 +1,28 @@
 import { HttpClient } from '@dynatrace-sdk/http-client';
 import { executeDql } from './execute-dql';
+import { DYNATRACE_ENTITY_TYPES } from '../utils/dynatrace-entity-types';
 
+/**
+ * Find a monitored entity by name via DQL
+ * @param dtClient
+ * @param entityName
+ * @returns
+ */
 export const findMonitoredEntityByName = async (dtClient: HttpClient, entityName: string) => {
-  const dql = `fetch dt.entity.application | search "*${entityName}*" | fieldsAdd entity.type
-                | append [fetch dt.entity.service | search "*${entityName}*" | fieldsAdd entity.type]
-                | append [fetch dt.entity.host | search "*${entityName}*" | fieldsAdd entity.type]
-                | append [fetch dt.entity.process_group | search "*${entityName}*" | fieldsAdd entity.type]
-                | append [fetch dt.entity.cloud_application | search "*${entityName}*" | fieldsAdd entity.type]`;
+  if (entityName == '') {
+    return 'No monitored entity found with the specified name.';
+  }
 
+  // construct a DQL statement like "fetch <entityType> | search "*<entityName>*" | fieldsAdd entity.type" for each entity type
+  // and join them with " | append "
+  // for example: fetch dt.entity.application | search "*<entityName>*" | fieldsAdd entity.type | append fetch dt.entity.service | search "*<entityName>*" | fieldsAdd entity.type
+  const dql =
+    `fetch ${DYNATRACE_ENTITY_TYPES[0]} | search "*${entityName}*" | fieldsAdd entity.type` +
+    DYNATRACE_ENTITY_TYPES.slice(1)
+      .map((entityType) => ` | append [ fetch ${entityType} | search "*${entityName}*" | fieldsAdd entity.type ]`)
+      .join('');
+
+  // Get response from API
   const dqlResponse = await executeDql(dtClient, { query: dql });
 
   if (dqlResponse && dqlResponse.length > 0) {
