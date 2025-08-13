@@ -19,11 +19,14 @@ FROM node:22.17.1-alpine3.21
 WORKDIR /app
 
 # Copy package files and install production dependencies
-COPY --from=build /app/package.json /app/package-lock.json /app/
+COPY --from=build --chown=node:node /app/package.json /app/package-lock.json /app/
 RUN npm ci --only=production --ignore-scripts && npm cache clean --force
 
 # Copy the built application
-COPY --from=build /app/dist /app/dist
+COPY --from=build --chown=node:node /app/dist /app/dist
+
+# Run image as non-root user
+USER node
 
 # Start the application
 CMD ["node", "dist/index.js"]
