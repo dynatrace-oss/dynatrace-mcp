@@ -9,10 +9,6 @@ updates:
       time: '06:00'
       timezone: 'UTC'
     open-pull-requests-limit: 10
-    reviewers:
-      - 'dynatrace-oss/dynatrace-mcp-maintainers'
-    assignees:
-      - 'dynatrace-oss/dynatrace-mcp-maintainers'
     commit-message:
       prefix: 'deps'
       prefix-development: 'deps-dev'
@@ -53,10 +49,6 @@ updates:
       time: '06:00'
       timezone: 'UTC'
     open-pull-requests-limit: 5
-    reviewers:
-      - 'dynatrace-oss/dynatrace-mcp-maintainers'
-    assignees:
-      - 'dynatrace-oss/dynatrace-mcp-maintainers'
     commit-message:
       prefix: 'ci'
       include: 'scope'
@@ -73,10 +65,6 @@ updates:
       time: '06:00'
       timezone: 'UTC'
     open-pull-requests-limit: 3
-    reviewers:
-      - 'dynatrace-oss/dynatrace-mcp-maintainers'
-    assignees:
-      - 'dynatrace-oss/dynatrace-mcp-maintainers'
     commit-message:
       prefix: 'docker'
       include: 'scope'
