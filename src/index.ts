@@ -15,6 +15,7 @@ import {
   ListToolsRequestSchema,
   NotificationSchema,
   Tool,
+  ToolAnnotations,
 } from '@modelcontextprotocol/sdk/types.js';
 import { config } from 'dotenv';
 import { z, ZodRawShape, ZodTypeAny } from 'zod';
@@ -76,6 +77,7 @@ const main = async () => {
     name: string,
     description: string,
     paramsSchema: ZodRawShape,
+    annotations: ToolAnnotations,
     cb: (args: z.objectOutputType<ZodRawShape, ZodTypeAny>) => Promise<string>,
   ) => {
     const wrappedCb = async (args: ZodRawShape): Promise<CallToolResult> => {
@@ -112,28 +114,36 @@ const main = async () => {
       }
     };
 
-    server.tool(name, description, paramsSchema, (args) => wrappedCb(args));
+    server.tool(name, description, paramsSchema, annotations, (args) => wrappedCb(args));
   };
 
-  tool('get_environment_info', 'Get information about the connected Dynatrace Environment (Tenant)', {}, async ({}) => {
-    // create an oauth-client
-    const dtClient = await createDtHttpClient(
-      dtEnvironment,
-      scopesBase,
-      oauthClientId,
-      oauthClientSecret,
-      dtPlatformToken,
-    );
-    const environmentInformationClient = new EnvironmentInformationClient(dtClient);
+  tool(
+    'get_environment_info',
+    'Get information about the connected Dynatrace Environment (Tenant)',
+    {},
+    {
+      readOnlyHint: true,
+    },
+    async ({}) => {
+      // create an oauth-client
+      const dtClient = await createDtHttpClient(
+        dtEnvironment,
+        scopesBase,
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
+      );
+      const environmentInformationClient = new EnvironmentInformationClient(dtClient);
 
-    const environmentInfo = await environmentInformationClient.getEnvironmentInformation();
-    let resp = `Environment Information (also referred to as tenant):
+      const environmentInfo = await environmentInformationClient.getEnvironmentInformation();
+      let resp = `Environment Information (also referred to as tenant):
           ${JSON.stringify(environmentInfo)}\n`;
 
-    resp += `You can reach it via ${dtEnvironment}\n`;
+      resp += `You can reach it via ${dtEnvironment}\n`;
 
-    return resp;
-  });
+      return resp;
+    },
+  );
 
   tool(
     'list_vulnerabilities',
@@ -154,6 +164,9 @@ const main = async () => {
         .number()
         .default(25)
         .describe('Maximum number of vulnerabilities to display in the response.'),
+    },
+    {
+      readOnlyHint: true,
     },
     async ({ riskScore, additionalFilter, maxVulnerabilitiesToDisplay }) => {
       const dtClient = await createDtHttpClient(
@@ -216,6 +229,9 @@ const main = async () => {
         ),
       maxProblemsToDisplay: z.number().default(10).describe('Maximum number of problems to display in the response.'),
     },
+    {
+      readOnlyHint: true,
+    },
     async ({ additionalFilter, maxProblemsToDisplay }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
@@ -263,6 +279,9 @@ const main = async () => {
     {
       entityName: z.string(),
     },
+    {
+      readOnlyHint: true,
+    },
     async ({ entityName }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
@@ -281,6 +300,9 @@ const main = async () => {
     'Get details of a monitored entity based on the entityId on Dynatrace',
     {
       entityId: z.string().optional(),
+    },
+    {
+      readOnlyHint: true,
     },
     async ({ entityId }) => {
       const dtClient = await createDtHttpClient(
@@ -317,6 +339,9 @@ const main = async () => {
       channel: z.string().optional(),
       message: z.string().optional(),
     },
+    {
+      // not read-only, not open-world, not destructive
+    },
     async ({ channel, message }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
@@ -336,6 +361,9 @@ const main = async () => {
     'Get Logs for a monitored entity based on name of the entity on Dynatrace',
     {
       entityName: z.string().optional(),
+    },
+    {
+      readOnlyHint: true,
     },
     async ({ entityName }) => {
       const dtClient = await createDtHttpClient(
@@ -357,6 +385,7 @@ const main = async () => {
     {
       dqlStatement: z.string(),
     },
+    { readOnlyHint: true },
     async ({ dqlStatement }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
@@ -391,6 +420,9 @@ const main = async () => {
     'Get Logs, Metrics, Spans or Events from Dynatrace GRAIL by executing a Dynatrace Query Language (DQL) statement. It\'s recommended to use "verify_dql" tool before you execute a DQL statement. A valid statement looks like this: "fetch [logs, spans, events] | filter <some-filter> | summarize count(), by:{some-fields}. Adapt filters for certain attributes: `traceId` could be `trace_id` or `trace.id`.',
     {
       dqlStatement: z.string(),
+    },
+    {
+      openWorldHint: true, // while we are not strictly talking to the open world here, the response from DQL could contain anything, so we treat it as open world
     },
     async ({ dqlStatement }) => {
       const dtClient = await createDtHttpClient(
@@ -427,6 +459,9 @@ const main = async () => {
         .describe(
           'Natural language description of what you want to query. Be specific and include time ranges, entities, and metrics of interest.',
         ),
+    },
+    {
+      openWorldHint: true, // while we are not strictly talking to the open world here, the response here comes from another LLM, which could be considered as open world
     },
     async ({ text }) => {
       const dtClient = await createDtHttpClient(
@@ -466,6 +501,9 @@ const main = async () => {
     {
       dql: z.string().describe('The DQL statement to explain'),
     },
+    {
+      openWorldHint: true, // while we are not strictly talking to the open world here, the response here comes from another LLM, which could be considered as open world
+    },
     async ({ dql }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
@@ -502,6 +540,9 @@ const main = async () => {
       text: z.string().describe('Your question or request for Davis CoPilot'),
       context: z.string().optional().describe('Optional context to provide additional information'),
       instruction: z.string().optional().describe('Optional instruction for how to format the response'),
+    },
+    {
+      openWorldHint: true, // while we are not strictly talking to the open world here, the response here comes from another LLM, which could be considered as open world
     },
     async ({ text, context, instruction }) => {
       const dtClient = await createDtHttpClient(
@@ -567,6 +608,9 @@ const main = async () => {
       channel: z.string().optional(),
       isPrivate: z.boolean().optional().default(false),
     },
+    {
+      // not read only, not open world
+    },
     async ({ problemType, teamName, channel, isPrivate }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
@@ -599,6 +643,9 @@ const main = async () => {
     {
       workflowId: z.string().optional(),
     },
+    {
+      // not read-only, not open-world
+    },
     async ({ workflowId }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
@@ -626,6 +673,9 @@ const main = async () => {
           `The Kubernetes (K8s) Cluster Id, referred to as k8s.cluster.uid (this is NOT the Dynatrace environment)`,
         ),
     },
+    {
+      readOnlyHint: true,
+    },
     async ({ clusterId }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
@@ -645,6 +695,9 @@ const main = async () => {
     'Get detailed Ownership information for one or multiple entities on Dynatrace',
     {
       entityIds: z.string().optional().describe('Comma separated list of entityIds'),
+    },
+    {
+      readOnlyHint: true,
     },
     async ({ entityIds }) => {
       const dtClient = await createDtHttpClient(
