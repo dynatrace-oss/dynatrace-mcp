@@ -9,6 +9,7 @@ import { config } from 'dotenv';
 import { createDtHttpClient } from '../src/authentication/dynatrace-clients';
 import { findMonitoredEntityByName } from '../src/capabilities/find-monitored-entity-by-name';
 import { getDynatraceEnv, DynatraceEnv } from '../src/getDynatraceEnv';
+import { time } from 'console';
 
 // Load environment variables
 config();
@@ -66,7 +67,7 @@ describe('Find Monitored Entity by Name Integration Tests', () => {
     expect(response).toBeDefined();
     expect(typeof response).toBe('string');
     expect(response).toBe('No monitored entity found with the specified name.');
-  });
+  }, 30_000); // Increased timeout for API calls
 
   test('should handle search with empty string', async () => {
     const dtClient = await createHttpClient();
