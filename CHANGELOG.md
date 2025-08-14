@@ -1,5 +1,9 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## Unreleased changes
+
+- Added tool-annotations `readOnlyHint` and `openWorldHint`
+
 ## 0.5.0 (Release Candidate 3)
 
 - Improved `list_vulnerabilities` tool to use DQL statement instead of classic API, and aligned parameters with `list_problems` tool
