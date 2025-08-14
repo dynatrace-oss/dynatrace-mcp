@@ -15,10 +15,14 @@ export const getMonitoredEntityDetails = async (dtClient: HttpClient, entityId: 
   let dql: string;
 
   if (entityType) {
-    // query only the specific entity type
+    // query only the specific entity type - this should be the default case, and rather quick
+    // ToDo: Support smartscapeNodes in the near future :)
     dql = `fetch ${entityType} | filter id == "${entityId}" | expand tags | fieldsAdd entity.type`;
   } else {
-    // Fallback: query all entity types
+    // Fallback: query all entity types - it's inefficient and unlikely that this works, but maybe some entity type is not correctly mapped
+    console.error(
+      `Couldn't determine entity type for ID: ${entityId}. Falling back to querying all entity types. This may be slow! Please raise an issue on GitHub if you believe this is a bug.`,
+    );
     dql =
       `fetch ${DYNATRACE_ENTITY_TYPES[0]} | filter id == "${entityId}" | expand tags | fieldsAdd entity.type` +
       DYNATRACE_ENTITY_TYPES.slice(1)
