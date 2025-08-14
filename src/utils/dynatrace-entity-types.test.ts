@@ -159,5 +159,10 @@ describe('getEntityTypeFromId', () => {
       const result = getEntityTypeFromId('AZURE_VM-42EA5AB8F028E280');
       expect(result).toBe('dt.entity.azure_vm');
     });
+
+    it('should map RELATIONAL_DATABASE_SERVICE entity ID to dt.entity.relational_database_service', () => {
+      const result = getEntityTypeFromId('RELATIONAL_DATABASE_SERVICE-B4EDC0E1E1279494');
+      expect(result).toBe('dt.entity.relational_database_service');
+    });
   });
 });
