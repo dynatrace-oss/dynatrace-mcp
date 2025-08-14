@@ -59,6 +59,9 @@ const ENTITY_ID_PREFIX_TO_TYPE_MAP: Record<string, string> = {
   // Geolocation
   GEOLOCATION: 'dt.entity.geolocation', // Verified!
 
+  // Database Services
+  RELATIONAL_DATABASE_SERVICE: 'dt.entity.relational_database_service', // Verified - might need an additional integration/config to work properly though
+
   // AWS Services
   EC2_INSTANCE: 'dt.entity.ec2_instance', // Verified!
   AWS_LAMBDA_FUNCTION: 'dt.entity.aws_lambda_function', // Verified!
