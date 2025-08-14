@@ -47,7 +47,6 @@
   "license": "MIT",
   "dependencies": {
     "@dynatrace-sdk/client-automation": "^5.3.0",
-    "@dynatrace-sdk/client-classic-environment-v2": "^3.6.8",
     "@dynatrace-sdk/client-platform-management-service": "^1.6.3",
     "@dynatrace-sdk/client-query": "^1.18.1",
     "@dynatrace-sdk/shared-errors": "^1.0.0",
