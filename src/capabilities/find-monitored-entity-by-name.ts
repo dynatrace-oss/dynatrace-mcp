@@ -23,6 +23,7 @@ export const findMonitoredEntityByName = async (dtClient: HttpClient, entityName
       .join('');
 
   // Get response from API
+  // Note: This may be slow, as we are appending multiple entity types above
   const dqlResponse = await executeDql(dtClient, { query: dql });
 
   if (dqlResponse && dqlResponse.length > 0) {
