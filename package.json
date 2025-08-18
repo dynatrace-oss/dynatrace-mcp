@@ -1,6 +1,6 @@
 {
   "name": "@dynatrace-oss/dynatrace-mcp-server",
-  "version": "0.5.0-rc.2",
+  "version": "0.5.0-rc.3",
   "description": "Model Context Protocol (MCP) server for Dynatrace",
   "keywords": [
     "Dynatrace",
@@ -35,7 +35,7 @@
   },
   "scripts": {
     "build": "tsc --build",
-    "prepare": "npm run build",
+    "prepare": "husky",
     "watch": "tsc --watch",
     "test": "jest",
     "test:unit": "jest --selectProjects unit",
@@ -53,12 +53,13 @@
     "@dynatrace-sdk/shared-errors": "^1.0.0",
     "@modelcontextprotocol/sdk": "^1.8.0",
     "dotenv": "^16.4.7",
-    "dt-app": "^0.140.1",
+    "dt-app": "^0.148.1",
     "zod-to-json-schema": "^3.24.5"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/node": "^22",
+    "husky": "^9.1.7",
     "jest": "^30.0.0",
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.0",

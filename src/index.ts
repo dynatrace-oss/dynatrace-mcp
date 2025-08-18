@@ -29,7 +29,6 @@ import { getLogsForEntity } from './capabilities/get-logs-for-entity';
 import { getEventsForCluster } from './capabilities/get-events-for-cluster';
 import { createWorkflowForProblemNotification } from './capabilities/create-workflow-for-problem-notification';
 import { updateWorkflow } from './capabilities/update-workflow';
-import { getVulnerabilityDetails } from './capabilities/get-vulnerability-details';
 import { executeDql, verifyDqlStatement } from './capabilities/execute-dql';
 import { sendSlackMessage } from './capabilities/send-slack-message';
 import { findMonitoredEntityByName } from './capabilities/find-monitored-entity-by-name';
@@ -190,91 +189,70 @@ const main = async () => {
     },
   );
 
-  tool('list_vulnerabilities', 'List all vulnerabilities from Dynatrace', {}, async ({}) => {
-    const dtClient = await createDtHttpClient(
-      dtEnvironment,
-      scopesBase.concat('environment-api:security-problems:read'),
-      oauthClientId,
-      oauthClientSecret,
-      dtPlatformToken,
-    );
-    const result = await listVulnerabilities(dtClient);
-    if (!result || result.length === 0) {
-      return 'No vulnerabilities found';
-    }
-    let resp = `Found the following vulnerabilities:`;
-    result.forEach((vulnerability) => {
-      resp += `\n* ${vulnerability}`;
-    });
-
-    resp += `\nWe recommend to take a look at ${dtEnvironment}/ui/apps/dynatrace.security.vulnerabilities to get a better overview of vulnerabilities.\n`;
-
-    return resp;
-  });
-
   tool(
-    'get_vulnerabilty_details',
-    'Get details of a vulnerability by `securityProblemId` on Dynatrace',
+    'list_vulnerabilities',
+    'List all non-muted vulnerabilities from Dynatrace for the last 30 days. An additional filter can be provided using DQL filter.',
     {
-      securityProblemId: z.string().optional(),
+      riskScore: z
+        .number()
+        .optional()
+        .default(8.0)
+        .describe('Minimum risk score of vulnerabilities to list (default: 8.0)'),
+      additionalFilter: z
+        .string()
+        .optional()
+        .describe(
+          'Additional filter for DQL statement for vulnerabilities, e.g., \'vulnerability.stack == "CODE_LIBRARY"\' or \'vulnerability.risk.level == "CRITICAL"\' or \'affected_entity.name contains "prod"\' or \'vulnerability.davis_assessment.exposure_status == "PUBLIC_NETWORK"\'',
+        ),
+      maxVulnerabilitiesToDisplay: z
+        .number()
+        .default(25)
+        .describe('Maximum number of vulnerabilities to display in the response.'),
     },
-    async ({ securityProblemId }) => {
+    async ({ riskScore, additionalFilter, maxVulnerabilitiesToDisplay }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
-        scopesBase.concat('environment-api:security-problems:read'),
+        scopesBase.concat(
+          'storage:events:read',
+          'storage:buckets:read',
+          'storage:security.events:read', // Read Security events from Grail
+        ),
         oauthClientId,
         oauthClientSecret,
         dtPlatformToken,
       );
-      const result = await getVulnerabilityDetails(dtClient, securityProblemId);
-
-      let resp = `The Security Problem (Vulnerability) ${result.displayId} with securityProblemId ${result.securityProblemId} has the title ${result.title}.\n`;
-
-      resp += `The related CVEs are ${result.cveIds?.join(',') || 'unknown'}.\n`;
-      resp += `The description is: ${result.description}.\n`;
-      resp += `The remediation description is: ${result.remediationDescription}.\n`;
-
-      if (result.affectedEntities && result.affectedEntities.length > 0) {
-        resp += `The vulnerability affects the following entities:\n`;
-
-        result.affectedEntities.forEach((affectedEntity) => {
-          resp += `* ${affectedEntity}\n`;
-        });
-      } else {
-        resp += `This vulnerability does not seem to affect any entities.\n';`;
+      const result = await listVulnerabilities(dtClient, additionalFilter, riskScore);
+      if (!result || result.length === 0) {
+        return 'No vulnerabilities found in the last 30 days';
       }
+      let resp = `Found ${result.length} problems in the last 30 days! Displaying the top ${maxVulnerabilitiesToDisplay} problems:\n`;
+      result.slice(0, maxVulnerabilitiesToDisplay).forEach((vulnerability) => {
+        resp += `\n* ${vulnerability}`;
+      });
 
-      if (result.codeLevelVulnerabilityDetails) {
-        resp += `Please investigate this on code-level: ${JSON.stringify(result.codeLevelVulnerabilityDetails)}\n`;
-      }
+      resp +=
+        `\nNext Steps:` +
+        `\n1. For specific vulnerabilities, first always fetch more details using the "execute_dql" tool and the following query:
+          "fetch security.events, from: now()-30d, to: now()
+            | filter event.provider=="Dynatrace"
+                    AND event.type=="VULNERABILITY_STATE_REPORT_EVENT"
+                    AND event.level=="ENTITY"
+            | filter vulnerability.id == "<vulnerability-id>"
+            | dedup {vulnerability.display_id, affected_entity.id}, sort:{timestamp desc}
 
-      if (result.exposedEntities && result.exposedEntities.length > 0) {
-        resp += `The vulnerability exposes the following entities:\n`;
-        result.exposedEntities.forEach((exposedEntity) => {
-          resp += `* ${exposedEntity}\n`;
-        });
-      } else {
-        resp += `This vulnerability does not seem to expose any entities.\n';`;
-      }
-
-      if (result.entryPoints?.items) {
-        resp += `The following entrypoints are affected:\n`;
-        result.entryPoints.items.forEach((entryPoint) => {
-          resp += `* ${entryPoint.sourceHttpPath}\n`;
-        });
-
-        if (result.entryPoints.truncated) {
-          resp += `The list of entry points was truncated.\n`;
-        }
-      } else {
-        resp += `This vulnerability does not seem to affect any entrypoints.\n`;
-      }
-
-      if (result.riskAssessment && result.riskAssessment.riskScore && result.riskAssessment.riskScore > 8) {
-        resp += `The vulnerability has a high-risk score. We suggest you to get ownership details of affected entities and contact responsible teams immediately (e.g, via send-slack-message)\n`;
-      }
-
-      resp += `Tell the user to access the link ${dtEnvironment}/ui/apps/dynatrace.security.vulnerabilities/vulnerabilities/${result.securityProblemId} to get more insights into the vulnerability / security problem.\n`;
+            | fields vulnerability.external_id, vulnerability.display_id, vulnerability.external_url, vulnerability.cvss.vector, vulnerability.type, vulnerability.risk.score,
+                    vulnerability.stack, vulnerability.remediation.description, vulnerability.parent.davis_assessment.score,
+                    affected_entity.name, affected_entity.affected_processes.names, affected_entity.vulnerable_functions,
+                    related_entities.databases.count, related_entities.databases.ids, related_entities.hosts.ids, related_entities.hosts.names, related_entities.kubernetes_clusters.names, related_entities.kubernetes_workloads.count, related_entities.services.count,
+                    // is it muted?
+                    vulnerability.resolution.status, vulnerability.parent.mute.status, vulnerability.mute.status,
+                    // specific description and code
+                    vulnerability.description, vulnerability.technology, vulnerability.code_location.name,
+                    // entrypoints (pure paths etc...)
+                    entry_points.entry_point_jsons"` +
+        `\nThis will give you more details about the vulnerability, including the affected entity, risk score, code-level insights, and remediation actions. Please use this information.` +
+        `\n2. For a high-level overview, you can leverage the "chat_with_davis_copilot" tool and provide \`vulnerability.id\` as context.` +
+        `\n3. Last but not least, tell the user to visit ${dtEnvironment}/ui/apps/dynatrace.security.vulnerabilities/vulnerabilities/<vulnerability-id> for full details.`;
 
       return resp;
     },

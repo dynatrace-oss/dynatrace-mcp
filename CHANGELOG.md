@@ -1,15 +1,24 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
-## Unreleased changes
+## 0.5.0 (Release Candidate 3)
 
+- Improved `list_vulnerabilities` tool to use DQL statement instead of classic API, and aligned parameters with `list_problems` tool
+- Removed `get_vulnerability_details` tool as the same can now be achieved with a simple `execute_dql` call
+- Removed scope `environment-api:security.problems:read` as it's no longer needed
+- Added comprehensive AI-Powered Observability Workshop Rules with hierarchical workflow architecture
+- Enhanced README with advanced analysis capabilities including incident response, security compliance, and DevOps automation
+- Added support for multi-phase incident investigation, cross-data source correlation, and precise root cause identification
+- Introduced streamlined rule structure optimized for LLM context windows (all files under 6,500 tokens)
+- Added integration guides for multiple AI assistants (Amazon Q, Cursor, Windsurf, Cline, GitHub Copilot)
+- Enhanced example prompts with sophisticated use cases for transaction analysis, security assessment, and DevOps workflows
 - Removed unneeded scopes `environment-api:slo:read` (no tool is using this) and `environment-api:metrics:read` (anyway handled via execute DQL tool)
 - Removed `metrics` from `execute_dql` example with `fetch`.
 - Clarified usage of `verify_dql` to avoid unnecessary tool calls.
 
 ## 0.5.0 (Release Candidate 2)
 
-- Improved "List Problems" tool to use a DQL statement to retrieve data from Dynatrace, and provide better next steps
-- Removed "Get Problem Details" tool, as the same can be achieved with a simple "execute_dql" call
+- Improved `list_problems` tool to use a DQL statement to retrieve data from Dynatrace, and provide better next steps
+- Removed `get_problem_details` tool, as the same can be achieved with a simple "execute_dql" call
 - Removed scope `environment-api:problems:read` as it's no longer needed
 
 ## 0.5.0 (Release Candidate 1)

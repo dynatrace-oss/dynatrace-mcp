@@ -1,18 +1,58 @@
 # Dynatrace Security & Compliance Analysis Guide
 
+## 🚨 **CRITICAL: Data Source Migration**
+
+**⚠️ IMPORTANT UPDATE**: Security events have been migrated to a new dedicated table:
+
+### **New Data Source (Current)**
+
+```dql
+// ✅ CORRECT - Use security.events table
+fetch security.events, from:now() - 30d
+| filter event.type == "COMPLIANCE_FINDING"
+| filter cloud.provider == "aws"
+```
+
+### **Legacy Data Source (Deprecated)**
+
+```dql
+// ❌ DEPRECATED - Old events table with security event filter
+fetch events
+| filter event.kind == "SECURITY_EVENT"
+```
+
+**Migration Impact:**
+
+- **AWS/Cloud compliance findings** require extended timeframes (24h-30d) due to infrequent scanning
+- **All queries in this guide** have been updated for the new security.events table
+- **Better performance** and dedicated security data access
+
+---
+
 Use the Dynatrace MCP server to look up configuration issues. Here is how:
+
+**Related Security Files:**
+
+- **../reference/DynatraceQueryLanguage.md** - Core DQL syntax foundation and best practices
+- **../reference/DynatraceSecurityEvents.md** - Complete schema reference for all security event types with visual diagrams
+- **../reference/DynatraceExplore.md** - Environment discovery for security field exploration
+
+**Integration with Observability:**
+
+- **DynatraceIncidentResponse.md** - Correlate security findings with operational problems
+- **dataSourceGuides/DynatraceDataInvestigation.md** - Security-related log investigation patterns
 
 - Call the Dynatrace DQL tool (execute_dql)
 - **FIRST**: Always analyze scan types to understand what data is available using COMPLIANCE_SCAN_COMPLETED events
 - Always start with a broad query and limit the amount of results, and only then filter down - this allows you to identify the available data fields and their content for filtering.
-- **CRITICAL**: For cloud provider compliance findings (AWS/GCP/Azure), always use extended timeframes (24h+) as cloud scans are infrequent and findings may be outside the default 2-hour window.
+- **CRITICAL**: For cloud provider compliance findings (AWS/GCP/Azure), always use extended timeframes (24h-30d) as cloud scans are infrequent and findings may be outside the default 2-hour window.
 - For Kubernetes compliance findings, the default timeframe usually works as scans run more frequently.
 
 ---
 
 ## 🔐 **Security Events Architecture**
 
-Dynatrace security events are stored in a dedicated bucket (`default_security_events`) with `event.kind=="SECURITY_EVENT"` for enhanced access control and data separation.
+Dynatrace security events are now stored in a dedicated `security.events` table for enhanced access control, data separation, and improved query performance.
 
 ### **Event Categories:**
 
@@ -63,7 +103,7 @@ Dynatrace security events are stored in a dedicated bucket (`default_security_ev
 
 ```dql
 // Get most recent scan first
-fetch events, from:now() - 24h
+fetch security.events, from:now() - 30d
 | filter event.type == "COMPLIANCE_SCAN_COMPLETED" AND object.type == "AWS"
 | sort timestamp desc | limit 1
 | fields scan.id
@@ -73,7 +113,7 @@ fetch events, from:now() - 24h
 
 ```dql
 // This includes outdated findings from multiple scans!
-fetch events, from:now() - 7d
+fetch security.events, from:now() - 7d
 | filter event.type == "COMPLIANCE_FINDING"
 | summarize count = count()
 ```
@@ -83,7 +123,7 @@ fetch events, from:now() - 7d
 #### **Severity-Based Risk Assessment**
 
 ```dql
-fetch events, from:now() - 24h
+fetch security.events, from:now() - 30d
 | filter event.type == "COMPLIANCE_FINDING"
 | filter compliance.result.status.level == "FAILED"
 | summarize
@@ -98,7 +138,7 @@ fetch events, from:now() - 24h
 #### **Evidence-Based Investigation**
 
 ```dql
-fetch events, from:now() - 24h
+fetch security.events, from:now() - 30d
 | filter event.type == "COMPLIANCE_FINDING"
 | filter compliance.rule.severity.level == "CRITICAL"
 | filter compliance.result.status.level == "FAILED"
@@ -110,7 +150,7 @@ fetch events, from:now() - 24h
 #### **Security Risk Correlation**
 
 ```dql
-fetch events, from:now() - 24h
+fetch security.events, from:now() - 30d
 | filter isNotNull(dt.security.risk.score)
 | summarize
     avg_risk_score = avg(dt.security.risk.score),
@@ -123,7 +163,7 @@ fetch events, from:now() - 24h
 #### **Runtime Protection Analysis**
 
 ```dql
-fetch events, from:now() - 24h
+fetch security.events, from:now() - 30d
 | filter isNotNull(dt.security.rap.action)
 | summarize
     blocked_count = countIf(dt.security.rap.action == "BLOCKED"),
@@ -139,7 +179,7 @@ fetch events, from:now() - 24h
 **ALWAYS start compliance analysis by understanding what scan types are available:**
 
 ```dql
-fetch events, from:now() - 7d
+fetch security.events, from:now() - 30d
 | filter event.type == "COMPLIANCE_SCAN_COMPLETED"
 | summarize scan_count = count(), by:{object.type}
 | sort scan_count desc
@@ -166,17 +206,17 @@ fetch events, from:now() - 7d
 
 ### Recommended Query Patterns:
 
-**For AWS findings - ALWAYS use 24h+ timeframe:**
+**For AWS findings - ALWAYS use 24h-30d timeframe:**
 
 ```dql
-fetch events, from:now() - 24h
+fetch security.events, from:now() - 30d
 | filter event.type == "COMPLIANCE_FINDING" AND cloud.provider == "aws"
 ```
 
 **For Kubernetes findings - default timeframe works:**
 
 ```dql
-fetch events
+fetch security.events
 | filter event.type == "COMPLIANCE_FINDING"
 | filter compliance.result.object.type startsWith "k8s"
 ```
@@ -184,7 +224,7 @@ fetch events
 **For comprehensive compliance analysis - use extended timeframe:**
 
 ```dql
-fetch events, from:now() - 7d
+fetch security.events, from:now() - 30d
 | filter event.type == "COMPLIANCE_FINDING"
 ```
 
@@ -193,14 +233,14 @@ fetch events, from:now() - 7d
 All AWS compliance findings (with proper timeframe):
 
 ```dql
-fetch events, from:now() - 24h
+fetch security.events, from:now() - 30d
 | filter event.type == "COMPLIANCE_FINDING" AND cloud.provider == "aws"
 ```
 
 AWS findings by compliance standard:
 
 ```dql
-fetch events, from:now() - 24h
+fetch security.events, from:now() - 30d
 | filter event.type == "COMPLIANCE_FINDING" AND cloud.provider == "aws"
 | summarize count = count(), by:{compliance.standard.short_name}
 ```
@@ -208,7 +248,7 @@ fetch events, from:now() - 24h
 AWS S3 bucket specific findings:
 
 ```dql
-fetch events, from:now() - 24h
+fetch security.events, from:now() - 30d
 | filter event.type == "COMPLIANCE_FINDING"
 | filter cloud.provider == "aws" AND object.type == "awsbucket"
 | fields timestamp, compliance.rule.severity.level, compliance.standard.short_name, compliance.rule.title, compliance.result.object.evidence_json
@@ -217,7 +257,7 @@ fetch events, from:now() - 24h
 AWS failed findings by severity:
 
 ```dql
-fetch events, from:now() - 24h
+fetch security.events, from:now() - 30d
 | filter event.type == "COMPLIANCE_FINDING"
 | filter compliance.result.status.level == "FAILED"
 | filter cloud.provider == "aws"
@@ -248,7 +288,7 @@ fetch events, from:now() - 7d
 
 ```dql
 // Get the most recent scan first
-fetch events, from:now() - 24h
+fetch security.events, from:now() - 30d
 | filter event.type == "COMPLIANCE_SCAN_COMPLETED" AND object.type == "AWS"
 | sort timestamp desc
 | limit 1
@@ -258,14 +298,14 @@ fetch events, from:now() - 24h
 Then use that `scan.id` to get current findings:
 
 ```dql
-fetch events, from:now() - 24h
+fetch security.events, from:now() - 30d
 | filter event.type == "COMPLIANCE_FINDING" AND scan.id == "<latest_scan_id>"
 | summarize count = count(), by:{compliance.rule.title}
 ```
 
 ### Troubleshooting Missing Findings:
 
-1. **No cloud provider findings?** → Use `from:now() - 24h` or longer
+1. **No cloud provider findings?** → Use `from:now() - 30d` or longer
 2. **No recent findings?** → Check if scans are running with COMPLIANCE_SCAN_COMPLETED query
 3. **Partial results?** → Extend timeframe to capture full scan cycles
 
