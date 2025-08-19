@@ -358,7 +358,7 @@ All recipients should receive this message according to their designation.`,
       // This might succeed but should report invalid destinations
       try {
         const result = await sendEmail(dtClient, emailRequest);
-        
+
         // If the email API accepts the request but marks destinations as invalid
         if (result.includes('Invalid destinations')) {
           expect(result).toContain('Invalid destinations');
