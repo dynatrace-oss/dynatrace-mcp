@@ -10,7 +10,7 @@ import { DYNATRACE_ENTITY_TYPES } from '../utils/dynatrace-entity-types';
  */
 export const findMonitoredEntityByName = async (dtClient: HttpClient, entityName: string) => {
   if (entityName == '') {
-    return 'No monitored entity found with the specified name.';
+    return 'You need to provide an entity name to search for.';
   }
 
   // construct a DQL statement like "fetch <entityType> | search "*<entityName>*" | fieldsAdd entity.type" for each entity type
