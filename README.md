@@ -338,6 +338,7 @@ Depending on the features you are using, the following scopes are needed:
 - `davis-copilot:conversations:execute` - execute conversational skill (chat with Copilot)
 - `davis-copilot:nl2dql:execute` - execute Davis Copilot Natural Language (NL) to DQL skill
 - `davis-copilot:dql2nl:execute` - execute DQL to Natural Language (NL) skill
+- `email:emails:send` - needed for `send_email` tool to send emails via Dynatrace Email API
 - `settings:objects:read` - needed for reading ownership information and Guardians (SRG) from settings
 
   **Note**: Please ensure that `settings:objects:read` is used, and _not_ the similarly named scope `app-settings:objects:read`.
@@ -366,6 +367,12 @@ fetch logs | filter dt.source_entity == 'SERVICE-123' | summarize count(), by:{s
 
 ```
 How can I investigate slow database queries in Dynatrace?
+```
+
+**Send email notifications:**
+
+```
+Send an email notification about the incident to the on-call team at team@example.com with CC to manager@example.com
 ```
 
 ### **Advanced Incident Investigation**
