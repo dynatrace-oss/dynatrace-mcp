@@ -317,7 +317,7 @@ const main = async () => {
 
   tool(
     'find_entity_by_name',
-    'Get the entityId of a (monitored) entity (e.g., service, host, process-group) within the topology based on the name of the entity on Dynatrace',
+    'Get the entityId of a monitored entity (service, host, process-group, application, kubernetes-node, ...) within the topology based on the name of the entity on Dynatrace',
     {
       entityName: z.string().describe('Name of the entity to search for, e.g., "my-service" or "my-host"'),
     },
