@@ -15,7 +15,7 @@ npm install -g @dynatrace-oss/dynatrace-mcp-server
 
 ### 2. Copy Integration Rules to Your IDE
 
-Copy all 11 rule files to your AI assistant's rules directory:
+Copy all 12 rule files to your AI assistant's rules directory:
 
 **IDE-Specific Locations:**
 
@@ -58,7 +58,7 @@ dynatrace-agent-rules/rules/
     └── DynatraceProblemsSpec.md                 # Problems schema reference
 ```
 
-### **Required Rule Files (11 Total)**
+### **Required Rule Files (12 Total)**
 
 **Main Files:**
 
@@ -83,6 +83,7 @@ dynatrace-agent-rules/rules/
 - `reference/DynatraceExplore.md` - **Field discovery patterns**
 - `reference/DynatraceSecurityEvents.md` - **Security events schema reference**
 - `reference/DynatraceProblemsSpec.md` - **Problems schema reference**
+- `reference/DynatraceEmailFormatting.md` - **Email formatting syntax and templates**
 
 ### **Workflow Connectivity Map**
 
