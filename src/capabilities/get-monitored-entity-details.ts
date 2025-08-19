@@ -21,7 +21,7 @@ export const getMonitoredEntityDetails = async (dtClient: HttpClient, entityId: 
   } else {
     // Fallback: query all entity types - it's inefficient and unlikely that this works, but maybe some entity type is not correctly mapped
     console.error(
-      `Couldn't determine entity type for ID: ${entityId}. Falling back to querying all entity types. This may be slow! Please raise an issue on GitHub if you believe this is a bug.`,
+      `Couldn't determine entity type for ID: ${entityId}. Falling back to querying all entity types. This may be slow! Please raise an issue at https://github.com/dynatrace-oss/dynatrace-mcp/issues if you believe this is a bug.`,
     );
     dql =
       `fetch ${DYNATRACE_ENTITY_TYPES[0]} | filter id == "${entityId}" | expand tags | fieldsAdd entity.type` +
