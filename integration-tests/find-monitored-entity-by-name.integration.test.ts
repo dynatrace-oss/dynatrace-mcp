@@ -9,7 +9,6 @@ import { config } from 'dotenv';
 import { createDtHttpClient } from '../src/authentication/dynatrace-clients';
 import { findMonitoredEntityByName } from '../src/capabilities/find-monitored-entity-by-name';
 import { getDynatraceEnv, DynatraceEnv } from '../src/getDynatraceEnv';
-import { time } from 'console';
 
 // Load environment variables
 config();
