@@ -4,7 +4,7 @@
 
 ### Added
 
-- Added `send_email` tool for sending emails via Dynatrace Email API with support for multiple recipients (TO, CC, BCC), subject, body content, and notification settings URL
+- Added `send_email` tool for sending emails via Dynatrace Email API with support for multiple recipients (TO, CC, BCC), subject, body content
 - Added OAuth scope `email:emails:send` for email functionality
 
 ## 0.5.0

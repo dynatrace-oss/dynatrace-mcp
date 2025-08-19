@@ -1,15 +1,5 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-echo "Running pre-commit checks..."
-
-# Check if we're in a Node.js project
-if [ -f "package.json" ]; then
-  # Try to run npm commands with fallback
-  (npm run test:unit 2>/dev/null || npm.cmd run test:unit 2>/dev/null || echo "Skipping tests - npm not available")
-  (npm run prettier:fix 2>/dev/null || npm.cmd run prettier:fix 2>/dev/null || echo "Skipping prettier - npm not available")
-else
-  echo "Not a Node.js project, skipping npm checks"
-fi
-
-echo "Pre-commit checks completed"
+npm run test:unit
+npm run prettier:fix

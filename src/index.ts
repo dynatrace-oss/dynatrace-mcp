@@ -34,7 +34,7 @@ import { createWorkflowForProblemNotification } from './capabilities/create-work
 import { updateWorkflow } from './capabilities/update-workflow';
 import { executeDql, verifyDqlStatement } from './capabilities/execute-dql';
 import { sendSlackMessage } from './capabilities/send-slack-message';
-import { sendEmail } from './capabilities/send-email';
+import { sendEmail, EmailSendResult } from './capabilities/send-email';
 import { findMonitoredEntityByName } from './capabilities/find-monitored-entity-by-name';
 import {
   chatWithDavisCopilot,
@@ -714,24 +714,24 @@ const main = async () => {
 
   tool(
     'send_email',
-    'Send an email using the Dynatrace Email API. The sender will be no-reply@apps.dynatrace.com.',
+    'Send an email using the Dynatrace Email API. The sender will be no-reply@apps.dynatrace.com. Maximum 10 recipients total across TO, CC, and BCC.',
     {
       toRecipients: z.array(z.string().email()).describe('Array of email addresses for TO recipients'),
       ccRecipients: z.array(z.string().email()).optional().describe('Array of email addresses for CC recipients'),
       bccRecipients: z.array(z.string().email()).optional().describe('Array of email addresses for BCC recipients'),
       subject: z.string().describe('Subject line of the email'),
-      body: z.string().describe('Body content of the email'),
-      contentType: z
-        .enum(['text/plain', 'text/html'])
-        .default('text/plain')
-        .describe('Content type of the email body (default: text/plain)'),
-      notificationSettingsUrl: z
-        .string()
-        .url()
-        .optional()
-        .describe('Optional notification settings URL (must be valid URL in tenant domain)'),
+      body: z.string().describe('Body content of the email (plain text only)'),
     },
-    async ({ toRecipients, ccRecipients, bccRecipients, subject, body, contentType, notificationSettingsUrl }) => {
+    async ({ toRecipients, ccRecipients, bccRecipients, subject, body }) => {
+      // Validate total recipients limit (10 max across TO, CC, and BCC)
+      const totalRecipients = toRecipients.length + (ccRecipients?.length || 0) + (bccRecipients?.length || 0);
+
+      if (totalRecipients > 10) {
+        throw new Error(
+          `Total recipients (${totalRecipients}) exceeds maximum limit of 10 across TO, CC, and BCC fields`,
+        );
+      }
+
       const dtClient = await createDtHttpClient(
         dtEnvironment,
         scopesBase.concat('email:emails:send'),
@@ -746,14 +746,30 @@ const main = async () => {
         ...(bccRecipients && { bccRecipients: { emailAddresses: bccRecipients } }),
         subject,
         body: {
-          contentType,
+          contentType: 'text/plain' as const,
           body,
         },
-        ...(notificationSettingsUrl && { notificationSettingsUrl }),
       };
 
       const result = await sendEmail(dtClient, emailRequest);
-      return result;
+
+      // Format the structured response into a user-friendly string
+      let responseMessage = `Email sent successfully! Request ID: ${result.requestId}\n`;
+      responseMessage += `Message: ${result.message}\n`;
+
+      if (result.invalidDestinations && result.invalidDestinations.length > 0) {
+        responseMessage += `Invalid destinations: ${result.invalidDestinations.join(', ')}\n`;
+      }
+
+      if (result.bouncingDestinations && result.bouncingDestinations.length > 0) {
+        responseMessage += `Bouncing destinations: ${result.bouncingDestinations.join(', ')}\n`;
+      }
+
+      if (result.complainingDestinations && result.complainingDestinations.length > 0) {
+        responseMessage += `Complaining destinations: ${result.complainingDestinations.join(', ')}\n`;
+      }
+
+      return responseMessage;
     },
   );
 

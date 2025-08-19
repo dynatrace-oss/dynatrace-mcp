@@ -15,7 +15,7 @@ npm install -g @dynatrace-oss/dynatrace-mcp-server
 
 ### 2. Copy Integration Rules to Your IDE
 
-Copy all 12 rule files to your AI assistant's rules directory:
+Copy all rule files to your AI assistant's rules directory:
 
 **IDE-Specific Locations:**
 

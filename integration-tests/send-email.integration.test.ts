@@ -4,11 +4,18 @@
  * This test verifies the email sending functionality by making actual API calls
  * to the Dynatrace environment. These tests require valid authentication credentials
  * and the email:emails:send scope.
+ * 
+ * IMPORTANT: Update the TEST_EMAIL_* variables below with your own email addresses
+ * be        subject: '[Integration Test] Invalid Email Test',
+        body: {
+          body: 'Testing invalid email address handling.',
+        },
+      };unning these tests to avoid sending emails to unintended recipients.
  */
 
 import { config } from 'dotenv';
 import { createDtHttpClient } from '../src/authentication/dynatrace-clients';
-import { sendEmail, EmailRequest } from '../src/capabilities/send-email';
+import { sendEmail, EmailRequest, EmailSendResult } from '../src/capabilities/send-email';
 import { getDynatraceEnv, DynatraceEnv } from '../src/getDynatraceEnv';
 
 // Load environment variables
@@ -24,6 +31,11 @@ const scopesBase = [
 const scopesEmail = [
   'email:emails:send', // Send emails via Dynatrace Email API
 ];
+
+// Configure test email addresses - change these before running tests
+const TEST_EMAIL_TO = 'your-test-email@example.com';
+const TEST_EMAIL_CC = 'your-cc-email@example.com';
+const TEST_EMAIL_BCC = 'your-bcc-email@example.com';
 
 describe('Send Email Integration Tests', () => {
   let dynatraceEnv: DynatraceEnv;
@@ -54,19 +66,19 @@ describe('Send Email Integration Tests', () => {
       );
 
       const emailRequest: EmailRequest = {
-        toRecipients: { emailAddresses: ['test@example.com'] },
+        toRecipients: { emailAddresses: [TEST_EMAIL_TO] },
         subject: '[Integration Test] Simple Email Test',
         body: {
-          contentType: 'text/plain',
           body: 'This is a test email sent from the Dynatrace MCP Server integration test.',
         },
       };
 
       const result = await sendEmail(dtClient, emailRequest);
 
-      expect(result).toContain('Email sent successfully!');
-      expect(result).toContain('Request ID:');
-      expect(result).toContain('Message:');
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBeDefined();
+      expect(result.requestId).toBeTruthy();
+      expect(result.message).toBeDefined();
     }, 30000); // 30 second timeout
 
     it('should send an email with formatted content', async () => {
@@ -110,18 +122,18 @@ fetch logs
 [Dynatrace Dashboard](${dynatraceEnv.dtEnvironment})`;
 
       const emailRequest: EmailRequest = {
-        toRecipients: { emailAddresses: ['test@example.com'] },
+        toRecipients: { emailAddresses: [TEST_EMAIL_TO] },
         subject: '[Integration Test] 📧 Formatted Email Test',
         body: {
-          contentType: 'text/plain',
           body: formattedBody,
         },
       };
 
       const result = await sendEmail(dtClient, emailRequest);
 
-      expect(result).toContain('Email sent successfully!');
-      expect(result).toContain('Request ID:');
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBeDefined();
+      expect(result.requestId).toBeTruthy();
     }, 30000);
 
     it('should send an email with multiple recipients (TO, CC, BCC)', async () => {
@@ -134,19 +146,18 @@ fetch logs
       );
 
       const emailRequest: EmailRequest = {
-        toRecipients: { emailAddresses: ['primary@example.com', 'secondary@example.com'] },
-        ccRecipients: { emailAddresses: ['cc-recipient@example.com'] },
-        bccRecipients: { emailAddresses: ['bcc-recipient@example.com'] },
+        toRecipients: { emailAddresses: [TEST_EMAIL_TO, TEST_EMAIL_TO] },
+        ccRecipients: { emailAddresses: [TEST_EMAIL_CC] },
+        bccRecipients: { emailAddresses: [TEST_EMAIL_BCC] },
         subject: '[Integration Test] Multiple Recipients Test',
         body: {
-          contentType: 'text/plain',
           body: `**Multiple Recipients Test**
 
 This email was sent to multiple recipients to test the TO, CC, and BCC functionality:
 
-- **TO**: primary@example.com, secondary@example.com
-- **CC**: cc-recipient@example.com  
-- **BCC**: bcc-recipient@example.com
+- **TO**: ${TEST_EMAIL_TO}, ${TEST_EMAIL_TO}
+- **CC**: ${TEST_EMAIL_CC}  
+- **BCC**: ${TEST_EMAIL_BCC}
 
 All recipients should receive this message according to their designation.`,
         },
@@ -154,8 +165,9 @@ All recipients should receive this message according to their designation.`,
 
       const result = await sendEmail(dtClient, emailRequest);
 
-      expect(result).toContain('Email sent successfully!');
-      expect(result).toContain('Request ID:');
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBeDefined();
+      expect(result.requestId).toBeTruthy();
     }, 30000);
 
     it('should send an incident notification email with proper formatting', async () => {
@@ -205,24 +217,24 @@ All recipients should receive this message according to their designation.`,
 [**🔗 View in Dynatrace**](${dynatraceEnv.dtEnvironment})`;
 
       const emailRequest: EmailRequest = {
-        toRecipients: { emailAddresses: ['oncall@example.com'] },
-        ccRecipients: { emailAddresses: ['platform-team@example.com'] },
+        toRecipients: { emailAddresses: [TEST_EMAIL_TO] },
+        ccRecipients: { emailAddresses: [TEST_EMAIL_CC] },
         subject: '🚨 P2 INCIDENT: Payment Service - High Error Rate Detected',
         body: {
-          contentType: 'text/plain',
           body: incidentBody,
         },
       };
 
       const result = await sendEmail(dtClient, emailRequest);
 
-      expect(result).toContain('Email sent successfully!');
-      expect(result).toContain('Request ID:');
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBeDefined();
+      expect(result.requestId).toBeTruthy();
     }, 30000);
   });
 
   describe('Email Content Validation', () => {
-    it('should handle emails with notification settings URL', async () => {
+    it('should handle basic email without optional fields', async () => {
       const dtClient = await createDtHttpClient(
         dynatraceEnv.dtEnvironment,
         scopesBase.concat(scopesEmail),
@@ -231,24 +243,19 @@ All recipients should receive this message according to their designation.`,
         dynatraceEnv.dtPlatformToken,
       );
 
-      // Extract the base URL from the environment
-      const baseUrl = dynatraceEnv.dtEnvironment;
-      const notificationUrl = `${baseUrl}/ui/settings/email-notifications`;
-
       const emailRequest: EmailRequest = {
-        toRecipients: { emailAddresses: ['test@example.com'] },
-        subject: '[Integration Test] Email with Notification Settings',
+        toRecipients: { emailAddresses: [TEST_EMAIL_TO] },
+        subject: '[Integration Test] Basic Email Test',
         body: {
-          contentType: 'text/plain',
-          body: 'This email includes a notification settings URL for testing purposes.',
+          body: 'This is a basic email test without optional fields.',
         },
-        notificationSettingsUrl: notificationUrl,
       };
 
       const result = await sendEmail(dtClient, emailRequest);
 
-      expect(result).toContain('Email sent successfully!');
-      expect(result).toContain('Request ID:');
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBeDefined();
+      expect(result.requestId).toBeTruthy();
     }, 30000);
 
     it('should handle security alert email formatting', async () => {
@@ -297,20 +304,20 @@ All recipients should receive this message according to their designation.`,
 [**🛡️ Security Dashboard**](${dynatraceEnv.dtEnvironment}/ui/security)`;
 
       const emailRequest: EmailRequest = {
-        toRecipients: { emailAddresses: ['security-team@example.com'] },
-        ccRecipients: { emailAddresses: ['compliance@example.com'] },
-        bccRecipients: { emailAddresses: ['audit@example.com'] },
+        toRecipients: { emailAddresses: [TEST_EMAIL_TO] },
+        ccRecipients: { emailAddresses: [TEST_EMAIL_CC] },
+        bccRecipients: { emailAddresses: [TEST_EMAIL_BCC] },
         subject: '🔒 HIGH SEVERITY: Security Vulnerability Detected - Immediate Action Required',
         body: {
-          contentType: 'text/plain',
           body: securityBody,
         },
       };
 
       const result = await sendEmail(dtClient, emailRequest);
 
-      expect(result).toContain('Email sent successfully!');
-      expect(result).toContain('Request ID:');
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBeDefined();
+      expect(result.requestId).toBeTruthy();
     }, 30000);
   });
 
@@ -326,10 +333,9 @@ All recipients should receive this message according to their designation.`,
       );
 
       const emailRequest: EmailRequest = {
-        toRecipients: { emailAddresses: ['test@example.com'] },
+        toRecipients: { emailAddresses: [TEST_EMAIL_TO] },
         subject: '[Integration Test] Authentication Error Test',
         body: {
-          contentType: 'text/plain',
           body: 'This should fail due to invalid credentials.',
         },
       };
@@ -360,16 +366,40 @@ All recipients should receive this message according to their designation.`,
         const result = await sendEmail(dtClient, emailRequest);
 
         // If the email API accepts the request but marks destinations as invalid
-        if (result.includes('Invalid destinations')) {
-          expect(result).toContain('Invalid destinations');
+        if (result.invalidDestinations && result.invalidDestinations.length > 0) {
+          expect(result.invalidDestinations).toBeDefined();
+          expect(result.invalidDestinations.length).toBeGreaterThan(0);
         } else {
           // If it succeeds without reporting invalid destinations, that's also valid behavior
-          expect(result).toContain('Email sent successfully!');
+          expect(result.success).toBe(true);
+          expect(result.requestId).toBeDefined();
         }
       } catch (error) {
         // It's also valid for the API to reject invalid email formats
         expect(error).toBeDefined();
       }
+    }, 30000);
+
+    it('should reject emails with more than 10 total recipients', async () => {
+      const dtClient = await createDtHttpClient(
+        dynatraceEnv.dtEnvironment,
+        scopesBase.concat(scopesEmail),
+        dynatraceEnv.oauthClientId,
+        dynatraceEnv.oauthClientSecret,
+        dynatraceEnv.dtPlatformToken,
+      );
+
+      const emailRequest: EmailRequest = {
+        toRecipients: { emailAddresses: [TEST_EMAIL_TO, TEST_EMAIL_TO, TEST_EMAIL_TO, TEST_EMAIL_TO] },
+        ccRecipients: { emailAddresses: [TEST_EMAIL_CC, TEST_EMAIL_CC, TEST_EMAIL_CC, TEST_EMAIL_CC] },
+        bccRecipients: { emailAddresses: [TEST_EMAIL_BCC, TEST_EMAIL_BCC, TEST_EMAIL_BCC] }, // Total: 11 recipients
+        subject: '[Integration Test] Too Many Recipients Test',
+        body: {
+          body: 'This should fail due to exceeding the 10 recipient limit.',
+        },
+      };
+
+      await expect(sendEmail(dtClient, emailRequest)).rejects.toThrow(/exceeds maximum limit of 10/);
     }, 30000);
   });
 });

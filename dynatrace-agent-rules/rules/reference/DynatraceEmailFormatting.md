@@ -351,7 +351,6 @@ Service health will be monitored for the next **2 hours**.
 - **Maximum Recipients**: 10 recipients total across TO, CC, and BCC
 - **Content Limits**: 262,144 bytes maximum message size
 - **No HTML Support**: Only markdown-style formatting supported
-- **Tenant Domain**: `notificationSettingsUrl` must be within tenant domain
 
 ### **Integration with Workflows**
 
