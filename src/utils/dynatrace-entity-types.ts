@@ -94,7 +94,7 @@ export const DYNATRACE_ENTITY_TYPES = Object.values(ENTITY_ID_PREFIX_TO_TYPE_MAP
  * ```typescript
  * getEntityTypeFromId("PROCESS_GROUP-F84E4759809ADA84"); // Returns "dt.entity.process_group"
  * getEntityTypeFromId("APPLICATION-1234567890ABCDEF"); // Returns "dt.entity.application"
- * getEntityTypeFromId("KUBERNETES_POD-ABCDEF1234567890"); // Returns "dt.entity.kubernetes_pod"
+ * getEntityTypeFromId("KUBERNETES_SERVICE-ABCDEF1234567890"); // Returns "dt.entity.kubernetes_service"
  * getEntityTypeFromId("INVALID_ID"); // Returns null
  * ```
  */
