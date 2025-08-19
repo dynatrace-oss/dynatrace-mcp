@@ -5,19 +5,25 @@ This directory contains integration tests that make actual API calls to Dynatrac
 ## Test Suites
 
 ### **execute-dql.integration.test.ts**
+
 Tests DQL query execution functionality including:
+
 - Basic DQL query execution
 - Query verification
 - Error handling for invalid queries
 
 ### **davis-copilot-explain-dql.integration.test.ts**
+
 Tests Davis CoPilot AI functionality including:
+
 - Natural language to DQL translation
 - DQL explanation capabilities
 - Conversational AI features
 
 ### **send-email.integration.test.ts**
+
 Tests email sending functionality including:
+
 - Basic plain text emails
 - Formatted content with markdown-style syntax
 - Multiple recipients (TO, CC, BCC)
@@ -39,15 +45,18 @@ Before running integration tests, ensure you have:
 **Required OAuth Scopes:**
 
 For DQL tests:
+
 - `storage:*:read` - Various storage read permissions
 - `app-engine:apps:run`
 - `app-engine:functions:run`
 
 For Davis CoPilot tests:
+
 - `davis-copilot:*:execute` - AI capabilities
 - All DQL-related scopes
 
 For Email tests:
+
 - `email:emails:send` - Email sending capability
 - `app-engine:apps:run`
 - `app-engine:functions:run`
@@ -55,16 +64,18 @@ For Email tests:
 ## Running Tests
 
 Run all integration tests:
+
 ```bash
 npm run test:integration
 ```
 
 Run specific test suite:
+
 ```bash
 # DQL tests
 npm test -- integration-tests/execute-dql.integration.test.ts
 
-# Davis CoPilot tests  
+# Davis CoPilot tests
 npm test -- integration-tests/davis-copilot-explain-dql.integration.test.ts
 
 # Email tests

@@ -50,7 +50,7 @@ export const sendEmail = async (dtClient: HttpClient, emailRequest: EmailRequest
     });
 
     const result: EmailResponse = await response.body('json');
-    
+
     let responseMessage = `Email sent successfully! Request ID: ${result.requestId}\n`;
     responseMessage += `Message: ${result.message}\n`;
 

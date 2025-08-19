@@ -716,23 +716,11 @@ const main = async () => {
     'send_email',
     'Send an email using the Dynatrace Email API. The sender will be no-reply@apps.dynatrace.com.',
     {
-      toRecipients: z
-        .array(z.string().email())
-        .describe('Array of email addresses for TO recipients'),
-      ccRecipients: z
-        .array(z.string().email())
-        .optional()
-        .describe('Array of email addresses for CC recipients'),
-      bccRecipients: z
-        .array(z.string().email())
-        .optional()
-        .describe('Array of email addresses for BCC recipients'),
-      subject: z
-        .string()
-        .describe('Subject line of the email'),
-      body: z
-        .string()
-        .describe('Body content of the email'),
+      toRecipients: z.array(z.string().email()).describe('Array of email addresses for TO recipients'),
+      ccRecipients: z.array(z.string().email()).optional().describe('Array of email addresses for CC recipients'),
+      bccRecipients: z.array(z.string().email()).optional().describe('Array of email addresses for BCC recipients'),
+      subject: z.string().describe('Subject line of the email'),
+      body: z.string().describe('Body content of the email'),
       contentType: z
         .enum(['text/plain', 'text/html'])
         .default('text/plain')
