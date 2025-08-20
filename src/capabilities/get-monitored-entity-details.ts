@@ -1,51 +1,60 @@
 import { HttpClient } from '@dynatrace-sdk/http-client';
 import { executeDql } from './execute-dql';
-import { DYNATRACE_ENTITY_TYPES, getEntityTypeFromId } from '../utils/dynatrace-entity-types';
+import { getEntityTypeFromId } from '../utils/dynatrace-entity-types';
+
+type MonitoredEntityDetails = { entityId: string; displayName: string; type: string; allProperties: any };
 
 /**
  * Get monitored entity details by entity ID via DQL
  * @param dtClient
  * @param entityId
- * @returns
+ * @returns Details about the monitored entity, or undefined in case we couldn't find it
  */
-export const getMonitoredEntityDetails = async (dtClient: HttpClient, entityId: string) => {
+export const getMonitoredEntityDetails = async (
+  dtClient: HttpClient,
+  entityId: string,
+): Promise<MonitoredEntityDetails | undefined> => {
   // Try to determine the entity type directly from the entity ID (e.g., PROCESS_GROUP-F84E4759809ADA84 -> dt.entity.process_group)
   const entityType = getEntityTypeFromId(entityId);
 
-  let dql: string;
-
-  if (entityType) {
-    // query only the specific entity type - this should be the default case, and rather quick
-    // ToDo: Support smartscapeNodes in the near future :)
-    dql = `fetch ${entityType} | filter id == "${entityId}" | expand tags | fieldsAdd entity.type`;
-  } else {
-    // Fallback: query all entity types - it's inefficient and unlikely that this works, but maybe some entity type is not correctly mapped
+  if (!entityType) {
     console.error(
-      `Couldn't determine entity type for ID: ${entityId}. Falling back to querying all entity types. This may be slow! Please raise an issue at https://github.com/dynatrace-oss/dynatrace-mcp/issues if you believe this is a bug.`,
+      `Couldn't determine entity type for ID: ${entityId}. Please raise an issue at https://github.com/dynatrace-oss/dynatrace-mcp/issues if you believe this is a bug.`,
     );
-    dql =
-      `fetch ${DYNATRACE_ENTITY_TYPES[0]} | filter id == "${entityId}" | expand tags | fieldsAdd entity.type` +
-      DYNATRACE_ENTITY_TYPES.slice(1)
-        .map(
-          (entityType) =>
-            ` | append [ fetch ${entityType} | filter id == "${entityId}" | expand tags | fieldsAdd entity.type ]`,
-        )
-        .join('');
+    return;
   }
+
+  // construct DQL statement like `fetch dt.entity.hosts | filter id == "HOST-1234"`
+  const dql = `fetch ${entityType} | filter id == "${entityId}" | expand tags | fieldsAdd entity.type`;
 
   // Get response from API
   const dqlResponse = await executeDql(dtClient, { query: dql });
 
-  if (dqlResponse && dqlResponse.length > 0) {
-    // Return the first (and should be only) entity found
-    const entity = dqlResponse[0];
-    if (entity) {
-      return {
-        entityId: entity.id,
-        displayName: entity['entity.name'],
-        type: entity['entity.type'], // Use 'type' instead of 'entityType' to match expected structure
-        allProperties: entity, // Include all other properties returned by DQL
-      };
-    }
+  // verify response and length
+  if (!dqlResponse || dqlResponse.length === 0) {
+    console.error(`No entity found for ID: ${entityId}`);
+    return;
   }
+
+  // in case we have more than one entity -> log it
+  if (dqlResponse.length > 1) {
+    console.error(
+      `Multiple entities (${dqlResponse.length}) found for entity ID: ${entityId}. Returning the first one.`,
+    );
+  }
+
+  const entity = dqlResponse[0];
+  // make typescript happy; entity should never be null though
+  if (!entity) {
+    console.error(`No entity found for ID: ${entityId}`);
+    return;
+  }
+
+  // return entity details
+  return {
+    entityId: String(entity.id),
+    displayName: String(entity['entity.name']),
+    type: String(entity['entity.type']),
+    allProperties: entity || undefined,
+  };
 };
