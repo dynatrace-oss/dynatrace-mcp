@@ -47,13 +47,13 @@
   "license": "MIT",
   "dependencies": {
     "@dynatrace-sdk/client-automation": "^5.3.0",
-    "@dynatrace-sdk/client-classic-environment-v2": "^3.6.8",
+    "@dynatrace-sdk/client-classic-environment-v2": "^4.1.0",
     "@dynatrace-sdk/client-platform-management-service": "^1.6.3",
     "@dynatrace-sdk/client-query": "^1.18.1",
     "@dynatrace-sdk/shared-errors": "^1.0.0",
     "@modelcontextprotocol/sdk": "^1.8.0",
     "commander": "^14.0.0",
-    "dotenv": "^16.4.7",
+    "dotenv": "^17.2.1",
     "dt-app": "^0.148.1",
     "zod-to-json-schema": "^3.24.5"
   },
