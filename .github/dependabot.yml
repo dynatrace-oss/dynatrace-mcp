@@ -18,6 +18,13 @@ updates:
       - 'automated'
     # Group updates for better management
     groups:
+      nodejs-updates:
+        patterns:
+          - '@types/node'
+        update-types:
+          - 'minor'
+          - 'patch'
+          - 'major'
       dynatrace-sdk:
         patterns:
           - '@dynatrace-sdk/*'
@@ -29,9 +36,13 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
+        exclude-patterns:
+          - '@types/node'
       major-updates:
         update-types:
           - 'major'
+        exclude-patterns:
+          - '@types/node'
     # Ignore specific packages if needed
     ignore:
       # Ignore major version updates for core dependencies to avoid breaking changes
@@ -39,6 +50,20 @@ updates:
         update-types: ['version-update:semver-major']
       - dependency-name: 'dt-app'
         update-types: ['version-update:semver-major']
+      # Node.js version policy: Only allow LTS versions and be conservative about upgrades
+      # Current: Node.js 22 (LTS until April 2027)
+      # Ignore non-LTS Node.js versions (odd-numbered major versions)
+      - dependency-name: 'node'
+        versions: ['23.x', '25.x', '27.x', '29.x', '31.x', '33.x']
+      - dependency-name: '@types/node'
+        versions: ['23.x', '25.x', '27.x', '29.x', '31.x', '33.x']
+      # Allow future LTS versions but ignore immediate next major (24.x) until closer to EOL
+      # This provides a buffer period to test compatibility before upgrading, and avoids
+      # having a new NodeJS 24 PR opened every couple of days
+      - dependency-name: 'node'
+        versions: ['24.x']
+      - dependency-name: '@types/node'
+        versions: ['24.x']
 
   # Enable version updates for GitHub Actions
   - package-ecosystem: 'github-actions'
@@ -71,3 +96,20 @@ updates:
     labels:
       - 'docker'
       - 'automated'
+    # Group Node.js Docker updates separately
+    groups:
+      nodejs-docker-updates:
+        patterns:
+          - 'node'
+        update-types:
+          - 'minor'
+          - 'patch'
+          - 'major'
+    # Node.js version policy for Docker: Only use LTS versions and be conservative about upgrades
+    ignore:
+      # Ignore non-LTS Node.js versions in Docker images
+      - dependency-name: 'node'
+        versions: ['23.x', '25.x', '27.x', '29.x', '31.x', '33.x']
+      # Allow future LTS versions but ignore immediate next major (24.x) until closer to EOL
+      - dependency-name: 'node'
+        versions: ['24.x']
