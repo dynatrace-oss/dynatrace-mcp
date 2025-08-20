@@ -3,24 +3,36 @@ import { executeDql } from './execute-dql';
 import { DYNATRACE_ENTITY_TYPES } from '../utils/dynatrace-entity-types';
 
 /**
+ * Construct a DQL statement like "fetch <entityType> | search "*<entityName>*" | fieldsAdd entity.type" for each entity type,
+ * and join them with " | append [ ... ]"
+ * @param entityName
+ * @returns DQL Statement for searching all entity types
+ */
+export const generateDqlSearchEntityCommand = (entityName: string): string => {
+  const fetchDqlCommands = DYNATRACE_ENTITY_TYPES.map((entityType, index) => {
+    const dql = `fetch ${entityType} | search "*${entityName}*" | fieldsAdd entity.type`;
+    if (index === 0) {
+      return dql;
+    }
+    return `  | append [ ${dql} ]\n`;
+  });
+
+  return fetchDqlCommands.join('');
+};
+
+/**
  * Find a monitored entity by name via DQL
  * @param dtClient
  * @param entityName
  * @returns A string with the entity details like id, name and type, or an error message if no entity was found
  */
 export const findMonitoredEntityByName = async (dtClient: HttpClient, entityName: string) => {
-  if (entityName == '') {
+  if (!entityName) {
     return 'You need to provide an entity name to search for.';
   }
 
-  // construct a DQL statement like "fetch <entityType> | search "*<entityName>*" | fieldsAdd entity.type" for each entity type
-  // and join them with " | append "
-  // for example: fetch dt.entity.application | search "*<entityName>*" | fieldsAdd entity.type | append fetch dt.entity.service | search "*<entityName>*" | fieldsAdd entity.type
-  const dql =
-    `fetch ${DYNATRACE_ENTITY_TYPES[0]} | search "*${entityName}*" | fieldsAdd entity.type` +
-    DYNATRACE_ENTITY_TYPES.slice(1)
-      .map((entityType) => ` | append [ fetch ${entityType} | search "*${entityName}*" | fieldsAdd entity.type ]`)
-      .join('');
+  // construct a DQL statement for searching the entityName over all entity types
+  const dql = generateDqlSearchEntityCommand(entityName);
 
   // Get response from API
   // Note: This may be slow, as we are appending multiple entity types above

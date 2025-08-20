@@ -80,10 +80,7 @@ describe('Find Monitored Entity by Name Integration Tests', () => {
     expect(typeof response).toBe('string');
 
     // Should handle gracefully - likely will return many results or handle empty search
-    expect(
-      response.includes('The following monitored entities were found:') ||
-        response.includes('No monitored entity found with the specified name.'),
-    ).toBe(true);
+    expect(response).toContain('You need to provide an entity name to search for');
   });
 
   test('should return properly formatted response when entities are found', async () => {
