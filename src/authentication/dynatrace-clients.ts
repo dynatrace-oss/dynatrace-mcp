@@ -1,6 +1,6 @@
 import { HttpClient, PlatformHttpClient } from '@dynatrace-sdk/http-client';
 import { getSSOUrl } from 'dt-app';
-import { version as VERSION } from '../../package.json';
+import { getUserAgent } from '../utils/user-agent';
 import { OAuthTokenResponse } from './types';
 
 /**
@@ -73,7 +73,7 @@ const createBearerTokenHttpClient = async (environmentUrl: string, dtPlatformTok
     baseUrl: environmentUrl,
     defaultHeaders: {
       'Authorization': `Bearer ${dtPlatformToken}`,
-      'User-Agent': `dynatrace-mcp-server/v${VERSION} (${process.platform}-${process.arch})`,
+      'User-Agent': getUserAgent(),
     },
   });
 };

@@ -1,5 +1,6 @@
 import { HttpClient } from '@dynatrace-sdk/http-client';
 import { QueryExecutionClient, QueryAssistanceClient, QueryResult, ExecuteRequest } from '@dynatrace-sdk/client-query';
+import { getUserAgent } from '../utils/user-agent';
 
 export const verifyDqlStatement = async (dtClient: HttpClient, dqlStatement: string) => {
   const queryAssistanceClient = new QueryAssistanceClient(dtClient);
@@ -27,7 +28,10 @@ export const executeDql = async (
 ): Promise<QueryResult['records'] | undefined> => {
   const queryExecutionClient = new QueryExecutionClient(dtClient);
 
-  const response = await queryExecutionClient.queryExecute({ body });
+  const response = await queryExecutionClient.queryExecute({
+    body,
+    dtClientContext: getUserAgent(),
+  });
 
   if (response.result) {
     // return response result immediately
@@ -42,6 +46,7 @@ export const executeDql = async (
       await new Promise((resolve) => setTimeout(resolve, 2000));
       pollResponse = await queryExecutionClient.queryPoll({
         requestToken: response.requestToken,
+        dtClientContext: getUserAgent(),
       });
       // done - let's return it
       if (pollResponse.result) {

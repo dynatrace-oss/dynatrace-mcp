@@ -2,6 +2,9 @@
 
 ## Unreleased Changes
 
+- Added cost considerations disclaimer in README about Dynatrace Grail data access.
+- Added `dtClientContext` to `execute_dql` tool, to allow usage-monitoring for Grail access.
+
 ## 0.5.0 (Release Candidate 4)
 
 - Added Streamable HTTP transport support with `--http`/`--server`, `--port`, and `--host` arguments (default remains stdio for backward compatibility)
