@@ -73,7 +73,7 @@ describe('dynatrace-clients', () => {
           baseUrl: environmentUrl,
           defaultHeaders: {
             'Authorization': 'Bearer test-access-token',
-            'User-Agent': 'dynatrace-mcp-server/v1.0.0-test (linux-x64)',
+            'User-Agent': expect.stringMatching(/^dynatrace-mcp-server\/v1\.0\.0-test \(\w+-\w+\)$/),
           },
         });
         expect(result).toBeInstanceOf(PlatformHttpClient);
@@ -172,7 +172,7 @@ describe('dynatrace-clients', () => {
           baseUrl: environmentUrl,
           defaultHeaders: {
             'Authorization': `Bearer ${dtPlatformToken}`,
-            'User-Agent': 'dynatrace-mcp-server/v1.0.0-test (linux-x64)',
+            'User-Agent': expect.stringMatching(/^dynatrace-mcp-server\/v1\.0\.0-test \(\w+-\w+\)$/),
           },
         });
         expect(result).toBeInstanceOf(PlatformHttpClient);
