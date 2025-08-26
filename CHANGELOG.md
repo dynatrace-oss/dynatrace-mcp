@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Added metadata output which includes scanned bytes (for cost tracking) to `execute_dql`
+
 ## 0.5.0
 
 **Highlights**:

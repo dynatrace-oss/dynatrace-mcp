@@ -283,10 +283,10 @@ const main = async () => {
       );
       // get problems (uses fetch)
       const result = await listProblems(dtClient, additionalFilter);
-      if (result && result.length > 0) {
-        let resp = `Found ${result.length} problems! Displaying the top ${maxProblemsToDisplay} problems:\n`;
+      if (result && result.records && result.records.length > 0) {
+        let resp = `Found ${result.records.length} problems! Displaying the top ${maxProblemsToDisplay} problems:\n`;
         // iterate over dqlResponse and create a string with the problem details, but only show the top maxProblemsToDisplay problems
-        result.slice(0, maxProblemsToDisplay).forEach((problem) => {
+        result.records.slice(0, maxProblemsToDisplay).forEach((problem) => {
           if (problem) {
             resp += `Problem ${problem['display_id']} (please refer to this problem with \`problemId\` or \`event.id\` ${problem['problem_id']}))
                   with event.status ${problem['event.status']}, event.category ${problem['event.category']}: ${problem['event.name']} -
@@ -462,7 +462,41 @@ const main = async () => {
       );
       const response = await executeDql(dtClient, { query: dqlStatement });
 
-      return `DQL Response: ${JSON.stringify(response)}`;
+      if (!response) {
+        return 'DQL execution failed or returned no result.';
+      }
+
+      let result = `📊 **DQL Query Results**\n\n`;
+
+      // Cost and Performance Information
+      if (response.scannedRecords !== undefined) {
+        result += `- **Scanned Records:** ${response.scannedRecords.toLocaleString()}\n`;
+      }
+
+      if (response.scannedBytes !== undefined) {
+        const scannedGB = response.scannedBytes / (1024 * 1024 * 1024);
+        result += `- **Scanned Bytes:** ${scannedGB.toFixed(2)} GB`;
+
+        // Cost warning based on scanned bytes
+        if (scannedGB > 500) {
+          result += `\n    ⚠️ **Very High Data Usage Warning:** This query scanned ${scannedGB.toFixed(1)} GB of data, which may impact your Dynatrace consumption. Please take measures to optimize your query, like limiting the timeframe or selecting a bucket.\n`;
+        } else if (scannedGB > 50) {
+          result += `\n    ⚠️ **High Data Usage Warning:** This query scanned ${scannedGB.toFixed(2)} GB of data, which may impact your Dynatrace consumption.\n`;
+        } else if (scannedGB > 5) {
+          result += `\n    💡 **Moderate Data Usage:** This query scanned ${scannedGB.toFixed(2)} GB of data.\n`;
+        } else if (response.scannedBytes == 0) {
+          result += `\n    💡 **No Data consumed:** This query did not consume any data.\n`;
+        }
+      }
+
+      if (response.sampled !== undefined && response.sampled) {
+        result += `- **⚠️ Sampling Used:** Yes (results may be approximate)\n`;
+      }
+
+      result += `\n📋 **Query Results**: (${response.records?.length || 0} records):\n\n`;
+      result += `\`\`\`json\n${JSON.stringify(response.records, null, 2)}\n\`\`\``;
+
+      return result;
     },
   );
 

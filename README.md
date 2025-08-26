@@ -27,11 +27,11 @@ Bring real-time observability data directly into your development workflow.
 - Get more information about a monitored entity
 - Get Ownership of an entity
 
-## Costs
+### Costs
 
-**Important:** While this local MCP server is provided for free, using it to access data in Dynatrace Grail may incur additional costs based
+**Important:** While this local MCP server is provided for free, using certain capabilities to access data in Dynatrace Grail may incur additional costs based
 on your Dynatrace consumption model. This affects `execute_dql` tool and other capabilities that **query** Dynatrace Grail storage, and costs
-depend on the volume (GB scanned/billed).
+depend on the volume (GB scanned).
 
 **Before using this MCP server extensively, please:**
 
@@ -39,7 +39,17 @@ depend on the volume (GB scanned/billed).
 2. Understand the cost implications of the specific data you plan to query (logs, events, metrics) - see [Dynatrace Pricing and Rate Card](https://www.dynatrace.com/pricing/)
 3. Start with smaller timeframes (e.g., 12h-24h) and make use of [buckets](https://docs.dynatrace.com/docs/discover-dynatrace/platform/grail/data-model#built-in-grail-buckets) to reduce the cost impact
 
-**Note**: We will be providing a way to monitor Query Usage of the dynatrace-mcp-server in the future.
+**To understand costs that occured:**
+
+Execute the following DQL statement in a notebook to see how much bytes have been queried from Grail (Logs, Events, etc...):
+
+```
+fetch dt.system.events
+| filter event.kind == "QUERY_EXECUTION_EVENT" and contains(client.client_context, "dynatrace-mcp")
+| sort timestamp desc
+| fields timestamp, query_id, query, scanned_bytes, table, bucket, user.id, user.email, client.client_context
+| maketimeSeries sum(scanned_bytes), by: { user.email, user.id, table }
+```
 
 ### AI-Powered Assistance (Preview)
 

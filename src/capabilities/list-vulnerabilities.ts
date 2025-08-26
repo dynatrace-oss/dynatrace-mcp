@@ -23,11 +23,11 @@ export const listVulnerabilities = async (dtClient: HttpClient, additionalFilter
     maxResultBytes: 5_000_000, // 5 MB
   });
 
-  if (!response || response.length === 0) {
+  if (!response || !response.records || response.records.length === 0) {
     return [];
   }
 
-  const vulnerabilities = response.map((vuln: any) => {
+  const vulnerabilities = response.records.map((vuln: any) => {
     const vulnerabilityId = vuln['vulnerability.id'] || 'N/A';
     const vulnerabilityDisplayId = vuln['vulnerability.display_id'] || 'N/A';
     const riskScore = vuln['vulnerability.risk.score'] || 'N/A';
