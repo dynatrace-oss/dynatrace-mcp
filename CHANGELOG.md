@@ -2,10 +2,46 @@
 
 ## Unreleased Changes
 
-- Added cost considerations disclaimer in README about Dynatrace Grail data access.
-- Added `dtClientContext` to `execute_dql` tool, to allow usage-monitoring for Grail access.
-- Removed `get_logs_for_entity` tool, in favor of `execute_dql`.
-- Added information about Semantic Dictionary for `execute_dql` tool description.
+## 0.5.0
+
+**Highlights**:
+🚀 Davis CoPilot AI, supporting natural language to DQL
+🌐 HTTP transport support
+🔑 Platform Token authentication
+📚 Tool consolidation into `execute_dql`
+
+### Scopes
+
+- Removed unnecessary scope `environment-api:security.problems:read` as it's no longer needed
+- Removed unneeded scopes `environment-api:slo:read` and `environment-api:metrics:read` as functionality is handled via the `execute_dql` tool
+
+### Tools Added/Removed
+
+- Added tools to translate between natural language and DQL via Davis CoPilot, enabling easier query creation
+- Added tool to chat with Davis CoPilot for interactive assistance and guidance
+- Removed `get_logs_for_entity` tool in favor of the more flexible `execute_dql` tool
+- Removed `get_vulnerability_details` tool as the same functionality can now be achieved with a simple `execute_dql` call, simplifying the tool set
+- Removed `get_problem_details` tool as the same functionality can be achieved with a simple `execute_dql` call
+
+### Other Changes
+
+- Added cost considerations disclaimer in README about Dynatrace Grail data access to help users understand potential costs
+- Added `dtClientContext` to `execute_dql` tool, enabling usage monitoring for Grail access and better cost tracking
+- Added information about Semantic Dictionary for `execute_dql` tool description, improving user guidance for DQL queries
+- Added Streamable HTTP transport support with `--http`/`--server`, `--port`, and `--host` arguments, enabling you to run the server over HTTP while maintaining stdio as the default for backward compatibility
+- Enhanced `find_entity_by_name` tool to include all entities from the Smartscape topology, providing comprehensive entity discovery capabilities
+- Optimized `get_monitored_entity_details` tool to use direct entity type lookup for better performance and faster response times
+- Improved `list_vulnerabilities` tool to use DQL statements instead of classic API, aligned parameters with `list_problems` tool for consistent user experience
+- Added comprehensive AI-Powered Observability Workshop Rules with hierarchical workflow architecture for advanced analysis scenarios
+- Enhanced README with advanced analysis capabilities including incident response, security compliance, and DevOps automation workflows
+- Added support for multi-phase incident investigation, cross-data source correlation, and precise root cause identification
+- Introduced streamlined rule structure optimized for LLM context windows with all files under 6,500 tokens for better AI assistant performance
+- Added integration guides for multiple AI assistants including Amazon Q, Cursor, Windsurf, Cline, and GitHub Copilot
+- Enhanced example prompts with sophisticated use cases for transaction analysis, security assessment, and DevOps workflows
+- Removed `metrics` from `execute_dql` example with `fetch` to improve clarity
+- Clarified usage of `verify_dql` to avoid unnecessary tool calls and improve efficiency
+- Improved `list_problems` tool to use DQL statements for retrieving data from Dynatrace and provide better next steps for problem resolution
+- Added support for authorization via Platform Tokens using the `DT_PLATFORM_TOKEN` environment variable, providing an alternative authentication method
 
 ## 0.5.0 (Release Candidate 4)
 
