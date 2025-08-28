@@ -172,8 +172,7 @@ This only works if the config is stored in the current workspaces, e.g., `<your-
       "command": "npx",
       "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
-        "OAUTH_CLIENT_ID": "",
-        "OAUTH_CLIENT_SECRET": "",
+        "DT_PLATFORM_TOKEN": "",
         "DT_ENVIRONMENT": ""
       }
     }
@@ -190,8 +189,7 @@ This only works if the config is stored in the current workspaces, e.g., `<your-
       "command": "npx",
       "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
-        "OAUTH_CLIENT_ID": "",
-        "OAUTH_CLIENT_SECRET": "",
+        "DT_PLATFORM_TOKEN": "",
         "DT_ENVIRONMENT": ""
       }
     }
@@ -210,8 +208,7 @@ The [Amazon Q Developer CLI](https://docs.aws.amazon.com/amazonq/latest/qdevelop
       "command": "npx",
       "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
-        "OAUTH_CLIENT_ID": "",
-        "OAUTH_CLIENT_SECRET": "",
+        "DT_PLATFORM_TOKEN": "",
         "DT_ENVIRONMENT": ""
       }
     }
@@ -229,21 +226,21 @@ For scenarios where you need to run the MCP server as an HTTP service instead of
 
 ```bash
 # Get help and see all available options
-npx -y @dynatrace-oss/dynatrace-mcp-server --help
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --help
 
 # Run with HTTP server on default port 3000
-npx -y @dynatrace-oss/dynatrace-mcp-server --http
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http
 
 # Run with custom port (using short or long flag)
-npx -y @dynatrace-oss/dynatrace-mcp-server --server -p 8080
-npx -y @dynatrace-oss/dynatrace-mcp-server --http --port 3001
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --server -p 8080
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --port 3001
 
 # Run with custom host/IP (using short or long flag)
-npx -y @dynatrace-oss/dynatrace-mcp-server --http --host 127.0.0.1
-npx -y @dynatrace-oss/dynatrace-mcp-server --http -H 192.168.0.1
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --host 127.0.0.1
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http -H 192.168.0.1
 
 # Check version
-npx -y @dynatrace-oss/dynatrace-mcp-server --version
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --version
 ```
 
 **Configuration for MCP clients that support HTTP transport:**
@@ -299,16 +296,18 @@ For fetching just error-logs, add `| filter loglevel == "ERROR"`.
 
 ## Environment Variables
 
-You can set up authentication via **OAuth Client** or **Platform Tokens** (v0.5.0 and newer) via the following environment variables:
+You can set up authentication via **Platform Tokens** (recommended) or **OAuth Client** via the following environment variables:
 
 - `DT_ENVIRONMENT` (string, e.g., https://abc12345.apps.dynatrace.com) - URL to your Dynatrace Platform (do not use Dynatrace classic URLs like `abc12345.live.dynatrace.com`)
-- `OAUTH_CLIENT_ID` (string, e.g., `dt0s02.SAMPLE`) - Dynatrace OAuth Client ID
-- `OAUTH_CLIENT_SECRET` (string, e.g., `dt0s02.SAMPLE.abcd1234`) - Dynatrace OAuth Client Secret
-- With v0.5.0 and newer: `DT_PLATFORM_TOKEN` (string, e.g., `dt0s16.SAMPLE.abcd1234`) - Dynatrace Platform Token (limited support, as not all scopes are available; see below)
+- `DT_PLATFORM_TOKEN` (string, e.g., `dt0s16.SAMPLE.abcd1234`) - **Recommended**: Dynatrace Platform Token
+- `OAUTH_CLIENT_ID` (string, e.g., `dt0s02.SAMPLE`) - Alternative: Dynatrace OAuth Client ID (for advanced use cases)
+- `OAUTH_CLIENT_SECRET` (string, e.g., `dt0s02.SAMPLE.abcd1234`) - Alternative: Dynatrace OAuth Client Secret (for advanced use cases)
+
+**Platform Tokens are recommended** for most use cases as they provide a simpler authentication flow. OAuth Clients should only be used when specific OAuth features are required.
 
 For more information, please have a look at the documentation about
-[creating an Oauth Client in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/oauth-clients), as well as
-[creating a Platform Token in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens).
+[creating a Platform Token in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens), as well as
+[creating an OAuth Client in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/oauth-clients) for advanced scenarios.
 
 In addition, depending on the features you use, the following variables can be configured:
 
@@ -317,6 +316,8 @@ In addition, depending on the features you use, the following variables can be c
 ### Scopes for Authentication
 
 Depending on the features you are using, the following scopes are needed:
+
+**Available for both Platform Tokens and OAuth Clients:**
 
 - `app-engine:apps:run` - needed for almost all tools
 - `app-engine:functions:run` - needed for for almost all tools
@@ -341,6 +342,8 @@ Depending on the features you are using, the following scopes are needed:
 - `settings:objects:read` - needed for reading ownership information and Guardians (SRG) from settings
 
   **Note**: Please ensure that `settings:objects:read` is used, and _not_ the similarly named scope `app-settings:objects:read`.
+
+**Important**: Some features requiring `environment-api:entities:read` will only work with OAuth Clients. For most use cases, Platform Tokens provide all necessary functionality.
 
 ## ✨ Example prompts ✨
 
@@ -493,12 +496,18 @@ to help identify what might be causing these deployment issues?
 
 ### Authentication Issues
 
-In most cases, something is wrong with the OAuth Client. Please ensure that you have added all scopes as requested above.
-In addition, please ensure that your user also has all necessary permissions on your Dynatrace Environment.
+In most cases, authentication issues are related to missing scopes or invalid tokens. Please ensure that you have added all required scopes as listed above.
 
-In case of any problems, you can troubleshoot SSO/OAuth issues based on our [Dynatrace Developer Documentation](https://developer.dynatrace.com/develop/access-platform-apis-from-outside/#get-bearer-token-and-call-app-function) and providing the list of scopes.
+**For Platform Tokens:**
 
-It is recommended to try access the following API (which requires minimal scopes `app-engine:apps:run` and `app-engine:functions:run`):
+1. Verify your Platform Token has all the necessary scopes listed in the "Scopes for Authentication" section
+2. Ensure your token is valid and not expired
+3. Check that your user has the required permissions in your Dynatrace Environment
+
+**For OAuth Clients:**
+In case of OAuth-related problems, you can troubleshoot SSO/OAuth issues based on our [Dynatrace Developer Documentation](https://developer.dynatrace.com/develop/access-platform-apis-from-outside/#get-bearer-token-and-call-app-function).
+
+It is recommended to test access with the following API (which requires minimal scopes `app-engine:apps:run` and `app-engine:functions:run`):
 
 1. Use OAuth Client ID and Secret to retrieve a Bearer Token (only valid for a couple of minutes):
 
