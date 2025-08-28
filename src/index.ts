@@ -41,6 +41,7 @@ import {
   generateDqlFromNaturalLanguage,
 } from './capabilities/davis-copilot';
 import { DynatraceEnv, getDynatraceEnv } from './getDynatraceEnv';
+import { createTelemetry, Telemetry } from './utils/telemetry-openkit';
 import { getEntityTypeFromId } from './utils/dynatrace-entity-types';
 
 config();
@@ -123,6 +124,11 @@ const main = async () => {
   }
 
   console.error(`Starting Dynatrace MCP Server v${VERSION}...`);
+
+  // Initialize usage tracking
+  const telemetry = createTelemetry();
+  await telemetry.trackServerStart();
+
   const server = new McpServer(
     {
       name: 'Dynatrace MCP Server',
@@ -143,12 +149,19 @@ const main = async () => {
     cb: (args: z.objectOutputType<ZodRawShape, ZodTypeAny>) => Promise<string>,
   ) => {
     const wrappedCb = async (args: ZodRawShape): Promise<CallToolResult> => {
+      const startTime = Date.now();
+      let success = false;
+
       try {
         const response = await cb(args);
+        success = true;
         return {
           content: [{ type: 'text', text: response }],
         };
       } catch (error: any) {
+        // Track error
+        telemetry.trackError(error, `tool_${name}`).catch((e) => console.warn('Failed to track error:', e));
+
         // check if it's an error originating from the Dynatrace SDK / API Gateway and provide an appropriate message to the user
         if (isClientRequestError(error)) {
           return {
@@ -162,6 +175,10 @@ const main = async () => {
           content: [{ type: 'text', text: `Error: ${error.message}` }],
           isError: true,
         };
+      } finally {
+        // Track tool usage
+        const duration = Date.now() - startTime;
+        telemetry.trackToolUsage(name, success, duration).catch((e) => console.warn('Failed to track tool usage:', e));
       }
     };
 
@@ -826,8 +843,9 @@ const main = async () => {
     });
 
     // Handle graceful shutdown
-    process.on('SIGINT', () => {
+    process.on('SIGINT', async () => {
       console.error('Shutting down HTTP server...');
+      await telemetry.shutdown();
       httpServer.close(() => {
         process.exit(0);
       });
@@ -840,10 +858,30 @@ const main = async () => {
     await server.connect(transport);
 
     console.error('Dynatrace MCP Server running on stdio');
+
+    // Handle graceful shutdown for stdio mode
+    process.on('SIGINT', async () => {
+      console.error('Shutting down MCP server...');
+      await telemetry.shutdown();
+      process.exit(0);
+    });
+
+    process.on('SIGTERM', async () => {
+      console.error('Shutting down MCP server...');
+      await telemetry.shutdown();
+      process.exit(0);
+    });
   }
 };
 
-main().catch((error) => {
+main().catch(async (error) => {
   console.error('Fatal error in main():', error);
+  try {
+    const usageTracker = createTelemetry();
+    await usageTracker.trackError(error, 'main_error');
+    await usageTracker.shutdown();
+  } catch (e) {
+    console.warn('Failed to track fatal error:', e);
+  }
   process.exit(1);
 });
