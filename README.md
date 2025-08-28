@@ -47,7 +47,7 @@ Execute the following DQL statement in a notebook to see how much bytes have bee
 fetch dt.system.events
 | filter event.kind == "QUERY_EXECUTION_EVENT" and contains(client.client_context, "dynatrace-mcp")
 | sort timestamp desc
-| fields timestamp, query_id, query, scanned_bytes, table, bucket, user.id, user.email, client.client_context
+| fields timestamp, query_id, query_string, scanned_bytes, table, bucket, user.id, user.email, client.client_context
 | maketimeSeries sum(scanned_bytes), by: { user.email, user.id, table }
 ```
 

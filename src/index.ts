@@ -474,7 +474,7 @@ const main = async () => {
       }
 
       if (response.scannedBytes !== undefined) {
-        const scannedGB = response.scannedBytes / (1024 * 1024 * 1024);
+        const scannedGB = response.scannedBytes / (1000 * 1000 * 1000);
         result += `- **Scanned Bytes:** ${scannedGB.toFixed(2)} GB`;
 
         // Cost warning based on scanned bytes
