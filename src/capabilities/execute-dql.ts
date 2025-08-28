@@ -17,7 +17,7 @@ export const verifyDqlStatement = async (dtClient: HttpClient, dqlStatement: str
 export interface DqlExecutionResult {
   records: QueryResult['records'];
   metadata: QueryResult['metadata'];
-  /** Nubmer of Bytes scanned = Bytes Billed */
+  /** Number of Bytes scanned = Bytes Billed */
   scannedBytes?: number;
   scannedRecords?: number;
   executionTimeMilliseconds?: number;

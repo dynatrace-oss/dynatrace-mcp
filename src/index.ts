@@ -484,7 +484,7 @@ const main = async () => {
           result += `\n    ⚠️ **High Data Usage Warning:** This query scanned ${scannedGB.toFixed(2)} GB of data, which may impact your Dynatrace consumption.\n`;
         } else if (scannedGB > 5) {
           result += `\n    💡 **Moderate Data Usage:** This query scanned ${scannedGB.toFixed(2)} GB of data.\n`;
-        } else if (response.scannedBytes == 0) {
+        } else if (response.scannedBytes === 0) {
           result += `\n    💡 **No Data consumed:** This query did not consume any data.\n`;
         }
       }
