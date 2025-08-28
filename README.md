@@ -553,6 +553,34 @@ curl -X GET https://abc12345.apps.dynatrace.com/platform/management/v1/environme
 
 Grail has a dedicated section about permissions in the Dynatrace Docs. Please refer to https://docs.dynatrace.com/docs/discover-dynatrace/platform/grail/data-model/assign-permissions-in-grail for more details.
 
+## Telemetry
+
+The Dynatrace MCP Server includes sending Telemetry Data via Dynatrace OpenKit to help improve the product. This includes:
+
+- Server start events
+- Tool usage (which tools are called, success/failure, execution duration)
+- Error tracking for debugging and improvement
+
+**Privacy and Opt-out:**
+
+- Telemetry is **enabled by default** but can be disabled by setting `DT_MCP_DISABLE_TELEMETRY=true`
+- No sensitive data from your Dynatrace environment is tracked
+- Only anonymous usage statistics and error information are collected
+- Data is sent to Dynatrace's usage analytics endpoint
+
+**Configuration options:**
+
+- `DT_MCP_DISABLE_TELEMETRY` (boolean, default: `false`) - Disable Telemetry
+- `DT_MCP_TELEMETRY_APPLICATION_ID` (string, default: `dynatrace-mcp-server`) - Application ID for tracking
+- `DT_MCP_TELEMETRY_ENDPOINT_URL` (string, default: Dynatrace endpoint) - OpenKit endpoint URL
+- `DT_MCP_TELEMETRY_DEVICE_ID` (string, default: auto-generated) - Device identifier for tracking
+
+To disable usage tracking, add this to your environment:
+
+```bash
+DT_MCP_DISABLE_TELEMETRY=true
+```
+
 ## Development
 
 For local development purposes, you can use VSCode and GitHub Copilot.
