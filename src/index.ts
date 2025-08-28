@@ -44,6 +44,7 @@ import { DynatraceEnv, getDynatraceEnv } from './getDynatraceEnv';
 import { createTelemetry, Telemetry } from './utils/telemetry-openkit';
 import { getEntityTypeFromId } from './utils/dynatrace-entity-types';
 import { Http2ServerRequest } from 'node:http2';
+import { resetGrailBudgetTracker, getGrailBudgetTracker } from './utils/grail-budget-tracker';
 
 config();
 
@@ -93,7 +94,8 @@ const main = async () => {
     process.exit(1);
   }
   console.error(`Initializing Dynatrace MCP Server v${getPackageJsonVersion()}...`);
-  const { oauthClientId, oauthClientSecret, dtEnvironment, dtPlatformToken, slackConnectionId } = dynatraceEnv;
+  const { oauthClientId, oauthClientSecret, dtEnvironment, dtPlatformToken, slackConnectionId, grailBudgetGB } =
+    dynatraceEnv;
 
   // Test connection on startup
   let retryCount = 0;
@@ -512,13 +514,18 @@ const main = async () => {
         oauthClientSecret,
         dtPlatformToken,
       );
-      const response = await executeDql(dtClient, { query: dqlStatement });
+      const response = await executeDql(dtClient, { query: dqlStatement }, grailBudgetGB);
 
       if (!response) {
         return 'DQL execution failed or returned no result.';
       }
 
       let result = `📊 **DQL Query Results**\n\n`;
+
+      // Budget warning comes first if present
+      if (response.budgetWarning) {
+        result += `${response.budgetWarning}\n\n`;
+      }
 
       // Cost and Performance Information
       if (response.scannedRecords !== undefined) {
@@ -529,15 +536,22 @@ const main = async () => {
         const scannedGB = response.scannedBytes / (1000 * 1000 * 1000);
         result += `- **Scanned Bytes:** ${scannedGB.toFixed(2)} GB`;
 
-        // Cost warning based on scanned bytes
+        // Show budget status if available
+        if (response.budgetState) {
+          const usagePercentage =
+            (response.budgetState.totalBytesScanned / response.budgetState.budgetLimitBytes) * 100;
+          result += ` (Session total: ${(response.budgetState.totalBytesScanned / (1000 * 1000 * 1000)).toFixed(2)} GB / ${response.budgetState.budgetLimitGB} GB budget, ${usagePercentage.toFixed(1)}% used)`;
+        }
+        result += '\n';
+
         if (scannedGB > 500) {
-          result += `\n    ⚠️ **Very High Data Usage Warning:** This query scanned ${scannedGB.toFixed(1)} GB of data, which may impact your Dynatrace consumption. Please take measures to optimize your query, like limiting the timeframe or selecting a bucket.\n`;
+          result += `    ⚠️ **Very High Data Usage Warning:** This query scanned ${scannedGB.toFixed(1)} GB of data, which may impact your Dynatrace consumption. Please take measures to optimize your query, like limiting the timeframe or selecting a bucket.\n`;
         } else if (scannedGB > 50) {
-          result += `\n    ⚠️ **High Data Usage Warning:** This query scanned ${scannedGB.toFixed(2)} GB of data, which may impact your Dynatrace consumption.\n`;
+          result += `    ⚠️ **High Data Usage Warning:** This query scanned ${scannedGB.toFixed(2)} GB of data, which may impact your Dynatrace consumption.\n`;
         } else if (scannedGB > 5) {
-          result += `\n    💡 **Moderate Data Usage:** This query scanned ${scannedGB.toFixed(2)} GB of data.\n`;
+          result += `    💡 **Moderate Data Usage:** This query scanned ${scannedGB.toFixed(2)} GB of data.\n`;
         } else if (response.scannedBytes === 0) {
-          result += `\n    💡 **No Data consumed:** This query did not consume any data.\n`;
+          result += `    💡 **No Data consumed:** This query did not consume any data.\n`;
         }
       }
 
@@ -806,6 +820,35 @@ const main = async () => {
       let resp = 'Ownership information:\n';
       resp += JSON.stringify(ownershipInformation);
       return resp;
+    },
+  );
+
+  tool(
+    'reset_grail_budget',
+    'Reset the Grail query budget after it was exhausted, allowing new queries to be executed. This clears all tracked bytes scanned in the current session.',
+    {},
+    async ({}) => {
+      // Reset the global tracker
+      resetGrailBudgetTracker();
+
+      // Get a fresh tracker to show the reset state
+      const freshTracker = getGrailBudgetTracker(grailBudgetGB);
+      const state = freshTracker.getState();
+
+      return `✅ **Grail Budget Reset Successfully!**
+
+Budget status after reset:
+- Total bytes scanned: ${state.totalBytesScanned} bytes (0 GB)
+- Budget limit: ${state.budgetLimitGB} GB
+- Remaining budget: ${state.budgetLimitGB} GB
+- Budget exceeded: ${state.isBudgetExceeded ? 'Yes' : 'No'}
+
+You can now execute new Grail queries (DQL, etc.) again. If this happens more often, please consider
+
+- Optimizing your queries (timeframes, bucket selection, filters)
+- Creating or optimizing bucket configurations that fit your queries (see https://docs.dynatrace.com/docs/analyze-explore-automate/logs/lma-bucket-assignment for details)
+- Increasing \`DT_GRAIL_QUERY_BUDGET_GB\` in your environment configuration
+`;
     },
   );
 
