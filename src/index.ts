@@ -489,7 +489,10 @@ const main = async () => {
 
       let resp = `🔤 Natural Language to DQL:\n\n`;
       resp += `**Query:** "${text}"\n\n`;
-      resp += `**Generated DQL:**\n\`\`\`\n${response.dql}\n\`\`\`\n\n`;
+      if (response.dql) {
+        // Typically, the DQL response is empty if status == FAILED
+        resp += `**Generated DQL:**\n\`\`\`\n${response.dql}\n\`\`\`\n\n`;
+      }
       resp += `**Status:** ${response.status}\n`;
       resp += `**Message Token:** ${response.messageToken}\n`;
 
@@ -500,9 +503,11 @@ const main = async () => {
         });
       }
 
-      resp += `\n💡 **Next Steps:**\n`;
-      resp += `1. Use "execute_dql" tool to run the query (you can omit running the "verify_dql" tool)\n`;
-      resp += `2. If results don't match expectations, refine your natural language description and try again\n`;
+      if (response.status != 'FAILED') {
+        resp += `\n💡 **Next Steps:**\n`;
+        resp += `1. Use "execute_dql" tool to run the query (you can omit running the "verify_dql" tool)\n`;
+        resp += `2. If results don't match expectations, refine your natural language description and try again\n`;
+      }
 
       return resp;
     },
@@ -580,7 +585,10 @@ const main = async () => {
 
       let resp = `🤖 Davis CoPilot Response:\n\n`;
       resp += `**Your Question:** "${text}"\n\n`;
-      resp += `**Answer:**\n${response.text}\n\n`;
+      if (response.text) {
+        // Typically, text is empty if status is FAILED
+        resp += `**Answer:**\n${response.text}\n\n`;
+      }
       resp += `**Status:** ${response.status}\n`;
       resp += `**Message Token:** ${response.messageToken}\n`;
 
@@ -600,6 +608,10 @@ const main = async () => {
 
       if (response.state?.conversationId) {
         resp += `\n**Conversation ID:** ${response.state.conversationId}`;
+      }
+
+      if (response.status == 'FAILED') {
+        resp += `\n❌ **Your request was not successful**\n`;
       }
 
       return resp;
