@@ -103,7 +103,7 @@ describe('DQL Explanation Integration Tests', () => {
     expect(response.status === 'SUCCESSFUL' || response.status === 'SUCCESSFUL_WITH_WARNINGS').toBeTruthy();
 
     expect(response.summary.toLowerCase()).toContain('group logs by');
-    expect(response.summary.toLowerCase()).toContain('count the number of logs');
+    expect(response.summary.toLowerCase()).toContain('calculate the total number of logs');
     // The explanation should be reasonably detailed
     expect(response.explanation.length).toBeGreaterThan(50);
   });
