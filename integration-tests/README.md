@@ -13,8 +13,32 @@ Before running integration tests, ensure you have:
 - `DT_ENVIRONMENT` - Your Dynatrace environment URL (e.g., `https://abc123.apps.dynatrace.com`)
 - `DT_PLATFORM_TOKEN` - (Optional) Your Dynatrace platform token
 
-Run tests via
+For required OAuth scopes, refer to the main README.md file.
+
+## Running Tests
+
+Run all integration tests:
 
 ```bash
 npm run test:integration
 ```
+
+Run specific test suite:
+
+```bash
+# DQL tests
+npm test -- integration-tests/execute-dql.integration.test.ts
+
+# Davis CoPilot tests
+npm test -- integration-tests/davis-copilot-explain-dql.integration.test.ts
+
+# Email tests
+npm test -- integration-tests/send-email.integration.test.ts
+```
+
+## Important Notes
+
+- **Rate Limiting**: Tests include delays between API calls to avoid rate limits
+- **Real Environment**: These tests make actual API calls and may incur costs
+- **Email Testing**: Email tests send actual emails to test addresses
+- **Credentials**: Ensure your OAuth client has all required scopes enabled
