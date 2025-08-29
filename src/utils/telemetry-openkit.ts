@@ -24,10 +24,9 @@ class DynatraceMcpTelemetry implements Telemetry {
       return;
     }
 
-    // Default configuration for Dynatrace MCP Server tracking
-    // ToDo: @christian-kreuzberger-dtx please add the correct app id and endpoint URL once available
-    const applicationId = process.env.DT_MCP_TELEMETRY_APPLICATION_ID || '3a63cec0-626d-4fe7-8eb3-4d5d32bb4dd1';
-    const endpointUrl = process.env.DT_MCP_TELEMETRY_ENDPOINT_URL || 'https://bf49227hmc.bf.dynatrace.com/mbeacon';
+    // Default configuration for Dynatrace MCP Server Telemetry endpoints (DT Prod Self Mon)
+    const applicationId = process.env.DT_MCP_TELEMETRY_APPLICATION_ID || '5e2dbb56-076b-412e-8ffc-7babb7ae7c5d';
+    const endpointUrl = process.env.DT_MCP_TELEMETRY_ENDPOINT_URL || 'https://bf96767wvv.bf.dynatrace.com/mbeacon';
     const deviceId = process.env.DT_MCP_TELEMETRY_DEVICE_ID || this.generateDeviceId();
 
     this.initPromise = this.initializeOpenKit(endpointUrl, applicationId, deviceId);
@@ -42,6 +41,8 @@ class DynatraceMcpTelemetry implements Telemetry {
    */
   private async initializeOpenKit(endpointUrl: string, applicationId: string, deviceId: string): Promise<boolean> {
     try {
+      console.error(`Connecting telemetry with ${endpointUrl} and applicationId ${applicationId}`);
+
       this.openKit = new OpenKitBuilder(endpointUrl, applicationId, parseInt(deviceId, 10))
         .withApplicationVersion(require('../../package.json').version)
         .withOperatingSystem(`${os.platform()} ${os.release()}`)
