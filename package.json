@@ -50,6 +50,7 @@
     "@dynatrace-sdk/client-platform-management-service": "^1.6.3",
     "@dynatrace-sdk/client-query": "^1.18.1",
     "@dynatrace-sdk/shared-errors": "^1.0.0",
+    "@dynatrace/openkit-js": "^4.1.0",
     "@modelcontextprotocol/sdk": "^1.8.0",
     "commander": "^14.0.0",
     "dotenv": "^17.2.1",
