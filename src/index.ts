@@ -41,6 +41,7 @@ import {
   generateDqlFromNaturalLanguage,
 } from './capabilities/davis-copilot';
 import { DynatraceEnv, getDynatraceEnv } from './getDynatraceEnv';
+import { getEntityTypeFromId } from './utils/dynatrace-entity-types';
 
 config();
 
@@ -367,6 +368,20 @@ const main = async () => {
         resp += `You can find more details about the application at ${dtEnvironment}/ui/apps/dynatrace.kubernetes/explorer/workload?detailsId=${entityDetails.entityId}`;
       }
 
+      resp += `\n\n**Filter**:`;
+
+      // Use entityTypeTable as the filter (e.g., fetch logs | filter dt.entity.service == "SERVICE-1234")
+      if (entityDetails.entityTypeTable) {
+        resp += ` You can use the following filter to get relevant information from other tools: \`| filter ${entityDetails.entityTypeTable} == "${entityDetails.entityId}"\`. `;
+      } else {
+        resp += ` Try to use search command as follows: \`| search "${entityDetails.entityId}"\`. `;
+      }
+
+      resp += `\n\n**Next Steps**\n\n`;
+      resp += `1. Find available metrics for this entity, by using execute_dql tool with the following DQL statement: "fetch metric.series" and the filter defined above\n`;
+      resp += `2. Find out whether any problems exist for this entity using the list_problems tool\n`;
+      resp += `3. Explore logs for this entity by using execute_dql with "fetch logs" and applying the filter mentioned above'\n`;
+
       return resp;
     },
   );
@@ -430,13 +445,13 @@ const main = async () => {
   tool(
     'execute_dql',
     'Get Logs, Metrics, Spans or Events from Dynatrace GRAIL by executing a Dynatrace Query Language (DQL) statement. ' +
-      'You can also use "generate_dql_from_natural_language" to generate a DQL statement based on your request. ' +
+      'You can also use the "generate_dql_from_natural_language" tool upfront to generate or refine a DQL statement based on your request. ' +
       'Note: For more information about available fields for filters and aggregation, use the query "fetch dt.semantic_dictionary.models | filter data_object == \"logs\""',
     {
       dqlStatement: z
         .string()
         .describe(
-          'DQL Statement (Ex: "fetch [logs, spans, events] | filter <some-filter> | summarize count(), by:{some-fields}.", "timeseries { avg(<metric-name>), value.A = avg(<metric-name>, scalar: true) }")',
+          'DQL Statement (Ex: "fetch [logs, spans, events] | filter <some-filter> | summarize count(), by:{some-fields}.", or for metrics: "timeseries { avg(<metric-name>), value.A = avg(<metric-name>, scalar: true) }")',
         ),
     },
     async ({ dqlStatement }) => {
