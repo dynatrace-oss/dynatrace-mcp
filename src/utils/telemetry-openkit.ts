@@ -1,6 +1,7 @@
 import { OpenKitBuilder, OpenKit, Session } from '@dynatrace/openkit-js';
 import * as os from 'os';
 import * as crypto from 'crypto';
+import { getPackageJsonVersion } from './version';
 
 export interface Telemetry {
   trackServerStart(): Promise<void>;
@@ -9,6 +10,9 @@ export interface Telemetry {
   shutdown(): Promise<void>;
 }
 
+/**
+ * Based on https://docs.dynatrace.com/docs/ingest-from/extend-dynatrace/openkit/instrument-your-application-using-dynatrace-openkit#openkit-basic-sample--javascript
+ */
 class DynatraceMcpTelemetry implements Telemetry {
   private openKit: OpenKit | null = null;
   private session: Session | null = null;
@@ -19,14 +23,13 @@ class DynatraceMcpTelemetry implements Telemetry {
     this.isEnabled = process.env.DT_MCP_DISABLE_TELEMETRY !== 'true';
 
     if (!this.isEnabled) {
-      console.log('Dynatrace Telemetry is disabled via DT_MCP_DISABLE_TELEMETRY=true');
-      this.initPromise = Promise.resolve(false);
-      return;
+      throw new Error('Dynatrace Telemetry is disabled via DT_MCP_DISABLE_TELEMETRY=true');
     }
 
     // Default configuration for Dynatrace MCP Server Telemetry endpoints (DT Prod Self Mon)
     const applicationId = process.env.DT_MCP_TELEMETRY_APPLICATION_ID || '5e2dbb56-076b-412e-8ffc-7babb7ae7c5d';
     const endpointUrl = process.env.DT_MCP_TELEMETRY_ENDPOINT_URL || 'https://bf96767wvv.bf.dynatrace.com/mbeacon';
+    // get anonymized device id
     const deviceId = process.env.DT_MCP_TELEMETRY_DEVICE_ID || this.generateDeviceId();
 
     this.initPromise = this.initializeOpenKit(endpointUrl, applicationId, deviceId);
@@ -36,18 +39,20 @@ class DynatraceMcpTelemetry implements Telemetry {
    *
    * @param endpointUrl Dynatrace Endpoint for OpenKit Ingest
    * @param applicationId Application Id for OpenKit Ingest
-   * @param deviceId Device or Session ID (should be random)
+   * @param deviceId Device or Session ID (should be anonymized)
    * @returns
    */
   private async initializeOpenKit(endpointUrl: string, applicationId: string, deviceId: string): Promise<boolean> {
     try {
-      console.error(`Connecting telemetry with ${endpointUrl} and applicationId ${applicationId}`);
+      console.error(
+        `Connecting Dynatrace Telemetry via ${endpointUrl}. You can disable this by setting DT_MCP_DISABLE_TELEMETRY=true.`,
+      );
 
       this.openKit = new OpenKitBuilder(endpointUrl, applicationId, parseInt(deviceId, 10))
-        .withApplicationVersion(require('../../package.json').version)
+        .withApplicationVersion(getPackageJsonVersion())
         .withOperatingSystem(`${os.platform()} ${os.release()}`)
-        .withManufacturer('Dynatrace')
-        .withModelId('MCP-Server')
+        .withManufacturer('Dynatrace-OSS')
+        .withModelId('Dynatrace-MCP-Server')
         .build();
 
       return new Promise<boolean>((resolve) => {
@@ -63,7 +68,10 @@ class DynatraceMcpTelemetry implements Telemetry {
         }, timeoutInMilliseconds);
       });
     } catch (error) {
-      console.warn('Failed to initialize Dynatrace Telemetry:', error);
+      console.error('Failed to initialize Dynatrace Telemetry:', error);
+      console.error(
+        'If the error persists, please consider disabling telemetry by setting DT_MCP_DISABLE_TELEMETRY=true.',
+      );
       this.isEnabled = false;
       return false;
     }
@@ -95,7 +103,7 @@ class DynatraceMcpTelemetry implements Telemetry {
     try {
       const action = this.session.enterAction('mcp_server_start');
       action.reportEvent('server_started');
-      action.reportValue('version', require('../../package.json').version);
+      action.reportValue('version', getPackageJsonVersion());
       action.reportValue('node_version', process.version);
       action.reportValue('platform', process.platform);
       action.leaveAction();
@@ -192,11 +200,12 @@ class NoOpTelemetry implements Telemetry {
 }
 
 export function createTelemetry(): Telemetry {
-  const isEnabled = process.env.DT_MCP_DISABLE_TELEMETRY !== 'true';
-
-  if (!isEnabled) {
+  try {
+    return new DynatraceMcpTelemetry();
+  } catch (e) {
+    // Failed to initialize
+    console.error(e);
+    // fallback to NoOp Telemetry
     return new NoOpTelemetry();
   }
-
-  return new DynatraceMcpTelemetry();
 }

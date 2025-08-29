@@ -23,7 +23,7 @@ import { randomUUID } from 'node:crypto';
 import { Command } from 'commander';
 import { z, ZodRawShape, ZodTypeAny } from 'zod';
 
-import { version as VERSION } from '../package.json';
+import { getPackageJsonVersion } from './utils/version';
 import { createDtHttpClient } from './authentication/dynatrace-clients';
 import { listVulnerabilities } from './capabilities/list-vulnerabilities';
 import { listProblems } from './capabilities/list-problems';
@@ -91,7 +91,7 @@ const main = async () => {
     console.error((err as Error).message);
     process.exit(1);
   }
-  console.error(`Initializing Dynatrace MCP Server v${VERSION}...`);
+  console.error(`Initializing Dynatrace MCP Server v${getPackageJsonVersion()}...`);
   const { oauthClientId, oauthClientSecret, dtEnvironment, dtPlatformToken, slackConnectionId } = dynatraceEnv;
 
   // Test connection on startup
@@ -123,7 +123,7 @@ const main = async () => {
     }
   }
 
-  console.error(`Starting Dynatrace MCP Server v${VERSION}...`);
+  console.error(`Starting Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
   // Initialize usage tracking
   const telemetry = createTelemetry();
@@ -132,7 +132,7 @@ const main = async () => {
   const server = new McpServer(
     {
       name: 'Dynatrace MCP Server',
-      version: VERSION,
+      version: getPackageJsonVersion(),
     },
     {
       capabilities: {
@@ -795,7 +795,7 @@ const main = async () => {
   program
     .name('dynatrace-mcp-server')
     .description('Dynatrace Model Context Protocol (MCP) Server')
-    .version(VERSION)
+    .version(getPackageJsonVersion())
     .option('--http', 'enable HTTP server mode instead of stdio')
     .option('--server', 'enable HTTP server mode (alias for --http)')
     .option('-p, --port <number>', 'port for HTTP server', '3000')
