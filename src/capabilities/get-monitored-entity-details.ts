@@ -2,7 +2,13 @@ import { HttpClient } from '@dynatrace-sdk/http-client';
 import { executeDql } from './execute-dql';
 import { getEntityTypeFromId } from '../utils/dynatrace-entity-types';
 
-type MonitoredEntityDetails = { entityId: string; displayName: string; type: string; allProperties: any };
+type MonitoredEntityDetails = {
+  entityId: string;
+  displayName: string;
+  entityTypeTable: string;
+  type: string;
+  allProperties: any;
+};
 
 /**
  * Get monitored entity details by entity ID via DQL
@@ -53,6 +59,7 @@ export const getMonitoredEntityDetails = async (
   // return entity details
   return {
     entityId: String(entity.id),
+    entityTypeTable: entityType,
     displayName: String(entity['entity.name']),
     type: String(entity['entity.type']),
     allProperties: entity || undefined,
