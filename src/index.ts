@@ -43,6 +43,7 @@ import {
 import { DynatraceEnv, getDynatraceEnv } from './getDynatraceEnv';
 import { createTelemetry, Telemetry } from './utils/telemetry-openkit';
 import { getEntityTypeFromId } from './utils/dynatrace-entity-types';
+import { Http2ServerRequest } from 'node:http2';
 
 config();
 
@@ -129,6 +130,18 @@ const main = async () => {
   const telemetry = createTelemetry();
   await telemetry.trackServerStart();
 
+  // Create a shutdown handler that takes shutdown operations as parameters
+  const shutdownHandler = (...shutdownOps: Array<() => void | Promise<void>>) => {
+    return async () => {
+      console.error('Shutting down MCP server...');
+      for (const op of shutdownOps) {
+        await op();
+      }
+      process.exit(0);
+    };
+  };
+
+  // Initialize Metadata for MCP Server
   const server = new McpServer(
     {
       name: 'Dynatrace MCP Server',
@@ -149,12 +162,15 @@ const main = async () => {
     cb: (args: z.objectOutputType<ZodRawShape, ZodTypeAny>) => Promise<string>,
   ) => {
     const wrappedCb = async (args: ZodRawShape): Promise<CallToolResult> => {
+      // track starttime for telemetry
       const startTime = Date.now();
-      let success = false;
+      // track toolcall for telemetry
+      let toolCallSuccessful = false;
 
       try {
+        // call the tool
         const response = await cb(args);
-        success = true;
+        toolCallSuccessful = true;
         return {
           content: [{ type: 'text', text: response }],
         };
@@ -178,12 +194,16 @@ const main = async () => {
       } finally {
         // Track tool usage
         const duration = Date.now() - startTime;
-        telemetry.trackToolUsage(name, success, duration).catch((e) => console.warn('Failed to track tool usage:', e));
+        telemetry
+          .trackToolUsage(name, toolCallSuccessful, duration)
+          .catch((e) => console.warn('Failed to track tool usage:', e));
       }
     };
 
     server.tool(name, description, paramsSchema, (args) => wrappedCb(args));
   };
+
+  /** Tool Definitions below */
 
   tool(
     'get_environment_info',
@@ -842,14 +862,14 @@ const main = async () => {
       console.error(`Dynatrace MCP Server running on HTTP at http://${host}:${httpPort}`);
     });
 
-    // Handle graceful shutdown
-    process.on('SIGINT', async () => {
-      console.error('Shutting down HTTP server...');
-      await telemetry.shutdown();
-      httpServer.close(() => {
-        process.exit(0);
-      });
-    });
+    // Handle graceful shutdown for http server mode
+    process.on(
+      'SIGINT',
+      shutdownHandler(
+        async () => await telemetry.shutdown(),
+        () => new Promise<void>((resolve) => httpServer.close(() => resolve())),
+      ),
+    );
   } else {
     // Default stdio mode
     const transport = new StdioServerTransport();
@@ -860,26 +880,24 @@ const main = async () => {
     console.error('Dynatrace MCP Server running on stdio');
 
     // Handle graceful shutdown for stdio mode
-    process.on('SIGINT', async () => {
-      console.error('Shutting down MCP server...');
-      await telemetry.shutdown();
-      process.exit(0);
-    });
-
-    process.on('SIGTERM', async () => {
-      console.error('Shutting down MCP server...');
-      await telemetry.shutdown();
-      process.exit(0);
-    });
+    process.on(
+      'SIGINT',
+      shutdownHandler(async () => await telemetry.shutdown()),
+    );
+    process.on(
+      'SIGTERM',
+      shutdownHandler(async () => await telemetry.shutdown()),
+    );
   }
 };
 
 main().catch(async (error) => {
   console.error('Fatal error in main():', error);
   try {
-    const usageTracker = createTelemetry();
-    await usageTracker.trackError(error, 'main_error');
-    await usageTracker.shutdown();
+    // report error in main
+    const telemetry = createTelemetry();
+    await telemetry.trackError(error, 'main_error');
+    await telemetry.shutdown();
   } catch (e) {
     console.warn('Failed to track fatal error:', e);
   }
