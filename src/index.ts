@@ -128,7 +128,7 @@ const main = async () => {
 
   // Initialize usage tracking
   const telemetry = createTelemetry();
-  await telemetry.trackServerStart();
+  await telemetry.trackMcpServerStart();
 
   // Create a shutdown handler that takes shutdown operations as parameters
   const shutdownHandler = (...shutdownOps: Array<() => void | Promise<void>>) => {
@@ -195,7 +195,7 @@ const main = async () => {
         // Track tool usage
         const duration = Date.now() - startTime;
         telemetry
-          .trackToolUsage(name, toolCallSuccessful, duration)
+          .trackMcpToolUsage(name, toolCallSuccessful, duration)
           .catch((e) => console.warn('Failed to track tool usage:', e));
       }
     };
