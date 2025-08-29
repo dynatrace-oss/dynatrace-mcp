@@ -1,6 +1,7 @@
 import { HttpClient } from '@dynatrace-sdk/http-client';
 import { QueryExecutionClient, QueryAssistanceClient, QueryResult, ExecuteRequest } from '@dynatrace-sdk/client-query';
 import { getUserAgent } from '../utils/user-agent';
+import { getGrailBudgetTracker, GrailBudgetTracker, generateBudgetWarning } from '../utils/grail-budget-tracker';
 
 export const verifyDqlStatement = async (dtClient: HttpClient, dqlStatement: string) => {
   const queryAssistanceClient = new QueryAssistanceClient(dtClient);
@@ -23,23 +24,46 @@ export interface DqlExecutionResult {
   executionTimeMilliseconds?: number;
   queryId?: string;
   sampled?: boolean;
+  /** Budget tracking information */
+  budgetState?: GrailBudgetTracker;
+  /** Budget warning message if applicable */
+  budgetWarning?: string;
 }
 
 /**
  * Helper function to create a DQL execution result and log metadata information.
  * @param queryResult - The query result from Dynatrace API
  * @param logPrefix - Prefix for the log message (e.g., "DQL Execution Metadata" or "DQL Execution Metadata (Polled)")
+ * @param budgetLimitGB - Budget limit in GB for tracking purposes
  * @returns DqlExecutionResult with extracted metadata
  */
-const createResultAndLog = (queryResult: QueryResult, logPrefix: string): DqlExecutionResult => {
+const createResultAndLog = (
+  queryResult: QueryResult,
+  logPrefix: string,
+  budgetLimitGB?: number,
+): DqlExecutionResult => {
+  const scannedBytes = queryResult.metadata?.grail?.scannedBytes || 0;
+
+  // Track budget if limit is provided
+  let budgetState: GrailBudgetTracker | undefined;
+  let budgetWarning: string | undefined;
+
+  if (budgetLimitGB !== undefined) {
+    const tracker = getGrailBudgetTracker(budgetLimitGB);
+    budgetState = tracker.addBytesScanned(scannedBytes);
+    budgetWarning = generateBudgetWarning(budgetState, scannedBytes) || undefined;
+  }
+
   const result: DqlExecutionResult = {
     records: queryResult.records,
     metadata: queryResult.metadata,
-    scannedBytes: queryResult.metadata?.grail?.scannedBytes,
+    scannedBytes,
     scannedRecords: queryResult.metadata?.grail?.scannedRecords,
     executionTimeMilliseconds: queryResult.metadata?.grail?.executionTimeMilliseconds,
     queryId: queryResult.metadata?.grail?.queryId,
     sampled: queryResult.metadata?.grail?.sampled,
+    budgetState,
+    budgetWarning,
   };
 
   console.error(
@@ -55,12 +79,27 @@ const createResultAndLog = (queryResult: QueryResult, logPrefix: string): DqlExe
  * If the result is not immediately available, it will poll for the result until it is available.
  * @param dtClient
  * @param body - Contains the DQL statement to execute, and optional parameters like maxResultRecords and maxResultBytes
+ * @param budgetLimitGB - Optional budget limit in GB for tracking bytes scanned
  * @returns the result with records, metadata and cost information, or undefined if the query failed or no result was returned.
  */
 export const executeDql = async (
   dtClient: HttpClient,
   body: ExecuteRequest,
+  budgetLimitGB?: number,
 ): Promise<DqlExecutionResult | undefined> => {
+  // Check budget before executing the query if budget limit is provided
+  if (budgetLimitGB !== undefined) {
+    const tracker = getGrailBudgetTracker(budgetLimitGB);
+    const currentState = tracker.getState();
+
+    if (currentState.isBudgetExceeded) {
+      console.error('DQL execution aborted: Grail budget has been exceeded');
+      const budgetWarning = generateBudgetWarning(currentState, 0);
+
+      throw new Error(budgetWarning || 'DQL execution aborted: Grail budget has been exceeded');
+    }
+  }
+
   // create a Dynatrace QueryExecutionClient
   const queryExecutionClient = new QueryExecutionClient(dtClient);
 
@@ -74,7 +113,7 @@ export const executeDql = async (
   // check if we already got a result back
   if (response.result) {
     // yes - return response result immediately
-    return createResultAndLog(response.result, 'execute_dql - Metadata:');
+    return createResultAndLog(response.result, 'execute_dql - Metadata:', budgetLimitGB);
   }
 
   // no result yet? we have wait and poll (this requires requestToken to be set)
@@ -92,7 +131,7 @@ export const executeDql = async (
       // check if we got a result from the polling endpoint
       if (pollResponse.result) {
         // yes - let's return the polled result
-        return createResultAndLog(pollResponse.result, 'execute_dql Metadata (polled):');
+        return createResultAndLog(pollResponse.result, 'execute_dql Metadata (polled):', budgetLimitGB);
       }
     } while (pollResponse.state === 'RUNNING' || pollResponse.state === 'NOT_STARTED');
 
