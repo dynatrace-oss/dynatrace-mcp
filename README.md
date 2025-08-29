@@ -566,7 +566,7 @@ The Dynatrace MCP Server includes sending Telemetry Data via Dynatrace OpenKit t
 - Telemetry is **enabled by default** but can be disabled by setting `DT_MCP_DISABLE_TELEMETRY=true`
 - No sensitive data from your Dynatrace environment is tracked
 - Only anonymous usage statistics and error information are collected
-- Data is sent to Dynatrace's usage analytics endpoint
+- Usage statistics and error data are transmitted to Dynatrace’s analytics endpoint
 
 **Configuration options:**
 
