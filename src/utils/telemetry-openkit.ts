@@ -4,8 +4,8 @@ import * as crypto from 'crypto';
 import { getPackageJsonVersion } from './version';
 
 export interface Telemetry {
-  trackServerStart(): Promise<void>;
-  trackToolUsage(toolName: string, success: boolean, duration?: number): Promise<void>;
+  trackMcpServerStart(): Promise<void>;
+  trackMcpToolUsage(toolName: string, success: boolean, duration?: number): Promise<void>;
   trackError(error: Error, context?: string): Promise<void>;
   shutdown(): Promise<void>;
 }
@@ -94,7 +94,7 @@ class DynatraceMcpTelemetry implements Telemetry {
    * Track Server Start
    * @returns
    */
-  async trackServerStart(): Promise<void> {
+  async trackMcpServerStart(): Promise<void> {
     if (!this.isEnabled) return;
 
     await this.initPromise;
@@ -119,7 +119,7 @@ class DynatraceMcpTelemetry implements Telemetry {
    * @param duration duration of the tool call
    * @returns
    */
-  async trackToolUsage(toolName: string, success: boolean, duration?: number): Promise<void> {
+  async trackMcpToolUsage(toolName: string, success: boolean, duration?: number): Promise<void> {
     if (!this.isEnabled) return;
 
     await this.initPromise;
@@ -193,8 +193,8 @@ class DynatraceMcpTelemetry implements Telemetry {
 }
 
 class NoOpTelemetry implements Telemetry {
-  async trackServerStart(): Promise<void> {}
-  async trackToolUsage(): Promise<void> {}
+  async trackMcpServerStart(): Promise<void> {}
+  async trackMcpToolUsage(): Promise<void> {}
   async trackError(): Promise<void> {}
   async shutdown(): Promise<void> {}
 }
