@@ -66,7 +66,7 @@ Enhance your AI assistant with comprehensive Dynatrace observability analysis ca
 
 ### **🚀 Quick Setup for AI Assistants**
 
-Copy the comprehensive rule files from the [`rules/`](./rules/) directory to your AI assistant's rules directory:
+Copy the comprehensive rule files from the [`dynatrace-agent-rules/rules/`](./dynatrace-agent-rules/rules/) directory to your AI assistant's rules directory:
 
 **IDE-Specific Locations:**
 
@@ -149,7 +149,7 @@ rules/
 - **Eliminated circular references** - No more confusing cross-referencing webs
 - **DQL-first approach** - Prefer flexible queries over rigid MCP calls
 
-For detailed information about the workshop rules, see the [Rules README](./rules/README.md).
+For detailed information about the workshop rules, see the [Rules README](./dynatrace-agent-rules/rules/README.md).
 
 ## Quickstart
 
