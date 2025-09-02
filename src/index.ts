@@ -1,46 +1,40 @@
 #!/usr/bin/env node
 import { EnvironmentInformationClient } from '@dynatrace-sdk/client-platform-management-service';
-import {
-  ClientRequestError,
-  isApiClientError,
-  isApiGatewayError,
-  isClientRequestError,
-} from '@dynatrace-sdk/shared-errors';
+import { ClientRequestError, isClientRequestError } from '@dynatrace-sdk/shared-errors';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import {
-  CallToolRequest,
-  CallToolRequestSchema,
-  CallToolResult,
-  ListToolsRequestSchema,
-  NotificationSchema,
-  Tool,
-} from '@modelcontextprotocol/sdk/types.js';
-import { config } from 'dotenv';
-import { createServer, IncomingMessage, ServerResponse } from 'node:http';
-import { randomUUID } from 'node:crypto';
+import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { Command } from 'commander';
+import { config } from 'dotenv';
+import { randomUUID } from 'node:crypto';
+import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { z, ZodRawShape, ZodTypeAny } from 'zod';
 
 import { version as VERSION } from '../package.json';
 import { createDtHttpClient } from './authentication/dynatrace-clients';
-import { listVulnerabilities } from './capabilities/list-vulnerabilities';
-import { listProblems } from './capabilities/list-problems';
-import { getMonitoredEntityDetails } from './capabilities/get-monitored-entity-details';
-import { getOwnershipInformation } from './capabilities/get-ownership-information';
-import { getEventsForCluster } from './capabilities/get-events-for-cluster';
 import { createWorkflowForProblemNotification } from './capabilities/create-workflow-for-problem-notification';
-import { updateWorkflow } from './capabilities/update-workflow';
-import { executeDql, verifyDqlStatement } from './capabilities/execute-dql';
-import { sendSlackMessage } from './capabilities/send-slack-message';
-import { findMonitoredEntityByName } from './capabilities/find-monitored-entity-by-name';
 import {
   chatWithDavisCopilot,
   explainDqlInNaturalLanguage,
   generateDqlFromNaturalLanguage,
 } from './capabilities/davis-copilot';
+import { executeDql, verifyDqlStatement } from './capabilities/execute-dql';
+import { findMonitoredEntityByName } from './capabilities/find-monitored-entity-by-name';
+import { getEventsForCluster } from './capabilities/get-events-for-cluster';
+import { getExecution } from './capabilities/get-execution';
+import { getExecutions } from './capabilities/get-executions';
+import { getMonitoredEntityDetails } from './capabilities/get-monitored-entity-details';
+import { getOwnershipInformation } from './capabilities/get-ownership-information';
+import { getWorkflowExecutions } from './capabilities/get-workflow-executions';
+import { listProblems } from './capabilities/list-problems';
+import { listVulnerabilities } from './capabilities/list-vulnerabilities';
+import { sendSlackMessage } from './capabilities/send-slack-message';
+import { updateWorkflow } from './capabilities/update-workflow';
 import { DynatraceEnv, getDynatraceEnv } from './getDynatraceEnv';
+import { getTaskExecutions } from './capabilities/get-task-executions';
+import { getWorkflow } from './capabilities/get-workflow';
+import { getTaskExecutionLog } from './capabilities/get-task-execution-log';
 
 config();
 
@@ -684,6 +678,138 @@ const main = async () => {
       }
 
       return resp;
+    },
+  );
+
+  tool(
+    'list_executions',
+    'List all executions of all workflows.',
+    {
+      adminAccess: z.boolean().optional().default(false),
+    },
+    async ({ adminAccess }) => {
+      const dtClient = await createDtHttpClient(
+        dtEnvironment,
+        scopesBase.concat('automation:workflows:read', adminAccess ? 'automation:workflows:admin' : ''),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
+      );
+
+      const response = await getExecutions(dtClient, adminAccess);
+
+      return JSON.stringify(response);
+    },
+  );
+
+  tool(
+    'list_workflow_executions',
+    'List all executions for a specific workflow.',
+    {
+      workflowId: z.string().uuid().optional(),
+      adminAccess: z.boolean().optional().default(false),
+    },
+    async ({ workflowId, adminAccess }) => {
+      const dtClient = await createDtHttpClient(
+        dtEnvironment,
+        scopesBase.concat('automation:workflows:read', adminAccess ? 'automation:workflows:admin' : ''),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
+      );
+
+      const response = await getWorkflowExecutions(dtClient, workflowId, adminAccess);
+
+      return JSON.stringify(response);
+    },
+  );
+
+  tool(
+    'get_execution',
+    'Get a specific execution for a workflow.',
+    {
+      executionId: z.string().uuid(),
+      adminAccess: z.boolean().optional().default(false),
+    },
+    async ({ executionId, adminAccess }) => {
+      const dtClient = await createDtHttpClient(
+        dtEnvironment,
+        scopesBase.concat('automation:workflows:read', adminAccess ? 'automation:workflows:admin' : ''),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
+      );
+
+      const response = await getExecution(dtClient, executionId, adminAccess);
+
+      return JSON.stringify(response);
+    },
+  );
+
+  tool(
+    'get_workflow',
+    'Get a specific workflow.',
+    {
+      workflowId: z.string().uuid(),
+      adminAccess: z.boolean().optional().default(false),
+    },
+    async ({ workflowId, adminAccess }) => {
+      const dtClient = await createDtHttpClient(
+        dtEnvironment,
+        scopesBase.concat('automation:workflows:read', adminAccess ? 'automation:workflows:admin' : ''),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
+      );
+
+      const response = await getWorkflow(dtClient, workflowId, adminAccess);
+
+      return JSON.stringify(response);
+    },
+  );
+
+  tool(
+    'get_task_executions',
+    'Get all task executions for a specific execution.',
+    {
+      executionId: z.string().uuid(),
+      adminAccess: z.boolean().optional().default(false),
+    },
+    async ({ executionId, adminAccess }) => {
+      const dtClient = await createDtHttpClient(
+        dtEnvironment,
+        scopesBase.concat('automation:workflows:read', adminAccess ? 'automation:workflows:admin' : ''),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
+      );
+
+      const response = await getTaskExecutions(dtClient, executionId, adminAccess);
+
+      return JSON.stringify(response);
+    },
+  );
+
+  tool(
+    'get_task_execution_log',
+    'Get the task execution log for a specific task within a workflow execution.',
+    {
+      executionId: z.string().uuid(),
+      taskId: z.string(),
+      adminAccess: z.boolean().optional().default(false),
+    },
+    async ({ executionId, taskId, adminAccess }) => {
+      const dtClient = await createDtHttpClient(
+        dtEnvironment,
+        scopesBase.concat('automation:workflows:read', adminAccess ? 'automation:workflows:admin' : ''),
+        oauthClientId,
+        oauthClientSecret,
+        dtPlatformToken,
+      );
+
+      const response = await getTaskExecutionLog(dtClient, executionId, taskId, adminAccess);
+
+      return JSON.stringify(response);
     },
   );
 
