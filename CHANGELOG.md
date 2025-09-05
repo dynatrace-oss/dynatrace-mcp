@@ -2,9 +2,11 @@
 
 ## Unreleased Changes
 
-- Added metadata output which includes scanned bytes (for cost tracking) to `execute_dql`
+- Added metadata output which includes Grail scanned bytes (for cost tracking) to `execute_dql`
 - Added next-steps for `get_entity_details` to find out about metrics, problems and logs
 - Added Telemetry via Dynatrace OpenKit to improve the product with anonymous usage statistics and error information (can be disabled via `DT_MCP_DISABLE_TELEMETRY` environment variable)
+- Added Grail budget tracking with `DT_GRAIL_QUERY_BUDGET_GB` environment variable (default: 1000 GB, setting it to `-1` disables it), as well as warnings and exceeded alerts in `execute_dql` tool responses
+- Enforce Grail budget by throwing an exception when the budget has been exceeded, preventing further DQL query execution
 
 ## 0.5.0
 
