@@ -40,7 +40,7 @@ class DynatraceMcpTelemetry implements Telemetry {
    * @param endpointUrl Dynatrace Endpoint for OpenKit Ingest
    * @param applicationId Application Id for OpenKit Ingest
    * @param deviceId Device or Session ID (should be anonymized)
-   * @returns
+   * @returns true if initialization was successful, false otherwise
    */
   private async initializeOpenKit(endpointUrl: string, applicationId: string, deviceId: string): Promise<boolean> {
     try {
@@ -92,7 +92,7 @@ class DynatraceMcpTelemetry implements Telemetry {
 
   /**
    * Track Server Start
-   * @returns
+   * @returns nothing
    */
   async trackMcpServerStart(): Promise<void> {
     if (!this.isEnabled) return;
@@ -117,7 +117,7 @@ class DynatraceMcpTelemetry implements Telemetry {
    * @param toolName name of the tool
    * @param success whether or not the tool call was successful
    * @param duration duration of the tool call
-   * @returns
+   * @returns nothing
    */
   async trackMcpToolUsage(toolName: string, success: boolean, duration?: number): Promise<void> {
     if (!this.isEnabled) return;
@@ -145,7 +145,7 @@ class DynatraceMcpTelemetry implements Telemetry {
    * Track Errors
    * @param error error message to be tracked
    * @param context
-   * @returns
+   * @returns nothing
    */
   async trackError(error: Error, context?: string): Promise<void> {
     if (!this.isEnabled) return;
