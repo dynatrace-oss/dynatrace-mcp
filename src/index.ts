@@ -16,6 +16,7 @@ import {
   ListToolsRequestSchema,
   NotificationSchema,
   Tool,
+  isInitializeRequest,
 } from '@modelcontextprotocol/sdk/types.js';
 import { config } from 'dotenv';
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
@@ -83,76 +84,11 @@ function handleClientRequestError(error: ClientRequestError): string {
   return `Client Request Error: ${error.message} with HTTP status: ${error.response.status}. ${additionalErrorInformation} (body: ${JSON.stringify(error.body)})`;
 }
 
-const main = async () => {
-  // read Environment variables
-  let dynatraceEnv: DynatraceEnv;
-  try {
-    dynatraceEnv = getDynatraceEnv();
-  } catch (err) {
-    console.error((err as Error).message);
-    process.exit(1);
-  }
-  console.error(`Initializing Dynatrace MCP Server v${getPackageJsonVersion()}...`);
+/**
+ * Sets up all the tools for an MCP server instance
+ */
+function setupServerTools(server: McpServer, telemetry: Telemetry, dynatraceEnv: DynatraceEnv) {
   const { oauthClientId, oauthClientSecret, dtEnvironment, dtPlatformToken, slackConnectionId } = dynatraceEnv;
-
-  // Test connection on startup
-  let retryCount = 0;
-  const maxRetries = 5;
-  while (true) {
-    try {
-      console.error(
-        `Testing connection to Dynatrace environment: ${dtEnvironment}... (Attempt ${retryCount + 1} of ${maxRetries})`,
-      );
-      await testDynatraceConnection(dtEnvironment, oauthClientId, oauthClientSecret, dtPlatformToken);
-      console.error(`Successfully connected to the Dynatrace environment at ${dtEnvironment}.`);
-      break;
-    } catch (error: any) {
-      console.error(`Error: Could not connect to the Dynatrace environment.`);
-      if (isClientRequestError(error)) {
-        console.error(handleClientRequestError(error));
-      } else {
-        console.error(`Error: ${error.message}`);
-      }
-      retryCount++;
-      if (retryCount >= maxRetries) {
-        console.error(`Fatal: Maximum number of connection retries (${maxRetries}) exceeded. Exiting.`);
-        process.exit(1);
-      }
-      const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
-      console.error(`Retrying in ${delay / 1000} seconds...`);
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-  }
-
-  console.error(`Starting Dynatrace MCP Server v${getPackageJsonVersion()}...`);
-
-  // Initialize usage tracking
-  const telemetry = createTelemetry();
-  await telemetry.trackMcpServerStart();
-
-  // Create a shutdown handler that takes shutdown operations as parameters
-  const shutdownHandler = (...shutdownOps: Array<() => void | Promise<void>>) => {
-    return async () => {
-      console.error('Shutting down MCP server...');
-      for (const op of shutdownOps) {
-        await op();
-      }
-      process.exit(0);
-    };
-  };
-
-  // Initialize Metadata for MCP Server
-  const server = new McpServer(
-    {
-      name: 'Dynatrace MCP Server',
-      version: getPackageJsonVersion(),
-    },
-    {
-      capabilities: {
-        tools: {},
-      },
-    },
-  );
 
   // quick abstraction/wrapper to make it easier for tools to reply text instead of JSON
   const tool = (
@@ -808,6 +744,81 @@ const main = async () => {
       return resp;
     },
   );
+}
+
+const main = async () => {
+  // read Environment variables
+  let dynatraceEnv: DynatraceEnv;
+  try {
+    dynatraceEnv = getDynatraceEnv();
+  } catch (err) {
+    console.error((err as Error).message);
+    process.exit(1);
+  }
+  console.error(`Initializing Dynatrace MCP Server v${getPackageJsonVersion()}...`);
+  const { oauthClientId, oauthClientSecret, dtEnvironment, dtPlatformToken, slackConnectionId } = dynatraceEnv;
+
+  // Test connection on startup
+  let retryCount = 0;
+  const maxRetries = 5;
+  while (true) {
+    try {
+      console.error(
+        `Testing connection to Dynatrace environment: ${dtEnvironment}... (Attempt ${retryCount + 1} of ${maxRetries})`,
+      );
+      await testDynatraceConnection(dtEnvironment, oauthClientId, oauthClientSecret, dtPlatformToken);
+      console.error(`Successfully connected to the Dynatrace environment at ${dtEnvironment}.`);
+      break;
+    } catch (error: any) {
+      console.error(`Error: Could not connect to the Dynatrace environment.`);
+      if (isClientRequestError(error)) {
+        console.error(handleClientRequestError(error));
+      } else {
+        console.error(`Error: ${error.message}`);
+      }
+      retryCount++;
+      if (retryCount >= maxRetries) {
+        console.error(`Fatal: Maximum number of connection retries (${maxRetries}) exceeded. Exiting.`);
+        process.exit(1);
+      }
+      const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+      console.error(`Retrying in ${delay / 1000} seconds...`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+
+  console.error(`Starting Dynatrace MCP Server v${getPackageJsonVersion()}...`);
+
+  // Initialize usage tracking
+  const telemetry = createTelemetry();
+  await telemetry.trackMcpServerStart();
+
+  // Create a shutdown handler that takes shutdown operations as parameters
+  const shutdownHandler = (...shutdownOps: Array<() => void | Promise<void>>) => {
+    return async () => {
+      console.error('Shutting down MCP server...');
+      for (const op of shutdownOps) {
+        await op();
+      }
+      process.exit(0);
+    };
+  };
+
+  // Initialize Metadata for MCP Server (for stdio mode only)
+  const server = new McpServer(
+    {
+      name: 'Dynatrace MCP Server',
+      version: getPackageJsonVersion(),
+    },
+    {
+      capabilities: {
+        tools: {},
+      },
+    },
+  );
+
+  // Set up all the tools for stdio mode
+  setupServerTools(server, telemetry, dynatraceEnv);
 
   // Parse command line arguments using commander
   const program = new Command();
@@ -828,10 +839,9 @@ const main = async () => {
   const host = options.host || '0.0.0.0';
 
   if (httpMode) {
-    // HTTP server mode
-    const httpTransport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: () => randomUUID(),
-    });
+    // HTTP server mode with session management
+    // Map to store transports by session ID
+    const transports: { [sessionId: string]: StreamableHTTPServerTransport } = {};
 
     const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
       // Parse request body for POST requests
@@ -851,11 +861,69 @@ const main = async () => {
         }
       }
 
-      await httpTransport.handleRequest(req, res, body);
-    });
+      // Check for existing session ID
+      const sessionId = req.headers['mcp-session-id'] as string | undefined;
+      let transport: StreamableHTTPServerTransport;
 
-    console.error('Connecting server to HTTP transport...');
-    await server.connect(httpTransport);
+      if (sessionId && transports[sessionId]) {
+        // Reuse existing transport
+        transport = transports[sessionId];
+      } else if (!sessionId && isInitializeRequest(body)) {
+        // New initialization request
+        transport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: () => randomUUID(),
+          onsessioninitialized: (sessionId) => {
+            // Store the transport by session ID
+            transports[sessionId] = transport;
+            console.error(`New MCP session initialized: ${sessionId}`);
+          },
+        });
+
+        // Clean up transport when closed
+        transport.onclose = () => {
+          if (transport.sessionId) {
+            console.error(`MCP session closed: ${transport.sessionId}`);
+            delete transports[transport.sessionId];
+          }
+        };
+
+        // Create a new server instance for this session
+        const sessionServer = new McpServer(
+          {
+            name: 'Dynatrace MCP Server',
+            version: getPackageJsonVersion(),
+          },
+          {
+            capabilities: {
+              tools: {},
+            },
+          },
+        );
+
+        // Set up all the tools for this session server (reuse the same tool function)
+        setupServerTools(sessionServer, telemetry, dynatraceEnv);
+
+        // Connect to the MCP server
+        await sessionServer.connect(transport);
+      } else {
+        // Invalid request
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            jsonrpc: '2.0',
+            error: {
+              code: -32000,
+              message: 'Bad Request: No valid session ID provided',
+            },
+            id: null,
+          }),
+        );
+        return;
+      }
+
+      // Handle the request
+      await transport.handleRequest(req, res, body);
+    });
 
     // Start HTTP Server on the specified host and port
     httpServer.listen(httpPort, host, () => {
