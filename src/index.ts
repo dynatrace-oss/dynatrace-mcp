@@ -1,22 +1,10 @@
 #!/usr/bin/env node
 import { EnvironmentInformationClient } from '@dynatrace-sdk/client-platform-management-service';
-import {
-  ClientRequestError,
-  isApiClientError,
-  isApiGatewayError,
-  isClientRequestError,
-} from '@dynatrace-sdk/shared-errors';
+import { ClientRequestError, isClientRequestError } from '@dynatrace-sdk/shared-errors';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import {
-  CallToolRequest,
-  CallToolRequestSchema,
-  CallToolResult,
-  ListToolsRequestSchema,
-  NotificationSchema,
-  Tool,
-} from '@modelcontextprotocol/sdk/types.js';
+import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { config } from 'dotenv';
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
@@ -37,17 +25,17 @@ import { sendSlackMessage } from './capabilities/send-slack-message';
 import { findMonitoredEntityByName } from './capabilities/find-monitored-entity-by-name';
 import {
   chatWithDavisCopilot,
+  ConversationContext,
   explainDqlInNaturalLanguage,
   generateDqlFromNaturalLanguage,
 } from './capabilities/davis-copilot';
 import { DynatraceEnv, getDynatraceEnv } from './getDynatraceEnv';
-import { createTelemetry, Telemetry } from './utils/telemetry-openkit';
-import { getEntityTypeFromId } from './utils/dynatrace-entity-types';
-import { Http2ServerRequest } from 'node:http2';
+import { createTelemetry } from './utils/telemetry-openkit';
+import { Error } from '@dynatrace-sdk/client-automation';
 
 config();
 
-let scopesBase = [
+const scopesBase = [
   'app-engine:apps:run', // needed for environmentInformationClient
   'app-engine:functions:run', // needed for environmentInformationClient
 ];
@@ -106,12 +94,12 @@ const main = async () => {
       await testDynatraceConnection(dtEnvironment, oauthClientId, oauthClientSecret, dtPlatformToken);
       console.error(`Successfully connected to the Dynatrace environment at ${dtEnvironment}.`);
       break;
-    } catch (error: any) {
+    } catch (error) {
       console.error(`Error: Could not connect to the Dynatrace environment.`);
       if (isClientRequestError(error)) {
         console.error(handleClientRequestError(error));
       } else {
-        console.error(`Error: ${error.message}`);
+        console.error(`Error: ${error}`);
       }
       retryCount++;
       if (retryCount >= maxRetries) {
@@ -174,6 +162,7 @@ const main = async () => {
         return {
           content: [{ type: 'text', text: response }],
         };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         // Track error
         telemetry.trackError(error, `tool_${name}`).catch((e) => console.warn('Failed to track error:', e));
@@ -188,7 +177,7 @@ const main = async () => {
         // else: We don't know what kind of error happened - best-case we can provide error.message
         console.log(error);
         return {
-          content: [{ type: 'text', text: `Error: ${error.message}` }],
+          content: [{ type: 'text', text: `Error: ${error}` }],
           isError: true,
         };
       } finally {
@@ -209,7 +198,7 @@ const main = async () => {
     'get_environment_info',
     'Get information about the connected Dynatrace Environment (Tenant) and verify the connection and authentication.',
     {},
-    async ({}) => {
+    async () => {
       // create an oauth-client
       const dtClient = await createDtHttpClient(
         dtEnvironment,
@@ -335,7 +324,7 @@ const main = async () => {
         resp +=
           `\nNext Steps:` +
           `\n1. Use "execute_dql" tool with the following query to get more details about a specific problem:
-          "fetch dt.davis.problems, from: now()-10h, to: now() | filter event.id == \"<problem-id>\" | fields event.description, event.status, event.category, event.start, event.end,
+          "fetch dt.davis.problems, from: now()-10h, to: now() | filter event.id == "<problem-id>" | fields event.description, event.status, event.category, event.start, event.end,
             root_cause_entity_id, root_cause_entity_name, duration, affected_entities_count,
             event_count, affected_users_count, problem_id, dt.davis.mute.status, dt.davis.mute.user,
             entity_tags, labels.alerting_profile, maintenance.is_under_maintenance,
@@ -483,7 +472,7 @@ const main = async () => {
     'execute_dql',
     'Get Logs, Metrics, Spans or Events from Dynatrace GRAIL by executing a Dynatrace Query Language (DQL) statement. ' +
       'You can also use the "generate_dql_from_natural_language" tool upfront to generate or refine a DQL statement based on your request. ' +
-      'Note: For more information about available fields for filters and aggregation, use the query "fetch dt.semantic_dictionary.models | filter data_object == \"logs\""',
+      'Note: For more information about available fields for filters and aggregation, use the query "fetch dt.semantic_dictionary.models | filter data_object == "logs""',
     {
       dqlStatement: z
         .string()
@@ -651,7 +640,7 @@ const main = async () => {
         dtPlatformToken,
       );
 
-      const conversationContext: any[] = [];
+      const conversationContext: ConversationContext[] = [];
 
       if (context) {
         conversationContext.push({
@@ -844,7 +833,7 @@ const main = async () => {
         const rawBody = Buffer.concat(chunks).toString();
         try {
           body = JSON.parse(rawBody);
-        } catch (error) {
+        } catch {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Invalid JSON' }));
           return;

@@ -1,4 +1,4 @@
-import { getDynatraceEnv, DynatraceEnv } from './getDynatraceEnv';
+import { getDynatraceEnv } from './getDynatraceEnv';
 
 describe('getDynatraceEnv', () => {
   const baseEnv = {

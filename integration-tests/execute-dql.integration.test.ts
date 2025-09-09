@@ -163,7 +163,7 @@ describe('Execute DQL Integration Tests', () => {
     if (executionResponse?.records && executionResponse.records.length > 0) {
       expect(typeof executionResponse.records[0]).toBe('object');
       // Events should have common fields like timestamp, event.type, etc.
-      const firstEvent = executionResponse.records[0] as Record<string, any>;
+      const firstEvent = executionResponse.records[0];
       expect(firstEvent).toHaveProperty('timestamp');
     }
   });

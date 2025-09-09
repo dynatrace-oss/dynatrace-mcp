@@ -1,13 +1,14 @@
 import { HttpClient } from '@dynatrace-sdk/http-client';
 import { executeDql } from './execute-dql';
 import { getEntityTypeFromId } from '../utils/dynatrace-entity-types';
+import { ResultRecord } from '@dynatrace-sdk/client-query';
 
 type MonitoredEntityDetails = {
   entityId: string;
   displayName: string;
   entityTypeTable: string;
   type: string;
-  allProperties: any;
+  allProperties: ResultRecord | undefined;
 };
 
 /**

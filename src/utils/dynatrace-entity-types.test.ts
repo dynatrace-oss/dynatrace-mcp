@@ -59,16 +59,19 @@ describe('getEntityTypeFromId', () => {
   });
 
   it('should return null for null input', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = getEntityTypeFromId(null as any);
     expect(result).toBeNull();
   });
 
   it('should return null for undefined input', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = getEntityTypeFromId(undefined as any);
     expect(result).toBeNull();
   });
 
   it('should return null for non-string input', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = getEntityTypeFromId(123 as any);
     expect(result).toBeNull();
   });
