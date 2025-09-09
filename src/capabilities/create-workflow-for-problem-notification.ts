@@ -78,7 +78,7 @@ export const createWorkflowForProblemNotification = async (
     };
   }
 
-  let notificationWorkflow: WorkflowCreate = {
+  const notificationWorkflow: WorkflowCreate = {
     title: `[MCP POC] Notify team ${teamName} on problem of type ${problemType}`,
     description: `Automatically created workflow to notify team ${teamName} on problems of type ${problemType} - please delete me after the demo!`,
     isPrivate: isPrivate,
@@ -91,7 +91,7 @@ export const createWorkflowForProblemNotification = async (
         description: 'Sends a notification to a Slack channel',
         input: {
           connectionId: 'slack-connection-id',
-          channel: `{{ \"${channel}\" }}`,
+          channel: `{{ "${channel}" }}`,
           message: `🚨 Alert for Team ${teamName}\n*Problem Type*: ${problemType}\n*Problem ID*: {{ event()["display_id"] }}\n*Status*: {{ event()["event.status"] }}\n\n<{{ environment().url }}/ui/apps/dynatrace.davis.problems/problem/{{ event()["event.id"] }}|Click here for details>`,
         },
         active: true,

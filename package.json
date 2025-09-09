@@ -41,7 +41,9 @@
     "test:unit": "jest --selectProjects unit",
     "test:integration": "jest --selectProjects integration --runInBand",
     "prettier": "prettier --check .",
-    "prettier:fix": "prettier --write ."
+    "prettier:fix": "prettier --write .",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "author": "Dynatrace",
   "license": "MIT",
@@ -58,13 +60,18 @@
     "zod-to-json-schema": "^3.24.5"
   },
   "devDependencies": {
+    "@eslint/js": "^9.35.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22",
+    "eslint": "^9.35.0",
+    "globals": "^16.3.0",
     "husky": "^9.1.7",
     "jest": "^30.0.0",
+    "jiti": "^2.5.1",
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "typescript-eslint": "^8.43.0"
   }
 }

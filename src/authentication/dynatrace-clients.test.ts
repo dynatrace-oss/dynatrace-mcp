@@ -35,7 +35,6 @@ describe('dynatrace-clients', () => {
     describe('with OAuth credentials', () => {
       const clientId = 'test-client-id';
       const clientSecret = 'test-client-secret';
-      const platformToken = 'test-platform-token';
 
       beforeEach(() => {
         mockGetSSOUrl.mockResolvedValue('https://sso.dynatrace.com');
