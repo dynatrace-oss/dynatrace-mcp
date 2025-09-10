@@ -38,6 +38,17 @@ depend on the volume (GB scanned).
 1. Review your current Dynatrace consumption model and pricing
 2. Understand the cost implications of the specific data you plan to query (logs, events, metrics) - see [Dynatrace Pricing and Rate Card](https://www.dynatrace.com/pricing/)
 3. Start with smaller timeframes (e.g., 12h-24h) and make use of [buckets](https://docs.dynatrace.com/docs/discover-dynatrace/platform/grail/data-model#built-in-grail-buckets) to reduce the cost impact
+4. Set an appropriate `DT_GRAIL_QUERY_BUDGET_GB` environment variable (default: 1000 GB) to control and monitor your Grail query consumption
+
+**Grail Budget Tracking:**
+
+The MCP server includes built-in budget tracking for Grail queries to help you monitor and control costs:
+
+- Set `DT_GRAIL_QUERY_BUDGET_GB` (default: 1000 GB) to define your session budget limit
+- The server tracks bytes scanned across all Grail queries in the current session
+- You'll receive warnings when approaching 80% of your budget
+- Budget exceeded alerts help prevent unexpected high consumption
+- Budget resets when you restart the MCP server session
 
 **To understand costs that occured:**
 
@@ -312,6 +323,7 @@ You can set up authentication via **Platform Tokens** (recommended) or **OAuth C
 - `DT_PLATFORM_TOKEN` (string, e.g., `dt0s16.SAMPLE.abcd1234`) - **Recommended**: Dynatrace Platform Token
 - `OAUTH_CLIENT_ID` (string, e.g., `dt0s02.SAMPLE`) - Alternative: Dynatrace OAuth Client ID (for advanced use cases)
 - `OAUTH_CLIENT_SECRET` (string, e.g., `dt0s02.SAMPLE.abcd1234`) - Alternative: Dynatrace OAuth Client Secret (for advanced use cases)
+- `DT_GRAIL_QUERY_BUDGET_GB` (number, default: 1000) - Budget limit in GB (base 1000) for Grail query bytes scanned per session. The MCP server tracks your Grail usage and warns when approaching or exceeding this limit.
 
 **Platform Tokens are recommended** for most use cases as they provide a simpler authentication flow. OAuth Clients should only be used when specific OAuth features are required.
 

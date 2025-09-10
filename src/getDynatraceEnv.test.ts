@@ -18,6 +18,7 @@ describe('getDynatraceEnv', () => {
       dtEnvironment: env.DT_ENVIRONMENT,
       dtPlatformToken: env.DT_PLATFORM_TOKEN,
       slackConnectionId: env.SLACK_CONNECTION_ID,
+      grailBudgetGB: 1000, // Default value
     });
   });
 
