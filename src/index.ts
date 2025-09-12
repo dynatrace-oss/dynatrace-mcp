@@ -83,21 +83,18 @@ function handleClientRequestError(error: ClientRequestError): string {
   return `Client Request Error: ${error.message} with HTTP status: ${error.response.status}. ${additionalErrorInformation} (body: ${JSON.stringify(error.body)})`;
 }
 
-const main = async () => {
-  // read Environment variables
-  let dynatraceEnv: DynatraceEnv;
-  try {
-    dynatraceEnv = getDynatraceEnv();
-  } catch (err) {
-    console.error((err as Error).message);
-    process.exit(1);
-  }
-  console.error(`Initializing Dynatrace MCP Server v${getPackageJsonVersion()}...`);
-  const { oauthClientId, oauthClientSecret, dtEnvironment, dtPlatformToken, slackConnectionId } = dynatraceEnv;
-
-  // Test connection on startup
+/**
+ * Try to connect to Dynatrace environment with retries and exponential backoff.
+ */
+async function retryTestDynatraceConnection(
+  dtEnvironment: string,
+  oauthClientId?: string,
+  oauthClientSecret?: string,
+  dtPlatformToken?: string,
+) {
   let retryCount = 0;
-  const maxRetries = 5;
+  const maxRetries = 3; // Max retries
+  const delayMs = 2000; // Initial delay of 2 seconds
   while (true) {
     try {
       console.error(
@@ -116,14 +113,41 @@ const main = async () => {
       retryCount++;
       if (retryCount >= maxRetries) {
         console.error(`Fatal: Maximum number of connection retries (${maxRetries}) exceeded. Exiting.`);
-        process.exit(1);
+        throw new Error(
+          `Failed to connect to Dynatrace environment ${dtEnvironment} after ${maxRetries} attempts. Most likely your configuration is incorrect.`,
+        );
       }
-      const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+      const delay = Math.pow(2, retryCount) * delayMs; // Exponential backoff
       console.error(`Retrying in ${delay / 1000} seconds...`);
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
+}
 
+const main = async () => {
+  console.error(`Initializing Dynatrace MCP Server v${getPackageJsonVersion()}...`);
+
+  // read Environment variables
+  let dynatraceEnv: DynatraceEnv;
+  try {
+    dynatraceEnv = getDynatraceEnv();
+  } catch (err) {
+    console.error((err as Error).message);
+    process.exit(1);
+  }
+
+  // Unpack environment variables
+  const { oauthClientId, oauthClientSecret, dtEnvironment, dtPlatformToken, slackConnectionId } = dynatraceEnv;
+
+  // Test connection on startup
+  try {
+    await retryTestDynatraceConnection(dtEnvironment, oauthClientId, oauthClientSecret, dtPlatformToken);
+  } catch (err) {
+    console.error((err as Error).message);
+    process.exit(2);
+  }
+
+  // Ready to start the server
   console.error(`Starting Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
   // Initialize usage tracking

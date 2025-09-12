@@ -288,19 +288,6 @@ npx -y @dynatrace-oss/dynatrace-mcp-server@latest --version
 }
 ```
 
-**Configuration for MCP clients that support HTTP transport:**
-
-```json
-{
-  "mcpServers": {
-    "dynatrace-http": {
-      "url": "http://localhost:3000",
-      "transport": "http"
-    }
-  }
-}
-```
-
 ### Rule File
 
 For efficient result retrieval from Dynatrace, please consider creating a rule file (e.g., [.github/copilot-instructions.md](https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions), [.amazonq/rules/](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/context-project-rules.html)), instructing coding agents on how to get more details for your component/app/service. Here is an example for [easytrade](https://github.com/Dynatrace/easytrade), please adapt the names and filters to fit your use-cases and components:
