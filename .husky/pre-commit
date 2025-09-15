@@ -1,3 +1,2 @@
 npm run test:unit
 npm run prettier:fix
-git update-index --again
