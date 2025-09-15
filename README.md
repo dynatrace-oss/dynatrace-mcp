@@ -1,7 +1,29 @@
 # Dynatrace MCP Server
 
+<h4 align="center">
+  <a href="https://github.com/dynatrace-oss/dynatrace-mcp/releases">
+    <img src="https://img.shields.io/github/release/dynatrace-oss/dynatrace-mcp" />
+  </a>
+  <a href="https://github.com/dynatrace-oss/dynatrace-mcp/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/license-mit-blue.svg" alt="Dynatrace MCP Server is released under the MIT License" />
+  </a>
+  <a href="https://www.npmjs.com/package/@dynatrace-oss/dynatrace-mcp-server">
+    <img src="https://img.shields.io/npm/dm/@dynatrace-oss/dynatrace-mcp-server?logo=npm&style=flat&color=red" alt="npm" />
+  </a>
+  <a href="https://github.com/dynatrace-oss/dynatrace-mcp">
+    <img src="https://img.shields.io/github/stars/dynatrace-oss/dynatrace-mcp" alt="Dynatrace MCP Server Stars on GitHub" />
+  </a>
+  <a href="https://github.com/dynatrace-oss/dynatrace-mcp">
+    <img src="https://img.shields.io/github/contributors/dynatrace-oss/dynatrace-mcp?color=green" alt="Dynatrace MCP Server Contributors on GitHub" />
+  </a>
+</h4>
+
 This local MCP server allows interaction with the [Dynatrace](https://www.dynatrace.com/) observability platform.
 Bring real-time observability data directly into your development workflow.
+
+> Note: This product is not officially supported by Dynatrace.
+
+Please contact us via [GitHub Issues](https://github.com/dynatrace-oss/dynatrace-mcp/issues) if you have feature requests, questions, or need help.
 
 <img width="1046" alt="image" src="/assets/dynatrace-mcp-arch.png" />
 
@@ -195,7 +217,7 @@ This only works if the config is stored in the current workspaces, e.g., `<your-
 ```json
 {
   "mcpServers": {
-    "mobile-mcp": {
+    "dynatrace-mcp-server": {
       "command": "npx",
       "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
@@ -214,7 +236,7 @@ The [Amazon Q Developer CLI](https://docs.aws.amazon.com/amazonq/latest/qdevelop
 ```json
 {
   "mcpServers": {
-    "mobile-mcp": {
+    "dynatrace-mcp-server": {
       "command": "npx",
       "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
@@ -628,8 +650,3 @@ This will
 - prepare the [changelog](CHANGELOG.md),
 - update the version number in [package.json](package.json),
 - commit the changes.
-
-## Notes
-
-This product is not officially supported by Dynatrace.
-Please contact us via [GitHub Issues](https://github.com/dynatrace-oss/dynatrace-mcp/issues) if you have feature requests, questions, or need help.

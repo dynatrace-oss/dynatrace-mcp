@@ -5,6 +5,7 @@
 - Added metadata output which includes scanned bytes (for cost tracking) to `execute_dql`
 - Added next-steps for `get_entity_details` to find out about metrics, problems and logs
 - Added Telemetry via Dynatrace OpenKit to improve the product with anonymous usage statistics and error information (can be disabled via `DT_MCP_DISABLE_TELEMETRY` environment variable)
+- Added `server.json` and published the mcp server at the official MCP Registry
 
 ## 0.5.0
 
