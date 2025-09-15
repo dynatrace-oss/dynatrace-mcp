@@ -38,10 +38,10 @@ export const findMonitoredEntityByName = async (dtClient: HttpClient, entityName
   // Note: This may be slow, as we are appending multiple entity types above
   const dqlResponse = await executeDql(dtClient, { query: dql });
 
-  if (dqlResponse && dqlResponse.length > 0) {
+  if (dqlResponse && dqlResponse.records && dqlResponse.records.length > 0) {
     let resp = 'The following monitored entities were found:\n';
     // iterate over dqlResponse and create a string with the entity names
-    dqlResponse.forEach((entity) => {
+    dqlResponse.records.forEach((entity) => {
       if (entity) {
         resp += `- Entity '${entity['entity.name']}' of type '${entity['entity.type']} has entity id '${entity.id}'\n`;
       }

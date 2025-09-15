@@ -9,7 +9,7 @@ import { OAuthTokenResponse } from './types';
  * @param clientSecret - Oauth Client Secret for Dynatrace
  * @param ssoAuthUrl - SSO Authentication URL
  * @param scopes - List of requested scopes
- * @returns
+ * @returns Response of the OAuth Endpoint (which, in the best case includes a token)
  */
 const requestToken = async (
   clientId: string,
@@ -45,7 +45,7 @@ const requestToken = async (
  * @param clientId
  * @param clientSecret
  * @param dtPlatformToken
- * @returns
+ * @returns an authenticated HttpClient
  */
 export const createDtHttpClient = async (
   environmentUrl: string,

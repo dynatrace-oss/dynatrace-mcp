@@ -1,7 +1,29 @@
 # Dynatrace MCP Server
 
+<h4 align="center">
+  <a href="https://github.com/dynatrace-oss/dynatrace-mcp/releases">
+    <img src="https://img.shields.io/github/release/dynatrace-oss/dynatrace-mcp" />
+  </a>
+  <a href="https://github.com/dynatrace-oss/dynatrace-mcp/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/license-mit-blue.svg" alt="Dynatrace MCP Server is released under the MIT License" />
+  </a>
+  <a href="https://www.npmjs.com/package/@dynatrace-oss/dynatrace-mcp-server">
+    <img src="https://img.shields.io/npm/dm/@dynatrace-oss/dynatrace-mcp-server?logo=npm&style=flat&color=red" alt="npm" />
+  </a>
+  <a href="https://github.com/dynatrace-oss/dynatrace-mcp">
+    <img src="https://img.shields.io/github/stars/dynatrace-oss/dynatrace-mcp" alt="Dynatrace MCP Server Stars on GitHub" />
+  </a>
+  <a href="https://github.com/dynatrace-oss/dynatrace-mcp">
+    <img src="https://img.shields.io/github/contributors/dynatrace-oss/dynatrace-mcp?color=green" alt="Dynatrace MCP Server Contributors on GitHub" />
+  </a>
+</h4>
+
 This local MCP server allows interaction with the [Dynatrace](https://www.dynatrace.com/) observability platform.
 Bring real-time observability data directly into your development workflow.
+
+> Note: This product is not officially supported by Dynatrace.
+
+Please contact us via [GitHub Issues](https://github.com/dynatrace-oss/dynatrace-mcp/issues) if you have feature requests, questions, or need help.
 
 <img width="1046" alt="image" src="/assets/dynatrace-mcp-arch.png" />
 
@@ -27,19 +49,40 @@ Bring real-time observability data directly into your development workflow.
 - Get more information about a monitored entity
 - Get Ownership of an entity
 
-## Costs
+### Costs
 
-**Important:** While this local MCP server is provided for free, using it to access data in Dynatrace Grail may incur additional costs based
+**Important:** While this local MCP server is provided for free, using certain capabilities to access data in Dynatrace Grail may incur additional costs based
 on your Dynatrace consumption model. This affects `execute_dql` tool and other capabilities that **query** Dynatrace Grail storage, and costs
-depend on the volume (GB scanned/billed).
+depend on the volume (GB scanned).
 
 **Before using this MCP server extensively, please:**
 
 1. Review your current Dynatrace consumption model and pricing
 2. Understand the cost implications of the specific data you plan to query (logs, events, metrics) - see [Dynatrace Pricing and Rate Card](https://www.dynatrace.com/pricing/)
 3. Start with smaller timeframes (e.g., 12h-24h) and make use of [buckets](https://docs.dynatrace.com/docs/discover-dynatrace/platform/grail/data-model#built-in-grail-buckets) to reduce the cost impact
+4. Set an appropriate `DT_GRAIL_QUERY_BUDGET_GB` environment variable (default: 1000 GB) to control and monitor your Grail query consumption
 
-**Note**: We will be providing a way to monitor Query Usage of the dynatrace-mcp-server in the future.
+**Grail Budget Tracking:**
+
+The MCP server includes built-in budget tracking for Grail queries to help you monitor and control costs:
+
+- Set `DT_GRAIL_QUERY_BUDGET_GB` (default: 1000 GB) to define your session budget limit
+- The server tracks bytes scanned across all Grail queries in the current session
+- You'll receive warnings when approaching 80% of your budget
+- Budget exceeded alerts help prevent unexpected high consumption
+- Budget resets when you restart the MCP server session
+
+**To understand costs that occured:**
+
+Execute the following DQL statement in a notebook to see how much bytes have been queried from Grail (Logs, Events, etc...):
+
+```
+fetch dt.system.events
+| filter event.kind == "QUERY_EXECUTION_EVENT" and contains(client.client_context, "dynatrace-mcp")
+| sort timestamp desc
+| fields timestamp, query_id, query_string, scanned_bytes, table, bucket, user.id, user.email, client.client_context
+| maketimeSeries sum(scanned_bytes), by: { user.email, user.id, table }
+```
 
 ### AI-Powered Assistance (Preview)
 
@@ -56,7 +99,7 @@ Enhance your AI assistant with comprehensive Dynatrace observability analysis ca
 
 ### **🚀 Quick Setup for AI Assistants**
 
-Copy the comprehensive rule files from the [`rules/`](./rules/) directory to your AI assistant's rules directory:
+Copy the comprehensive rule files from the [`dynatrace-agent-rules/rules/`](./dynatrace-agent-rules/rules/) directory to your AI assistant's rules directory:
 
 **IDE-Specific Locations:**
 
@@ -139,7 +182,7 @@ rules/
 - **Eliminated circular references** - No more confusing cross-referencing webs
 - **DQL-first approach** - Prefer flexible queries over rigid MCP calls
 
-For detailed information about the workshop rules, see the [Rules README](./rules/README.md).
+For detailed information about the workshop rules, see the [Rules README](./dynatrace-agent-rules/rules/README.md).
 
 ## Quickstart
 
@@ -172,8 +215,7 @@ This only works if the config is stored in the current workspaces, e.g., `<your-
       "command": "npx",
       "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
-        "OAUTH_CLIENT_ID": "",
-        "OAUTH_CLIENT_SECRET": "",
+        "DT_PLATFORM_TOKEN": "",
         "DT_ENVIRONMENT": ""
       }
     }
@@ -186,12 +228,11 @@ This only works if the config is stored in the current workspaces, e.g., `<your-
 ```json
 {
   "mcpServers": {
-    "mobile-mcp": {
+    "dynatrace-mcp-server": {
       "command": "npx",
       "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
-        "OAUTH_CLIENT_ID": "",
-        "OAUTH_CLIENT_SECRET": "",
+        "DT_PLATFORM_TOKEN": "",
         "DT_ENVIRONMENT": ""
       }
     }
@@ -206,12 +247,11 @@ The [Amazon Q Developer CLI](https://docs.aws.amazon.com/amazonq/latest/qdevelop
 ```json
 {
   "mcpServers": {
-    "mobile-mcp": {
+    "dynatrace-mcp-server": {
       "command": "npx",
       "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
-        "OAUTH_CLIENT_ID": "",
-        "OAUTH_CLIENT_SECRET": "",
+        "DT_PLATFORM_TOKEN": "",
         "DT_ENVIRONMENT": ""
       }
     }
@@ -229,34 +269,21 @@ For scenarios where you need to run the MCP server as an HTTP service instead of
 
 ```bash
 # Get help and see all available options
-npx -y @dynatrace-oss/dynatrace-mcp-server --help
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --help
 
 # Run with HTTP server on default port 3000
-npx -y @dynatrace-oss/dynatrace-mcp-server --http
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http
 
 # Run with custom port (using short or long flag)
-npx -y @dynatrace-oss/dynatrace-mcp-server --server -p 8080
-npx -y @dynatrace-oss/dynatrace-mcp-server --http --port 3001
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --server -p 8080
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --port 3001
 
 # Run with custom host/IP (using short or long flag)
-npx -y @dynatrace-oss/dynatrace-mcp-server --http --host 127.0.0.1
-npx -y @dynatrace-oss/dynatrace-mcp-server --http -H 192.168.0.1
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --host 127.0.0.1
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http -H 192.168.0.1
 
 # Check version
-npx -y @dynatrace-oss/dynatrace-mcp-server --version
-```
-
-**Configuration for MCP clients that support HTTP transport:**
-
-```json
-{
-  "mcpServers": {
-    "dynatrace-http": {
-      "url": "http://localhost:3000",
-      "transport": "http"
-    }
-  }
-}
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --version
 ```
 
 **Configuration for MCP clients that support HTTP transport:**
@@ -299,16 +326,19 @@ For fetching just error-logs, add `| filter loglevel == "ERROR"`.
 
 ## Environment Variables
 
-You can set up authentication via **OAuth Client** or **Platform Tokens** (v0.5.0 and newer) via the following environment variables:
+You can set up authentication via **Platform Tokens** (recommended) or **OAuth Client** via the following environment variables:
 
 - `DT_ENVIRONMENT` (string, e.g., https://abc12345.apps.dynatrace.com) - URL to your Dynatrace Platform (do not use Dynatrace classic URLs like `abc12345.live.dynatrace.com`)
-- `OAUTH_CLIENT_ID` (string, e.g., `dt0s02.SAMPLE`) - Dynatrace OAuth Client ID
-- `OAUTH_CLIENT_SECRET` (string, e.g., `dt0s02.SAMPLE.abcd1234`) - Dynatrace OAuth Client Secret
-- With v0.5.0 and newer: `DT_PLATFORM_TOKEN` (string, e.g., `dt0s16.SAMPLE.abcd1234`) - Dynatrace Platform Token (limited support, as not all scopes are available; see below)
+- `DT_PLATFORM_TOKEN` (string, e.g., `dt0s16.SAMPLE.abcd1234`) - **Recommended**: Dynatrace Platform Token
+- `OAUTH_CLIENT_ID` (string, e.g., `dt0s02.SAMPLE`) - Alternative: Dynatrace OAuth Client ID (for advanced use cases)
+- `OAUTH_CLIENT_SECRET` (string, e.g., `dt0s02.SAMPLE.abcd1234`) - Alternative: Dynatrace OAuth Client Secret (for advanced use cases)
+- `DT_GRAIL_QUERY_BUDGET_GB` (number, default: 1000) - Budget limit in GB (base 1000) for Grail query bytes scanned per session. The MCP server tracks your Grail usage and warns when approaching or exceeding this limit.
+
+**Platform Tokens are recommended** for most use cases as they provide a simpler authentication flow. OAuth Clients should only be used when specific OAuth features are required.
 
 For more information, please have a look at the documentation about
-[creating an Oauth Client in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/oauth-clients), as well as
-[creating a Platform Token in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens).
+[creating a Platform Token in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens), as well as
+[creating an OAuth Client in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/oauth-clients) for advanced scenarios.
 
 In addition, depending on the features you use, the following variables can be configured:
 
@@ -317,6 +347,8 @@ In addition, depending on the features you use, the following variables can be c
 ### Scopes for Authentication
 
 Depending on the features you are using, the following scopes are needed:
+
+**Available for both Platform Tokens and OAuth Clients:**
 
 - `app-engine:apps:run` - needed for almost all tools
 - `app-engine:functions:run` - needed for for almost all tools
@@ -342,6 +374,8 @@ Depending on the features you are using, the following scopes are needed:
 - `settings:objects:read` - needed for reading ownership information and Guardians (SRG) from settings
 
   **Note**: Please ensure that `settings:objects:read` is used, and _not_ the similarly named scope `app-settings:objects:read`.
+
+**Important**: Some features requiring `environment-api:entities:read` will only work with OAuth Clients. For most use cases, Platform Tokens provide all necessary functionality.
 
 ## ✨ Example prompts ✨
 
@@ -500,12 +534,18 @@ to help identify what might be causing these deployment issues?
 
 ### Authentication Issues
 
-In most cases, something is wrong with the OAuth Client. Please ensure that you have added all scopes as requested above.
-In addition, please ensure that your user also has all necessary permissions on your Dynatrace Environment.
+In most cases, authentication issues are related to missing scopes or invalid tokens. Please ensure that you have added all required scopes as listed above.
 
-In case of any problems, you can troubleshoot SSO/OAuth issues based on our [Dynatrace Developer Documentation](https://developer.dynatrace.com/develop/access-platform-apis-from-outside/#get-bearer-token-and-call-app-function) and providing the list of scopes.
+**For Platform Tokens:**
 
-It is recommended to try access the following API (which requires minimal scopes `app-engine:apps:run` and `app-engine:functions:run`):
+1. Verify your Platform Token has all the necessary scopes listed in the "Scopes for Authentication" section
+2. Ensure your token is valid and not expired
+3. Check that your user has the required permissions in your Dynatrace Environment
+
+**For OAuth Clients:**
+In case of OAuth-related problems, you can troubleshoot SSO/OAuth issues based on our [Dynatrace Developer Documentation](https://developer.dynatrace.com/develop/access-platform-apis-from-outside/#get-bearer-token-and-call-app-function).
+
+It is recommended to test access with the following API (which requires minimal scopes `app-engine:apps:run` and `app-engine:functions:run`):
 
 1. Use OAuth Client ID and Secret to retrieve a Bearer Token (only valid for a couple of minutes):
 
@@ -540,6 +580,34 @@ curl -X GET https://abc12345.apps.dynatrace.com/platform/management/v1/environme
 ### Problem accessing data on Grail
 
 Grail has a dedicated section about permissions in the Dynatrace Docs. Please refer to https://docs.dynatrace.com/docs/discover-dynatrace/platform/grail/data-model/assign-permissions-in-grail for more details.
+
+## Telemetry
+
+The Dynatrace MCP Server includes sending Telemetry Data via Dynatrace OpenKit to help improve the product. This includes:
+
+- Server start events
+- Tool usage (which tools are called, success/failure, execution duration)
+- Error tracking for debugging and improvement
+
+**Privacy and Opt-out:**
+
+- Telemetry is **enabled by default** but can be disabled by setting `DT_MCP_DISABLE_TELEMETRY=true`
+- No sensitive data from your Dynatrace environment is tracked
+- Only anonymous usage statistics and error information are collected
+- Usage statistics and error data are transmitted to Dynatrace’s analytics endpoint
+
+**Configuration options:**
+
+- `DT_MCP_DISABLE_TELEMETRY` (boolean, default: `false`) - Disable Telemetry
+- `DT_MCP_TELEMETRY_APPLICATION_ID` (string, default: `dynatrace-mcp-server`) - Application ID for tracking
+- `DT_MCP_TELEMETRY_ENDPOINT_URL` (string, default: Dynatrace endpoint) - OpenKit endpoint URL
+- `DT_MCP_TELEMETRY_DEVICE_ID` (string, default: auto-generated) - Device identifier for tracking
+
+To disable usage tracking, add this to your environment:
+
+```bash
+DT_MCP_DISABLE_TELEMETRY=true
+```
 
 ## Development
 
@@ -588,8 +656,3 @@ This will
 - prepare the [changelog](CHANGELOG.md),
 - update the version number in [package.json](package.json),
 - commit the changes.
-
-## Notes
-
-This product is not officially supported by Dynatrace.
-Please contact us via [GitHub Issues](https://github.com/dynatrace-oss/dynatrace-mcp/issues) if you have feature requests, questions, or need help.

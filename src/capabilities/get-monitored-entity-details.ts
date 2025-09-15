@@ -2,7 +2,13 @@ import { HttpClient } from '@dynatrace-sdk/http-client';
 import { executeDql } from './execute-dql';
 import { getEntityTypeFromId } from '../utils/dynatrace-entity-types';
 
-type MonitoredEntityDetails = { entityId: string; displayName: string; type: string; allProperties: any };
+type MonitoredEntityDetails = {
+  entityId: string;
+  displayName: string;
+  entityTypeTable: string;
+  type: string;
+  allProperties: any;
+};
 
 /**
  * Get monitored entity details by entity ID via DQL
@@ -31,19 +37,19 @@ export const getMonitoredEntityDetails = async (
   const dqlResponse = await executeDql(dtClient, { query: dql });
 
   // verify response and length
-  if (!dqlResponse || dqlResponse.length === 0) {
+  if (!dqlResponse || !dqlResponse.records || dqlResponse.records.length === 0) {
     console.error(`No entity found for ID: ${entityId}`);
     return;
   }
 
   // in case we have more than one entity -> log it
-  if (dqlResponse.length > 1) {
+  if (dqlResponse.records.length > 1) {
     console.error(
-      `Multiple entities (${dqlResponse.length}) found for entity ID: ${entityId}. Returning the first one.`,
+      `Multiple entities (${dqlResponse.records.length}) found for entity ID: ${entityId}. Returning the first one.`,
     );
   }
 
-  const entity = dqlResponse[0];
+  const entity = dqlResponse.records[0];
   // make typescript happy; entity should never be null though
   if (!entity) {
     console.error(`No entity found for ID: ${entityId}`);
@@ -53,6 +59,7 @@ export const getMonitoredEntityDetails = async (
   // return entity details
   return {
     entityId: String(entity.id),
+    entityTypeTable: entityType,
     displayName: String(entity['entity.name']),
     type: String(entity['entity.type']),
     allProperties: entity || undefined,

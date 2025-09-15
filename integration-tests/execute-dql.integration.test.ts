@@ -95,13 +95,20 @@ describe('Execute DQL Integration Tests', () => {
     });
 
     expect(executionResponse).toBeDefined();
-    expect(Array.isArray(executionResponse)).toBe(true);
+    expect(executionResponse?.records).toBeDefined();
+    expect(Array.isArray(executionResponse?.records)).toBe(true);
 
     // Should return an array of records (even if empty)
-    if (executionResponse && executionResponse.length > 0) {
+    if (executionResponse?.records && executionResponse.records.length > 0) {
       // Check that records have expected structure
-      expect(typeof executionResponse[0]).toBe('object');
+      expect(typeof executionResponse.records[0]).toBe('object');
     }
+
+    // Check that cost information is available
+    expect(executionResponse?.scannedBytes).toBeDefined();
+    expect(typeof executionResponse?.scannedBytes).toBe('number');
+    expect(executionResponse?.scannedRecords).toBeDefined();
+    expect(typeof executionResponse?.scannedRecords).toBe('number');
   });
 
   test('should execute metrics query', async () => {
@@ -122,11 +129,12 @@ describe('Execute DQL Integration Tests', () => {
     });
 
     expect(executionResponse).toBeDefined();
-    expect(Array.isArray(executionResponse)).toBe(true);
+    expect(executionResponse?.records).toBeDefined();
+    expect(Array.isArray(executionResponse?.records)).toBe(true);
 
     // Metrics might not always have data, so we just check structure
-    if (executionResponse && executionResponse.length > 0) {
-      expect(typeof executionResponse[0]).toBe('object');
+    if (executionResponse?.records && executionResponse.records.length > 0) {
+      expect(typeof executionResponse.records[0]).toBe('object');
     }
   });
 
@@ -148,13 +156,14 @@ describe('Execute DQL Integration Tests', () => {
     });
 
     expect(executionResponse).toBeDefined();
-    expect(Array.isArray(executionResponse)).toBe(true);
+    expect(executionResponse?.records).toBeDefined();
+    expect(Array.isArray(executionResponse?.records)).toBe(true);
 
     // Events might not always have data, so we just check structure
-    if (executionResponse && executionResponse.length > 0) {
-      expect(typeof executionResponse[0]).toBe('object');
+    if (executionResponse?.records && executionResponse.records.length > 0) {
+      expect(typeof executionResponse.records[0]).toBe('object');
       // Events should have common fields like timestamp, event.type, etc.
-      const firstEvent = executionResponse[0] as Record<string, any>;
+      const firstEvent = executionResponse.records[0] as Record<string, any>;
       expect(firstEvent).toHaveProperty('timestamp');
     }
   });

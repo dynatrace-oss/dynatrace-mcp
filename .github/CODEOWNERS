@@ -2,4 +2,12 @@
 # This file designates code owners for this repository.
 # Each line is a file pattern followed by one or more owners.
 
-* @christian-kreuzberger-dtx @krisdyna @MrManny @raphael-wigoutschnigg-dt
+# core maintainers
+* @christian-kreuzberger-dtx @MrManny @raphael-wigoutschnigg-dt
+
+# allow updates for markdown files and server.json
+*.md @krisdyna @dt-benedict
+server.json @krisdyna @dt-benedict
+
+# allow updates of agent rules
+dynatrace-agent-rules/** @dt-benedict
