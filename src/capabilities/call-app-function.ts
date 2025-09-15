@@ -1,7 +1,12 @@
 import { HttpClient } from '@dynatrace-sdk/http-client';
 
 /** Helper function to call an app-function via platform-api */
-export const callAppFunction = async (dtClient: HttpClient, appId: string, functionName: string, payload: any) => {
+export const callAppFunction = async (
+  dtClient: HttpClient,
+  appId: string,
+  functionName: string,
+  payload: Record<string, unknown>,
+) => {
   console.error(`Sending payload ${JSON.stringify(payload)}`);
 
   const response = await dtClient.send({

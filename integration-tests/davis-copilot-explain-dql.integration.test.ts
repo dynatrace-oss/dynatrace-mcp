@@ -7,7 +7,7 @@
 
 import { config } from 'dotenv';
 import { createDtHttpClient } from '../src/authentication/dynatrace-clients';
-import { explainDqlInNaturalLanguage, Dql2NlResponse } from '../src/capabilities/davis-copilot';
+import { explainDqlInNaturalLanguage } from '../src/capabilities/davis-copilot';
 import { getDynatraceEnv, DynatraceEnv } from '../src/getDynatraceEnv';
 
 // Load environment variables

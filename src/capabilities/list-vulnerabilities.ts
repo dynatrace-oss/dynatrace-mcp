@@ -27,20 +27,20 @@ export const listVulnerabilities = async (dtClient: HttpClient, additionalFilter
     return [];
   }
 
-  const vulnerabilities = response.records.map((vuln: any) => {
-    const vulnerabilityId = vuln['vulnerability.id'] || 'N/A';
-    const vulnerabilityDisplayId = vuln['vulnerability.display_id'] || 'N/A';
-    const riskScore = vuln['vulnerability.risk.score'] || 'N/A';
-    const riskLevel = vuln['vulnerability.risk.level'] || 'N/A';
-    const title = vuln['vulnerability.title'] || 'Unknown';
-    const externalId = vuln['vulnerability.external_id'] || 'N/A';
-    const cve = vuln['vulnerability.references.cve'] || 'N/A';
-    const affectedEntity = vuln['affected_entity.name'] || 'N/A';
-    const vulnerabilityUrl = vuln['vulnerability.url'] || 'N/A';
+  const vulnerabilities = response.records.map((vuln) => {
+    const vulnerabilityId = vuln?.['vulnerability.id'] ?? 'N/A';
+    const vulnerabilityDisplayId = vuln?.['vulnerability.display_id'] ?? 'N/A';
+    const riskScore = vuln?.['vulnerability.risk.score'] ?? 'N/A';
+    const riskLevel = vuln?.['vulnerability.risk.level'] ?? 'N/A';
+    const title = vuln?.['vulnerability.title'] ?? 'Unknown';
+    const externalId = vuln?.['vulnerability.external_id'] ?? 'N/A';
+    const cve = vuln?.['vulnerability.references.cve'] ?? 'N/A';
+    const affectedEntity = vuln?.['affected_entity.name'] ?? 'N/A';
+    const vulnerabilityUrl = vuln?.['vulnerability.url'] ?? 'N/A';
 
     // mute status, parent mute status
-    const muteStatus = vuln['vulnerability.mute.status'] || 'N/A';
-    const parentMuteStatus = vuln['vulnerability.parent.mute.status'] || 'N/A';
+    const muteStatus = vuln?.['vulnerability.mute.status'] ?? 'N/A';
+    const parentMuteStatus = vuln?.['vulnerability.parent.mute.status'] ?? 'N/A';
 
     return `${title} (Vulnerability ID: ${vulnerabilityId}, Vulnerability Display ID: ${vulnerabilityDisplayId}, Risk Score: ${riskScore}, Risk Level: ${riskLevel},
               Affected Entity: ${affectedEntity}, External Vulnerability ID: ${externalId}, CVE: ${cve}, Mute Status: ${muteStatus}, Parent Mute Status: ${parentMuteStatus},
