@@ -2,10 +2,12 @@
 
 ## Unreleased Changes
 
-- Added metadata output which includes scanned bytes (for cost tracking) to `execute_dql`
-- Added next-steps for `get_entity_details` to find out about metrics, problems and logs
-- Added Telemetry via Dynatrace OpenKit to improve the product with anonymous usage statistics and error information (can be disabled via `DT_MCP_DISABLE_TELEMETRY` environment variable)
-- Added `server.json` and published the mcp server at the official MCP Registry
+## 0.6.0 (Release Candidate 1)
+
+- Added metadata output to `execute_dql` tool which includes scanned bytes information, enabling better cost tracking for Dynatrace Grail data access
+- Added next-steps guidance to `get_entity_details` tool to help users discover related metrics, problems, and logs for entities
+- Added telemetry via Dynatrace OpenKit to improve the product with anonymous usage statistics and error information, enhancing product development while respecting user privacy (can be disabled via `DT_MCP_DISABLE_TELEMETRY` environment variable)
+- Added `server.json` configuration and published the MCP server to the official MCP Registry, making it easier for users to discover and install the server
 
 ## 0.5.0
 
