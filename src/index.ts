@@ -114,7 +114,8 @@ async function retryTestDynatraceConnection(
       if (retryCount >= maxRetries) {
         console.error(`Fatal: Maximum number of connection retries (${maxRetries}) exceeded. Exiting.`);
         throw new Error(
-          `Failed to connect to Dynatrace environment ${dtEnvironment} after ${maxRetries} attempts. Most likely your configuration is incorrect.`,
+          `Failed to connect to Dynatrace environment ${dtEnvironment} after ${maxRetries} attempts. Most likely your configuration is incorrect. Last error: ${error.message}`,
+          { cause: error },
         );
       }
       const delay = Math.pow(2, retryCount) * delayMs; // Exponential backoff
