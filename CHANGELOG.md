@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Added tool-annotations `readOnlyHint`, `idempotentHint`, and `openWorldHint`, to improve tool usage
+
 ## 0.6.0 (Release Candidate 2)
 
 - Fixed an issue with the stateless HTTP server that prevented it from accepting multiple simultaneous connections

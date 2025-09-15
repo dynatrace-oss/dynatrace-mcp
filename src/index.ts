@@ -16,6 +16,7 @@ import {
   ListToolsRequestSchema,
   NotificationSchema,
   Tool,
+  ToolAnnotations,
 } from '@modelcontextprotocol/sdk/types.js';
 import { config } from 'dotenv';
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
@@ -46,6 +47,7 @@ import { createTelemetry, Telemetry } from './utils/telemetry-openkit';
 import { getEntityTypeFromId } from './utils/dynatrace-entity-types';
 import { Http2ServerRequest } from 'node:http2';
 import { resetGrailBudgetTracker, getGrailBudgetTracker } from './utils/grail-budget-tracker';
+import { read } from 'node:fs';
 
 config();
 
@@ -187,6 +189,7 @@ const main = async () => {
     name: string,
     description: string,
     paramsSchema: ZodRawShape,
+    annotations: ToolAnnotations,
     cb: (args: z.objectOutputType<ZodRawShape, ZodTypeAny>) => Promise<string>,
   ) => {
     const wrappedCb = async (args: ZodRawShape): Promise<CallToolResult> => {
@@ -228,7 +231,7 @@ const main = async () => {
       }
     };
 
-    server.tool(name, description, paramsSchema, (args) => wrappedCb(args));
+    server.tool(name, description, paramsSchema, annotations, (args: z.ZodRawShape) => wrappedCb(args));
   };
 
   /** Tool Definitions below */
@@ -237,6 +240,9 @@ const main = async () => {
     'get_environment_info',
     'Get information about the connected Dynatrace Environment (Tenant) and verify the connection and authentication.',
     {},
+    {
+      readOnlyHint: true,
+    },
     async ({}) => {
       // create an oauth-client
       const dtClient = await createDtHttpClient(
@@ -277,6 +283,9 @@ const main = async () => {
         .number()
         .default(25)
         .describe('Maximum number of vulnerabilities to display in the response.'),
+    },
+    {
+      readOnlyHint: true,
     },
     async ({ riskScore, additionalFilter, maxVulnerabilitiesToDisplay }) => {
       const dtClient = await createDtHttpClient(
@@ -339,6 +348,9 @@ const main = async () => {
         ),
       maxProblemsToDisplay: z.number().default(10).describe('Maximum number of problems to display in the response.'),
     },
+    {
+      readOnlyHint: true,
+    },
     async ({ additionalFilter, maxProblemsToDisplay }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
@@ -386,6 +398,9 @@ const main = async () => {
     {
       entityName: z.string().describe('Name of the entity to search for, e.g., "my-service" or "my-host"'),
     },
+    {
+      readOnlyHint: true,
+    },
     async ({ entityName }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
@@ -404,6 +419,9 @@ const main = async () => {
     'Get details of a monitored entity based on the entityId on Dynatrace',
     {
       entityId: z.string().optional(),
+    },
+    {
+      readOnlyHint: true,
     },
     async ({ entityId }) => {
       const dtClient = await createDtHttpClient(
@@ -458,6 +476,10 @@ const main = async () => {
       channel: z.string().optional(),
       message: z.string().optional(),
     },
+    {
+      // not read-only, not open-world, not destructive
+      readOnlyHint: false,
+    },
     async ({ channel, message }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
@@ -477,6 +499,10 @@ const main = async () => {
     'Verify a Dynatrace Query Language (DQL) statement on Dynatrace GRAIL before executing it. This step is recommended for DQL statements that have been dynamically created by non-expert tools. For statements coming from the `generate_dql_from_natural_language` tool as well as from documentation, this step can be omitted.',
     {
       dqlStatement: z.string(),
+    },
+    {
+      readOnlyHint: true,
+      idempotentHint: true, // same input always yields same output
     },
     async ({ dqlStatement }) => {
       const dtClient = await createDtHttpClient(
@@ -518,6 +544,13 @@ const main = async () => {
         .describe(
           'DQL Statement (Ex: "fetch [logs, spans, events] | filter <some-filter> | summarize count(), by:{some-fields}.", or for metrics: "timeseries { avg(<metric-name>), value.A = avg(<metric-name>, scalar: true) }")',
         ),
+    },
+    {
+      // not readonly (DQL statements may modify things), not idempotent (may change over time)
+      readOnlyHint: false,
+      idempotentHint: false,
+      // while we are not strictly talking to the open world here, the response from execute DQL could interpreted as a web-search, which often is referred to open-world
+      openWorldHint: true,
     },
     async ({ dqlStatement }) => {
       // Create a HTTP Client that has all storage:*:read scopes
@@ -602,6 +635,10 @@ const main = async () => {
           'Natural language description of what you want to query. Be specific and include time ranges, entities, and metrics of interest.',
         ),
     },
+    {
+      readOnlyHint: true,
+      idempotentHint: true,
+    },
     async ({ text }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
@@ -645,6 +682,10 @@ const main = async () => {
     {
       dql: z.string().describe('The DQL statement to explain'),
     },
+    {
+      readOnlyHint: true,
+      idempotentHint: true,
+    },
     async ({ dql }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
@@ -681,6 +722,11 @@ const main = async () => {
       text: z.string().describe('Your question or request for Davis CoPilot'),
       context: z.string().optional().describe('Optional context to provide additional information'),
       instruction: z.string().optional().describe('Optional instruction for how to format the response'),
+    },
+    {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true, // web-search like characteristics
     },
     async ({ text, context, instruction }) => {
       const dtClient = await createDtHttpClient(
@@ -753,6 +799,11 @@ const main = async () => {
       channel: z.string().optional(),
       isPrivate: z.boolean().optional().default(false),
     },
+    {
+      // not read only, not idempotent
+      readOnlyHint: false,
+      idempotentHint: false, // creating the same workflow multiple times is possible
+    },
     async ({ problemType, teamName, channel, isPrivate }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
@@ -785,6 +836,11 @@ const main = async () => {
     {
       workflowId: z.string().optional(),
     },
+    {
+      // not read only, but idempotent
+      readOnlyHint: false,
+      idempotentHint: true, // making the same workflow public multiple times yields the same result
+    },
     async ({ workflowId }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
@@ -812,6 +868,9 @@ const main = async () => {
           `The Kubernetes (K8s) Cluster Id, referred to as k8s.cluster.uid (this is NOT the Dynatrace environment)`,
         ),
     },
+    {
+      readOnlyHint: true,
+    },
     async ({ clusterId }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
@@ -831,6 +890,9 @@ const main = async () => {
     'Get detailed Ownership information for one or multiple entities on Dynatrace',
     {
       entityIds: z.string().optional().describe('Comma separated list of entityIds'),
+    },
+    {
+      readOnlyHint: true,
     },
     async ({ entityIds }) => {
       const dtClient = await createDtHttpClient(
@@ -853,6 +915,10 @@ const main = async () => {
     'reset_grail_budget',
     'Reset the Grail query budget after it was exhausted, allowing new queries to be executed. This clears all tracked bytes scanned in the current session.',
     {},
+    {
+      readonlyHint: false, // modifies state
+      idempotentHint: true, // multiple resets yield the same result
+    },
     async ({}) => {
       // Reset the global tracker
       resetGrailBudgetTracker();
@@ -887,6 +953,9 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
       bccRecipients: z.array(z.string().email()).optional().describe('Array of email addresses for BCC recipients'),
       subject: z.string().describe('Subject line of the email'),
       body: z.string().describe('Body content of the email (plain text only)'),
+    },
+    {
+      openWorldHint: true, // email is as close to the open-world as we can get with our system
     },
     async ({ toRecipients, ccRecipients, bccRecipients, subject, body }) => {
       // Validate total recipients limit (10 max across TO, CC, and BCC)
