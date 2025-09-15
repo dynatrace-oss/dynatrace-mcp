@@ -852,15 +852,26 @@ const main = async () => {
   const httpPort = parseInt(options.port, 10);
   const host = options.host || '0.0.0.0';
 
+  // HTTP server mode (Stateless)
   if (httpMode) {
-    // HTTP server mode
-    const httpTransport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: () => randomUUID(),
-    });
-
     const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
       // Parse request body for POST requests
       let body: unknown;
+      // Create a new Stateless HTTP Transport
+      const httpTransport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: undefined, // No Session ID needed
+      });
+
+      res.on('close', () => {
+        // close transport and server, but not the httpServer itself
+        httpTransport.close();
+        server.close();
+      });
+
+      // Connecting MCP-server to HTTP transport
+      await server.connect(httpTransport);
+
+      // Handle POST Requests for this endpoint
       if (req.method === 'POST') {
         const chunks: Buffer[] = [];
         for await (const chunk of req) {
@@ -878,9 +889,6 @@ const main = async () => {
 
       await httpTransport.handleRequest(req, res, body);
     });
-
-    console.error('Connecting server to HTTP transport...');
-    await server.connect(httpTransport);
 
     // Start HTTP Server on the specified host and port
     httpServer.listen(httpPort, host, () => {

@@ -1,5 +1,7 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+- Fixed an issue with stateless HTTP server only taking a single connection
+
 ## Unreleased Changes
 
 ## 0.6.0 (Release Candidate 1)
