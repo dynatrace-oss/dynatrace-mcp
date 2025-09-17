@@ -7,6 +7,7 @@
 - Enforce Grail budget by throwing an exception when the budget has been exceeded, preventing further DQL query execution
 - Added `send_email` tool for sending emails via Dynatrace Email API with support for multiple recipients (TO, CC, BCC), subject, body content
 - Added OAuth scope `email:emails:send` for email functionality
+- Refactored Davis CoPilot integration to use official `@dynatrace-sdk/client-davis-copilot` package instead of manual API calls, improving reliability and maintainability
 
 ## 0.6.0 (Release Candidate 1)
 

@@ -1,10 +1,5 @@
-import { HttpClient } from '@dynatrace-sdk/http-client';
-
 /**
  * Davis CoPilot API Integration
- *
- * !!! Note: Once @dynatrace-sdk/client-davis-copilot is available, we need to refactor this file.
- * !!! Disclaimer: Those API Calls might break any time, as they are not yet part of the official Dynatrace SDK.
  *
  * This module provides access to Davis CoPilot AI capabilities including:
  * - Natural Language to DQL conversion
@@ -20,148 +15,19 @@ import { HttpClient } from '@dynatrace-sdk/http-client';
  * in Dynatrace, including problem events, security issues, logs, metrics, and spans.
  */
 
-// TypeScript interfaces based on OpenAPI spec
-// ToDo: Once @dynatrace-sdk/client-davis-copilot is available, we need to refactor this file.
-export type Status = 'SUCCESSFUL' | 'SUCCESSFUL_WITH_WARNINGS' | 'FAILED';
+import { HttpClient } from '@dynatrace-sdk/http-client';
+import {
+  PublicClient,
+  Nl2DqlResponse,
+  Dql2NlResponse,
+  ConversationResponse,
+  ConversationContext,
+  State,
+  RecommenderResponse,
+} from '@dynatrace-sdk/client-davis-copilot';
 
-export interface Nl2DqlRequest {
-  text: string;
-}
-
-export interface Nl2DqlResponse {
-  dql: string;
-  messageToken: string;
-  status: Status;
-  metadata?: Metadata;
-}
-
-export interface Dql2NlRequest {
-  dql: string;
-}
-
-export interface Dql2NlResponse {
-  summary: string;
-  explanation: string;
-  messageToken: string;
-  status: Status;
-  metadata?: Metadata;
-}
-
-export interface ConversationRequest {
-  text: string;
-  context?: ConversationContext[];
-  annotations?: Record<string, string>;
-  state?: State;
-}
-
-export interface ConversationResponse {
-  text: string;
-  messageToken: string;
-  state: State;
-  metadata: MetadataWithSource;
-  status: Status;
-}
-
-export interface ConversationContext {
-  type: 'supplementary' | 'document-retrieval' | 'instruction';
-  value: string;
-}
-
-export interface State {
-  version?: string;
-  conversationId?: string;
-  skillName?: string;
-  history?: Array<{
-    role: string;
-    text: string;
-    supplementary?: string | null;
-  }>;
-}
-
-export interface Metadata {
-  notifications?: Notification[];
-}
-
-export interface MetadataWithSource extends Metadata {
-  sources?: SourceDocument[];
-}
-
-export interface Notification {
-  severity?: string;
-  notificationType?: string;
-  message?: string;
-}
-
-export interface SourceDocument {
-  title?: string;
-  url?: string;
-  type?: string;
-}
-
-export interface Nl2DqlFeedbackRequest {
-  messageToken: string;
-  origin: string;
-  feedback: Nl2DqlFeedback;
-  userQuery: string;
-  queryExplanation?: string;
-  generatedDql?: string;
-}
-
-export interface Nl2DqlFeedback {
-  type: 'positive' | 'negative';
-  text?: string;
-  category?: string;
-  improvement?: Nl2DqlImprovedSummary;
-}
-
-export interface Nl2DqlImprovedSummary {
-  text: string;
-  confirmation: boolean;
-}
-
-export interface Dql2NlFeedbackRequest {
-  messageToken: string;
-  origin: string;
-  feedback: Dql2NlFeedback;
-  userQuery: string;
-  queryExplanation?: string;
-  generatedDql?: string;
-}
-
-export interface Dql2NlFeedback {
-  type: 'positive' | 'negative';
-  text?: string;
-  category?: string;
-  improvement?: Dql2NlImprovedSummary;
-}
-
-export interface Dql2NlImprovedSummary {
-  text: string;
-  confirmation: boolean;
-}
-
-export interface ConversationFeedbackRequest {
-  messageToken: string;
-  origin: string;
-  feedback: ConversationFeedback;
-  userPrompt?: string;
-  copilotResponse?: string;
-  sources?: string[];
-}
-
-export interface ConversationFeedback {
-  type: 'positive' | 'negative';
-  text?: string;
-  category?: string;
-  improvement?: ConversationImprovedSummary;
-}
-
-export interface ConversationImprovedSummary {
-  text: string;
-  confirmation: boolean;
-}
-
-// API Functions
+// Re-export types that are used externally
+export type { Dql2NlResponse };
 
 /**
  * Generate DQL from natural language
@@ -170,19 +36,11 @@ export interface ConversationImprovedSummary {
  * security issues, logs, metrics, spans, and custom data.
  */
 export const generateDqlFromNaturalLanguage = async (dtClient: HttpClient, text: string): Promise<Nl2DqlResponse> => {
-  const request: Nl2DqlRequest = { text };
+  const client = new PublicClient(dtClient);
 
-  const response = await dtClient.send({
-    method: 'POST',
-    url: '/platform/davis/copilot/v0.2/skills/nl2dql:generate',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-    body: JSON.stringify(request),
+  return await client.nl2dql({
+    body: { text },
   });
-
-  return await response.body('json');
 };
 
 /**
@@ -192,19 +50,11 @@ export const generateDqlFromNaturalLanguage = async (dtClient: HttpClient, text:
  * queries for problem events, security issues, and performance metrics.
  */
 export const explainDqlInNaturalLanguage = async (dtClient: HttpClient, dql: string): Promise<Dql2NlResponse> => {
-  const request: Dql2NlRequest = { dql };
+  const client = new PublicClient(dtClient);
 
-  const response = await dtClient.send({
-    method: 'POST',
-    url: '/platform/davis/copilot/v0.2/skills/dql2nl:explain',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-    body: request, // Not sure why this does not need JSON.stringify, but it only works like this; once we have the SDK, this will be consistent
+  return await client.dql2nl({
+    body: { dql },
   });
-
-  return await response.body('json');
 };
 
 export const chatWithDavisCopilot = async (
@@ -214,22 +64,24 @@ export const chatWithDavisCopilot = async (
   annotations?: Record<string, string>,
   state?: State,
 ): Promise<ConversationResponse> => {
-  const request: ConversationRequest = {
-    text,
-    context,
-    annotations,
-    state,
-  };
+  const client = new PublicClient(dtClient);
 
-  const response = await dtClient.send({
-    method: 'POST',
-    url: '/platform/davis/copilot/v0.2/skills/conversations:message',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
+  const response: RecommenderResponse = await client.recommenderConversation({
+    body: {
+      text,
+      context,
+      annotations,
+      state,
     },
-    body: JSON.stringify(request),
   });
 
-  return await response.body('json');
+  // Type guard: RecommenderResponse is ConversationResponse | EventArray
+  // In practice, the SDK defaults to non-streaming and returns ConversationResponse
+  if (Array.isArray(response)) {
+    throw new Error(
+      'Unexpected streaming response format. Please raise an issue at https://github.com/dynatrace-oss/dynatrace-mcp/issues.',
+    );
+  }
+
+  return response;
 };

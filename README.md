@@ -25,7 +25,7 @@ Bring real-time observability data directly into your development workflow.
 
 Please contact us via [GitHub Issues](https://github.com/dynatrace-oss/dynatrace-mcp/issues) if you have feature requests, questions, or need help.
 
-<img width="1046" alt="image" src="/assets/dynatrace-mcp-arch.png" />
+![Architecture](https://github.com/dynatrace-oss/dynatrace-mcp/blob/main/assets/dynatrace-mcp-arch.png?raw=true)
 
 ## Use cases
 
