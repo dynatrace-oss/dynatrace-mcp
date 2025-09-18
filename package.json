@@ -9,7 +9,7 @@
     "server"
   ],
   "main": "./dist/index.js",
-  "type": "commonjs",
+  "type": "module",
   "bin": {
     "mcp-server-dynatrace": "./dist/index.js"
   },
@@ -64,10 +64,8 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^22",
     "eslint": "^9.35.0",
-    "globals": "^16.3.0",
     "husky": "^9.1.7",
     "jest": "^30.0.0",
-    "jiti": "^2.5.1",
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
