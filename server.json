@@ -7,7 +7,7 @@
     "url": "https://github.com/dynatrace-oss/Dynatrace-mcp",
     "source": "github"
   },
-  "version": "0.6.0-rc.1",
+  "version": "0.6.0-rc.2",
   "packages": [
     {
       "registry_type": "npm",

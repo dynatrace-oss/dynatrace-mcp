@@ -2,12 +2,14 @@
 
 ## Unreleased Changes
 
-- Fixed an issue with stateless HTTP server only taking a single connection
-- Added Grail budget tracking with `DT_GRAIL_QUERY_BUDGET_GB` environment variable (default: 1000 GB, setting it to `-1` disables it), as well as warnings and exceeded alerts in `execute_dql` tool responses
-- Enforce Grail budget by throwing an exception when the budget has been exceeded, preventing further DQL query execution
-- Added `send_email` tool for sending emails via Dynatrace Email API with support for multiple recipients (TO, CC, BCC), subject, body content
-- Added OAuth scope `email:emails:send` for email functionality
-- Refactored Davis CoPilot integration to use official `@dynatrace-sdk/client-davis-copilot` package instead of manual API calls, improving reliability and maintainability
+## 0.6.0 (Release Candidate 2)
+
+- Fixed an issue with the stateless HTTP server that prevented it from accepting multiple simultaneous connections
+- Added Grail budget tracking with `DT_GRAIL_QUERY_BUDGET_GB` environment variable (default: 1000 GB, setting it to `-1` disables budget tracking), providing cost control and visibility with warnings and alerts in `execute_dql` tool responses
+- Added budget enforcement that prevents further DQL query execution when the configured Grail budget has been exceeded, protecting against unexpected costs
+- Added `send_email` tool for sending emails via the Dynatrace Email API with support for multiple recipients (TO, CC, BCC), custom subject lines, and rich body content
+- Added OAuth scope `email:emails:send` to enable email functionality
+- Improved Davis CoPilot integration by migrating to the official `@dynatrace-sdk/client-davis-copilot` package, enhancing reliability and maintainability while reducing manual API implementation
 
 ## 0.6.0 (Release Candidate 1)
 
