@@ -7,13 +7,13 @@
     "url": "https://github.com/dynatrace-oss/Dynatrace-mcp",
     "source": "github"
   },
-  "version": "0.6.0-rc.2",
+  "version": "0.6.0",
   "packages": [
     {
       "registry_type": "npm",
       "registry_base_url": "https://registry.npmjs.org",
       "identifier": "@dynatrace-oss/dynatrace-mcp-server",
-      "version": "0.6.0-rc.1",
+      "version": "0.6.0",
       "runtime_hint": "npx",
       "transport": {
         "type": "stdio"

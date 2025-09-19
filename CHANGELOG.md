@@ -2,7 +2,33 @@
 
 ## Unreleased Changes
 
-- Added tool-annotations `readOnlyHint`, `idempotentHint`, and `openWorldHint`, to improve tool usage
+## 0.6.0
+
+**Highlights**:
+💰 Grail budget tracking and cost control
+📧 Send findings via E-Mail via the Dynatrace E-Mail API
+🔧 Enhanced tool annotations for better LLM integration
+🏪 Published to official MCP Registry and GitHub MCP Registry
+
+### Scopes
+
+- Added OAuth scope `email:emails:send` to enable email functionality
+
+### Tools Added/Removed
+
+- Added `send_email` tool for sending emails via the Dynatrace Email API with support for multiple recipients (TO, CC, BCC), custom subject lines, and rich body content
+- Added tool-annotations `readOnlyHint`, `idempotentHint`, and `openWorldHint` to improve tool usage by providing better hints to LLM clients about tool behavior
+- Added next-steps guidance to `get_entity_details` tool to help users discover related metrics, problems, and logs for entities
+
+### Other Changes
+
+- Fixed an issue with the stateless HTTP server that prevented it from accepting multiple simultaneous connections
+- Added Grail budget tracking with `DT_GRAIL_QUERY_BUDGET_GB` environment variable (default: 1000 GB, setting it to `-1` disables budget tracking), providing cost control and visibility with warnings and alerts in `execute_dql` tool responses
+- Added budget enforcement that prevents further DQL query execution when the configured Grail budget has been exceeded, protecting against unexpected costs
+- Improved Davis CoPilot integration by migrating to the official `@dynatrace-sdk/client-davis-copilot` package, enhancing reliability and maintainability while reducing manual API implementation
+- Added metadata output to `execute_dql` tool which includes scanned bytes information, enabling better cost tracking for Dynatrace Grail data access
+- Added telemetry via Dynatrace OpenKit to improve the product with anonymous usage statistics and error information, enhancing product development while respecting user privacy (can be disabled via `DT_MCP_DISABLE_TELEMETRY` environment variable)
+- Added `server.json` configuration and published the MCP server to the official MCP Registry, making it easier for users to discover and install the server
 
 ## 0.6.0 (Release Candidate 2)
 
