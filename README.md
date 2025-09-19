@@ -277,6 +277,43 @@ The [Amazon Q Developer CLI](https://docs.aws.amazon.com/amazonq/latest/qdevelop
 
 This configuration should be stored in `<your-repo>/.amazonq/mcp.json`.
 
+**Google Gemini CLI**
+
+The [Google Gemini CLI](https://github.com/google-gemini/gemini-cli) is Google's official command-line AI assistant that supports MCP server integration. You can add the Dynatrace MCP server using either the built-in management commands or manual configuration.
+
+Using `gemini` CLI directly (recommended):
+
+```bash
+gemini extensions install https://github.com/dynatrace-oss/dynatrace-mcp
+export DT_PLATFORM_TOKEN=...
+export DT_ENVIRONMENT=https://...
+```
+
+and verify that the server is running via
+
+```bash
+gemini mcp list
+```
+
+Or manually in your `~/.gemini/settings.json` or `.gemini/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "dynatrace": {
+      "command": "npx",
+      "args": ["@dynatrace-oss/dynatrace-mcp-server@latest"],
+      "env": {
+        "DT_PLATFORM_TOKEN": "",
+        "DT_ENVIRONMENT": ""
+      },
+      "timeout": 30000,
+      "trust": false
+    }
+  }
+}
+```
+
 ### HTTP Server Mode (Alternative)
 
 For scenarios where you need to run the MCP server as an HTTP service instead of using stdio (e.g., for stateful sessions, load balancing, or integration with web clients), you can use the HTTP server mode:
