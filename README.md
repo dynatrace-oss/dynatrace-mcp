@@ -27,7 +27,7 @@ If you need help, please contact us via [GitHub Issues](https://github.com/dynat
 
 ## Quickstart
 
-You can add this MCP server to your MCP Client like VSCode, Claude, Cursor, Amazon Q, Windsurf, or Github Copilot via the NPMJS package `@dynatrace-oss/dynatrace-mcp-server`, and type `stdio`.
+You can add this MCP server to your MCP Client like VSCode, Claude, Cursor, Amazon Q, Windsurf, ChatGPT, or Github Copilot via the npmjs package `@dynatrace-oss/dynatrace-mcp-server`, and type `stdio`.
 You can find more details about the configuration for different AI Assistants and MCP Clients in the [Configuration section below](#configuration).
 
 Furthermore, you need your Dynatrace environment URL, e.g., `https://abc12345.apps.dynatrace.com`, as well as a [Platform Token](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens), e.g., `dt0s16.SAMPLE.abcd1234`, with [required scopes](#scopes-for-authentication).
