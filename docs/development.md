@@ -1,6 +1,6 @@
 # Development
 
-This file is intended for developers of the dynatrace-mcp-server.
+This file is intended for contributors/developers of the dynatrace-mcp-server package.
 
 ## Local Development
 
