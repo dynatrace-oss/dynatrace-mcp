@@ -18,6 +18,8 @@
   </a>
 </h4>
 
+[![Demo video](https://img.youtube.com/vi/vE0lb-vo0Qc/default.jpg)]([https://youtu.be/vE0lb-vo0Qc](https://youtu.be/vE0lb-vo0Qc))
+
 The local _Dynatrace MCP server_ allows AI Assistants to interact with the [Dynatrace](https://www.dynatrace.com/) observability platform,
 bringing real-time observability data directly into your development workflow.
 
