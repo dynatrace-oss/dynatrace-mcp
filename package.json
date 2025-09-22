@@ -42,7 +42,9 @@
     "test:unit": "jest --selectProjects unit",
     "test:integration": "jest --selectProjects integration --runInBand",
     "prettier": "prettier --check .",
-    "prettier:fix": "prettier --write ."
+    "prettier:fix": "prettier --write .",
+    "start": "node dist/index.js --http --port 8080 --host 0.0.0.0",
+    "start:azure": "node dist/index.js --http --port %HTTP_PLATFORM_PORT% --host 0.0.0.0"
   },
   "author": "Dynatrace",
   "license": "MIT",
@@ -68,5 +70,8 @@
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
