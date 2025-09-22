@@ -25,6 +25,8 @@ bringing real-time observability data directly into your development workflow.
 
 If you need help, please contact us via [GitHub Issues](https://github.com/dynatrace-oss/dynatrace-mcp/issues) if you have feature requests, questions, or need help.
 
+https://github.com/user-attachments/assets/25c05db1-8e09-4a7f-add2-ed486ffd4b5a
+
 ## Quickstart
 
 You can add this MCP server to your MCP Client like VSCode, Claude, Cursor, Amazon Q, Windsurf, ChatGPT, or Github Copilot via the npmjs package `@dynatrace-oss/dynatrace-mcp-server`, and type `stdio`.
