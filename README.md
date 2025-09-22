@@ -18,16 +18,14 @@
   </a>
 </h4>
 
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=vE0lb-vo0Qc" target="_blank">
- <img src="http://img.youtube.com/vi/vE0lb-vo0Qc/mqdefault.jpg" alt="Watch the video" width="1258" height="1014" border="10" />
-</a>
-
 The local _Dynatrace MCP server_ allows AI Assistants to interact with the [Dynatrace](https://www.dynatrace.com/) observability platform,
 bringing real-time observability data directly into your development workflow.
 
 > Note: This product is not officially supported by Dynatrace.
 
 If you need help, please contact us via [GitHub Issues](https://github.com/dynatrace-oss/dynatrace-mcp/issues) if you have feature requests, questions, or need help.
+
+https://github.com/user-attachments/assets/25c05db1-8e09-4a7f-add2-ed486ffd4b5a
 
 ## Quickstart
 
