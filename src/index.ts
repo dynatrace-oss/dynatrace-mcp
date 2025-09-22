@@ -1023,48 +1023,147 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
     .option('-H, --host <host>', 'host for HTTP server', '0.0.0.0')
     .parse();
 
-  const options = program.opts();
-  const httpMode = options.http || options.server;
-  const httpPort = parseInt(options.port, 10);
-  const host = options.host || '0.0.0.0';
+  // const options = program.opts();
+  // const httpMode = options.http || options.server;
+  // const httpPort = parseInt(options.port, 10);
+  // const host = options.host || '0.0.0.0';
+
+  // Reemplaza las líneas 1026-1029 con:
+
+const options = program.opts();
+const httpMode = options.http || options.server;
+
+// Azure App Service uses PORT environment variable
+const envPort = process.env.PORT || process.env.HTTP_PLATFORM_PORT;
+const httpPort = envPort ? parseInt(envPort, 10) : parseInt(options.port, 10);
+const host = options.host || '0.0.0.0';
+
+console.error(`Configuration: httpMode=${httpMode}, port=${httpPort}, host=${host}`);
 
   // HTTP server mode (Stateless)
   if (httpMode) {
-    const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
-      // Parse request body for POST requests
-      let body: unknown;
-      // Create a new Stateless HTTP Transport
-      const httpTransport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: undefined, // No Session ID needed
-      });
+    // const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
+    //   // Parse request body for POST requests
+    //   let body: unknown;
+    //   // Create a new Stateless HTTP Transport
+    //   const httpTransport = new StreamableHTTPServerTransport({
+    //     sessionIdGenerator: undefined, // No Session ID needed
+    //   });
 
-      res.on('close', () => {
-        // close transport and server, but not the httpServer itself
-        httpTransport.close();
-        server.close();
-      });
+    //   res.on('close', () => {
+    //     // close transport and server, but not the httpServer itself
+    //     httpTransport.close();
+    //     server.close();
+    //   });
 
-      // Connecting MCP-server to HTTP transport
-      await server.connect(httpTransport);
+    //   // Connecting MCP-server to HTTP transport
+    //   await server.connect(httpTransport);
 
-      // Handle POST Requests for this endpoint
-      if (req.method === 'POST') {
-        const chunks: Buffer[] = [];
-        for await (const chunk of req) {
-          chunks.push(chunk);
-        }
-        const rawBody = Buffer.concat(chunks).toString();
-        try {
-          body = JSON.parse(rawBody);
-        } catch (error) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid JSON' }));
-          return;
-        }
-      }
+    //   // Handle POST Requests for this endpoint
+    //   if (req.method === 'POST') {
+    //     const chunks: Buffer[] = [];
+    //     for await (const chunk of req) {
+    //       chunks.push(chunk);
+    //     }
+    //     const rawBody = Buffer.concat(chunks).toString();
+    //     try {
+    //       body = JSON.parse(rawBody);
+    //     } catch (error) {
+    //       res.writeHead(400, { 'Content-Type': 'application/json' });
+    //       res.end(JSON.stringify({ error: 'Invalid JSON' }));
+    //       return;
+    //     }
+    //   }
 
-      await httpTransport.handleRequest(req, res, body);
-    });
+    //   await httpTransport.handleRequest(req, res, body);
+    // });
+
+    // Reemplaza la sección del servidor HTTP (líneas 1033-1067) con esto:
+
+const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
+  // Add CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  // Handle OPTIONS requests (CORS preflight)
+  if (req.method === 'OPTIONS') {
+    res.writeHead(200);
+    res.end();
+    return;
+  }
+
+  // Health check endpoint
+  if (req.method === 'GET' && req.url === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ 
+      status: 'healthy', 
+      service: 'Dynatrace MCP Server',
+      version: getPackageJsonVersion(),
+      timestamp: new Date().toISOString()
+    }));
+    return;
+  }
+
+  // Root endpoint - show server info
+  if (req.method === 'GET' && (req.url === '/' || req.url === '')) {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      name: 'Dynatrace MCP Server',
+      version: getPackageJsonVersion(),
+      status: 'running',
+      endpoints: {
+        health: '/health',
+        mcp: '/ (POST)',
+      },
+      message: 'Send MCP requests via POST to this endpoint'
+    }));
+    return;
+  }
+
+  // Parse request body for POST requests
+  let body: unknown;
+  
+  // Create a new Stateless HTTP Transport
+  const httpTransport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: undefined, // No Session ID needed
+  });
+
+  res.on('close', () => {
+    // close transport and server, but not the httpServer itself
+    httpTransport.close();
+    server.close();
+  });
+
+  // Connecting MCP-server to HTTP transport
+  await server.connect(httpTransport);
+
+  // Handle POST Requests for MCP
+  if (req.method === 'POST') {
+    const chunks: Buffer[] = [];
+    for await (const chunk of req) {
+      chunks.push(chunk);
+    }
+    const rawBody = Buffer.concat(chunks).toString();
+    try {
+      body = JSON.parse(rawBody);
+    } catch (error) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Invalid JSON' }));
+      return;
+    }
+  } else if (req.method === 'GET') {
+    // For GET requests that aren't handled above, return method not allowed
+    res.writeHead(405, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ 
+      error: 'Method not allowed', 
+      message: 'Use POST for MCP requests or GET /health for health check' 
+    }));
+    return;
+  }
+
+  await httpTransport.handleRequest(req, res, body);
+});
 
     // Start HTTP Server on the specified host and port
     httpServer.listen(httpPort, host, () => {

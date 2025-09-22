@@ -23,10 +23,13 @@ jobs:
         with:
           node-version: '22.x'
 
-      - name: npm install, build, and run unit tests only
+      - name: npm install and build
         run: |
           npm install
-          npm run build --if-present
+          npm run build
+
+      - name: Run unit tests only
+        run: |
           npm run test:unit --if-present
 
       - name: Upload artifact for deployment job
@@ -62,3 +65,4 @@ jobs:
           app-name: 'dynatrace-mcp-proxy'
           slot-name: 'Production'
           package: .
+          startup-command: 'npm start'
