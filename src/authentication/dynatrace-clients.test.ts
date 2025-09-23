@@ -2,10 +2,14 @@ import { createDtHttpClient } from './dynatrace-clients';
 import { PlatformHttpClient } from '@dynatrace-sdk/http-client';
 import { getSSOUrl } from 'dt-app';
 import { OAuthTokenResponse } from './types';
+import { performOAuthAuthorizationCodeFlow } from './dynatrace-oauth-auth-code-flow';
+import { globalTokenCache } from './token-cache';
 
 // Mock external dependencies
 jest.mock('@dynatrace-sdk/http-client');
 jest.mock('dt-app');
+jest.mock('./dynatrace-oauth-auth-code-flow');
+jest.mock('./token-cache');
 jest.mock('../../package.json', () => ({
   version: '1.0.0-test',
 }));
@@ -15,6 +19,10 @@ global.fetch = jest.fn();
 
 const mockPlatformHttpClient = PlatformHttpClient as jest.MockedClass<typeof PlatformHttpClient>;
 const mockGetSSOUrl = getSSOUrl as jest.MockedFunction<typeof getSSOUrl>;
+const mockPerformOAuthAuthorizationCodeFlow = performOAuthAuthorizationCodeFlow as jest.MockedFunction<
+  typeof performOAuthAuthorizationCodeFlow
+>;
+const mockGlobalTokenCache = globalTokenCache as jest.Mocked<typeof globalTokenCache>;
 const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
 
 describe('dynatrace-clients', () => {
@@ -22,6 +30,15 @@ describe('dynatrace-clients', () => {
     jest.clearAllMocks();
     // Reset console.error mock
     jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    // Mock token cache methods
+    mockGlobalTokenCache.getToken.mockReturnValue(null);
+    mockGlobalTokenCache.isTokenValid.mockReturnValue(false);
+    mockGlobalTokenCache.setToken.mockImplementation(() => {});
+    mockGlobalTokenCache.clearToken.mockImplementation(() => {});
+
+    // Mock getSSOUrl
+    mockGetSSOUrl.mockResolvedValue('https://sso.dynatrace.com');
   });
 
   afterEach(() => {
@@ -77,18 +94,6 @@ describe('dynatrace-clients', () => {
           },
         });
         expect(result).toBeInstanceOf(PlatformHttpClient);
-      });
-
-      it('should throw error when clientId, clientSecret and platformToken are missing', async () => {
-        await expect(createDtHttpClient(environmentUrl, scopes, undefined, undefined, undefined)).rejects.toThrow(
-          'Failed to create Dynatrace HTTP Client: Please provide either clientId and clientSecret or dtPlatformToken',
-        );
-      });
-
-      it('should throw error when environmentUrl is missing', async () => {
-        await expect(createDtHttpClient('', scopes, clientId, clientSecret)).rejects.toThrow(
-          'Failed to retrieve environment URL from env "DT_ENVIRONMENT"',
-        );
       });
 
       it('should throw error when token request fails with HTTP error', async () => {
@@ -157,7 +162,7 @@ describe('dynatrace-clients', () => {
         await createDtHttpClient(environmentUrl, scopes, clientId, clientSecret);
 
         expect(console.error).toHaveBeenCalledWith(
-          `Trying to authenticate API Calls to ${environmentUrl} via OAuthClientId ${clientId} with the following scopes: ${scopes.join(', ')}`,
+          `🔒 Client-Creds-Flow: Trying to authenticate API Calls to ${environmentUrl} via OAuthClientId ${clientId} with the following scopes: ${scopes.join(', ')}`,
         );
       });
     });
@@ -176,14 +181,6 @@ describe('dynatrace-clients', () => {
           },
         });
         expect(result).toBeInstanceOf(PlatformHttpClient);
-      });
-    });
-
-    describe('with no authentication', () => {
-      it('should throw error when no authentication method is provided', async () => {
-        await expect(createDtHttpClient(environmentUrl, scopes)).rejects.toThrow(
-          'Failed to create Dynatrace HTTP Client: Please provide either clientId and clientSecret or dtPlatformToken',
-        );
       });
     });
   });
