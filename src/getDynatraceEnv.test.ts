@@ -28,14 +28,18 @@ describe('getDynatraceEnv', () => {
     expect(result.slackConnectionId).toBe('fake-slack-connection-id');
   });
 
-  it('throws if environment variables for auth credentials are missing', () => {
+  it('allows missing auth credentials (OAuth auth code flow will be inferred)', () => {
     const env = {
       ...baseEnv,
       OAUTH_CLIENT_ID: undefined,
       OAUTH_CLIENT_SECRET: undefined,
       DT_PLATFORM_TOKEN: undefined,
     };
-    expect(() => getDynatraceEnv(env)).toThrow(/OAUTH_CLIENT_ID/);
+    expect(() => getDynatraceEnv(env)).not.toThrow();
+    const result = getDynatraceEnv(env);
+    expect(result.oauthClientId).toBeUndefined();
+    expect(result.oauthClientSecret).toBeUndefined();
+    expect(result.dtPlatformToken).toBeUndefined();
   });
 
   it('throws if DT_ENVIRONMENT is missing', () => {

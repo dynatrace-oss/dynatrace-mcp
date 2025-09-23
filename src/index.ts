@@ -69,10 +69,45 @@ if (dotEnvOutput.error) {
   );
 }
 
+const DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID = 'dt0s08.dt-app-local'; // ToDo: Register our own oauth client
+
 let scopesBase = [
   'app-engine:apps:run', // needed for environmentInformationClient
   'app-engine:functions:run', // needed for environmentInformationClient
 ];
+
+// All scopes needed by the MCP server tools
+// Requesting all scopes upfront allows us to reuse a single token for all operations
+const allRequiredScopes = scopesBase.concat([
+  // Storage (Grail) scopes
+  'storage:events:read', // Read events from Grail
+  'storage:buckets:read', // Read all system data stored on Grail
+  'storage:security.events:read', // Read Security events from Grail
+  'storage:entities:read', // Read Entities from Grail
+  'storage:logs:read', // Read logs for reliability guardian validations
+  'storage:metrics:read', // Read metrics for reliability guardian validations
+  'storage:bizevents:read', // Read bizevents for reliability guardian validations
+  'storage:spans:read', // Read spans from Grail
+  'storage:system:read', // Read System Data from Grail
+
+  // Settings and configuration scopes
+  'app-settings:objects:read', // Read app settings objects
+  'settings:objects:read', // Read settings objects
+  'environment-api:entities:read', // Read entities via environment API
+
+  // Davis CoPilot scopes
+  'davis-copilot:nl2dql:execute', // Convert natural language to DQL
+  'davis-copilot:dql2nl:execute', // Convert DQL to natural language
+  'davis-copilot:conversations:execute', // Chat with Davis CoPilot
+
+  // Automation/Workflows scopes
+  'automation:workflows:write', // Create and modify workflows
+  'automation:workflows:read', // Read workflows
+  'automation:workflows:run', // Execute workflows
+
+  // Communication scopes
+  'email:emails:send', // Send emails
+]);
 
 /**
  * Performs a connection test to the Dynatrace environment.
@@ -86,7 +121,7 @@ async function testDynatraceConnection(
 ) {
   const dtClient = await createDtHttpClient(
     dtEnvironment,
-    scopesBase,
+    oauthClientId && !oauthClientSecret ? allRequiredScopes : scopesBase,
     oauthClientId,
     oauthClientSecret,
     dtPlatformToken,
@@ -127,7 +162,7 @@ async function retryTestDynatraceConnection(
       console.error(`Successfully connected to the Dynatrace environment at ${dtEnvironment}.`);
       break;
     } catch (error: any) {
-      console.error(`Error: Could not connect to the Dynatrace environment.`);
+      console.error(`Error: Could not connect to the Dynatrace environment at ${dtEnvironment}.`);
       if (isClientRequestError(error)) {
         console.error(handleClientRequestError(error));
       } else {
@@ -161,11 +196,22 @@ const main = async () => {
   }
 
   // Unpack environment variables
-  const { oauthClientId, oauthClientSecret, dtEnvironment, dtPlatformToken, slackConnectionId, grailBudgetGB } =
+  let { oauthClientId, oauthClientSecret, dtEnvironment, dtPlatformToken, slackConnectionId, grailBudgetGB } =
     dynatraceEnv;
+
+  // Infer OAuth auth code flow if no OAuth Client credentials are provided
+  // -> configure default OAuth client ID for auth code flow
+  if (!oauthClientId && !oauthClientSecret && !dtPlatformToken) {
+    console.error('No OAuth credentials or platform token provided - switching to OAuth authorization code flow.');
+    oauthClientId = DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID; // Default OAuth client ID for auth code flow
+  }
 
   // Test connection on startup
   try {
+    // Depending on the authentication type, there are multiple pitfalls
+    // * For Platform Tokens, we can just try to access "get environment info" and we will know whether it works
+    // * For Oauth Client Credentials flow, we can also try to request an access token upfront with limited scopes, and verify whether everything works
+    // * for Oauth Auth Code flow, we can only verify whether the client ID is valid and the OAuth verifier call works, but we can't verify whether the user will be able to authenticate successfully
     await retryTestDynatraceConnection(dtEnvironment, oauthClientId, oauthClientSecret, dtPlatformToken);
   } catch (err) {
     console.error((err as Error).message);
@@ -203,6 +249,20 @@ const main = async () => {
       },
     },
   );
+
+  // Helper function to create HTTP client with current auth settings
+  // This is used to provide global scopes for auth code flow
+  const createAuthenticatedHttpClient = async (scopes: string[]) => {
+    // If we use authorization code flow (e.g., oauthClientId is set, but oauthClientSecret is empty), we pass all scopes in.
+    // For all other cases, we use allRequiredScopes
+    return await createDtHttpClient(
+      dtEnvironment,
+      oauthClientId && !oauthClientSecret ? allRequiredScopes : scopes, // Always use all scopes for maximum reusability
+      oauthClientId,
+      oauthClientSecret,
+      dtPlatformToken,
+    );
+  };
 
   // quick abstraction/wrapper to make it easier for tools to reply text instead of JSON
   const tool = (
@@ -299,13 +359,7 @@ const main = async () => {
     },
     async ({}) => {
       // create an oauth-client
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase,
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
+      const dtClient = await createAuthenticatedHttpClient(scopesBase);
       const environmentInformationClient = new EnvironmentInformationClient(dtClient);
 
       const environmentInfo = await environmentInformationClient.getEnvironmentInformation();
@@ -343,16 +397,12 @@ const main = async () => {
       readOnlyHint: true,
     },
     async ({ riskScore, additionalFilter, maxVulnerabilitiesToDisplay }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
+      const dtClient = await createAuthenticatedHttpClient(
         scopesBase.concat(
           'storage:events:read',
           'storage:buckets:read',
           'storage:security.events:read', // Read Security events from Grail
         ),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
       );
       const result = await listVulnerabilities(dtClient, additionalFilter, riskScore);
       if (!result || result.length === 0) {
@@ -407,12 +457,8 @@ const main = async () => {
       readOnlyHint: true,
     },
     async ({ additionalFilter, maxProblemsToDisplay }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
+      const dtClient = await createAuthenticatedHttpClient(
         scopesBase.concat('storage:events:read', 'storage:buckets:read'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
       );
       // get problems (uses fetch)
       const result = await listProblems(dtClient, additionalFilter);
@@ -467,13 +513,8 @@ const main = async () => {
       readOnlyHint: true,
     },
     async ({ entityNames, maxEntitiesToDisplay, extendedSearch }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase.concat('storage:entities:read'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
+      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('storage:entities:read'));
+
       const result = await findMonitoredEntitiesByName(dtClient, entityNames, extendedSearch);
 
       if (result && result.records && result.records.length > 0) {
@@ -524,13 +565,7 @@ const main = async () => {
         return 'Operation cancelled: Human approval was not granted for sending this Slack message.';
       }
 
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase.concat('app-settings:objects:read'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
+      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('app-settings:objects:read'));
       const response = await sendSlackMessage(dtClient, slackConnectionId, channel, message);
 
       return `Message sent to Slack channel: ${JSON.stringify(response)}`;
@@ -548,13 +583,7 @@ const main = async () => {
       idempotentHint: true, // same input always yields same output
     },
     async ({ dqlStatement }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase,
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
+      const dtClient = await createAuthenticatedHttpClient(scopesBase);
       const response = await verifyDqlStatement(dtClient, dqlStatement);
 
       let resp = 'DQL Statement Verification:\n';
@@ -598,8 +627,7 @@ const main = async () => {
     },
     async ({ dqlStatement }) => {
       // Create a HTTP Client that has all storage:*:read scopes
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
+      const dtClient = await createAuthenticatedHttpClient(
         scopesBase.concat(
           'storage:buckets:read', // Read all system data stored on Grail
           'storage:logs:read', // Read logs for reliability guardian validations
@@ -613,9 +641,6 @@ const main = async () => {
           'storage:user.sessions:read', // Read User sessions from Grail
           'storage:security.events:read', // Read Security events from Grail
         ),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
       );
       const response = await executeDql(dtClient, { query: dqlStatement }, grailBudgetGB);
 
@@ -684,13 +709,7 @@ const main = async () => {
       idempotentHint: true,
     },
     async ({ text }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase.concat('davis-copilot:nl2dql:execute'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
+      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('davis-copilot:nl2dql:execute'));
 
       // Check if the nl2dql skill is available
       const isAvailable = await isDavisCopilotSkillAvailable(dtClient, 'nl2dql');
@@ -737,13 +756,7 @@ const main = async () => {
       idempotentHint: true,
     },
     async ({ dql }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase.concat('davis-copilot:dql2nl:execute'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
+      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('davis-copilot:dql2nl:execute'));
 
       // Check if the dql2nl skill is available
       const isAvailable = await isDavisCopilotSkillAvailable(dtClient, 'dql2nl');
@@ -785,13 +798,7 @@ const main = async () => {
       openWorldHint: true, // web-search like characteristics
     },
     async ({ text, context, instruction }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase.concat('davis-copilot:conversations:execute'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
+      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('davis-copilot:conversations:execute'));
 
       // Check if the conversation skill is available
       const isAvailable = await isDavisCopilotSkillAvailable(dtClient, 'conversation');
@@ -876,12 +883,8 @@ const main = async () => {
         return 'Operation cancelled: Human approval was not granted for creating this workflow.';
       }
 
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
+      const dtClient = await createAuthenticatedHttpClient(
         scopesBase.concat('automation:workflows:write', 'automation:workflows:read', 'automation:workflows:run'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
       );
       const response = await createWorkflowForProblemNotification(dtClient, teamName, channel, problemType, isPrivate);
 
@@ -922,12 +925,8 @@ const main = async () => {
         return 'Operation cancelled: Human approval was not granted for making this workflow public.';
       }
 
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
+      const dtClient = await createAuthenticatedHttpClient(
         scopesBase.concat('automation:workflows:write', 'automation:workflows:read', 'automation:workflows:run'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
       );
       const response = await updateWorkflow(dtClient, workflowId, {
         isPrivate: false,
@@ -977,13 +976,7 @@ const main = async () => {
       readOnlyHint: true,
     },
     async ({ clusterId, kubernetesEntityId, eventType, maxEventsToDisplay }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase.concat('storage:events:read'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
+      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('storage:events:read'));
       const result = await getEventsForCluster(dtClient, clusterId, kubernetesEntityId, eventType);
 
       if (result && result.records && result.records.length > 0) {
@@ -1017,12 +1010,8 @@ const main = async () => {
       readOnlyHint: true,
     },
     async ({ entityIds }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
+      const dtClient = await createAuthenticatedHttpClient(
         scopesBase.concat('environment-api:entities:read', 'settings:objects:read'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
       );
       console.error(`Fetching ownership for ${entityIds}`);
       const ownershipInformation = await getOwnershipInformation(dtClient, entityIds);
@@ -1102,13 +1091,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
         return 'Operation cancelled: Human approval was not granted for sending this email.';
       }
 
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase.concat('email:emails:send'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
+      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('email:emails:send'));
 
       const emailRequest = {
         toRecipients: { emailAddresses: toRecipients },

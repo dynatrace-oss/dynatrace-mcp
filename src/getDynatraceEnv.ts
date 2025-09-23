@@ -24,11 +24,8 @@ export function getDynatraceEnv(env: NodeJS.ProcessEnv = process.env): Dynatrace
     throw new Error('Please set DT_ENVIRONMENT environment variable to your Dynatrace Platform Environment');
   }
 
-  if (!oauthClientId && !oauthClientSecret && !dtPlatformToken) {
-    throw new Error(
-      'Please set either OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET, or DT_PLATFORM_TOKEN environment variables',
-    );
-  }
+  // Allow case where no auth credentials are provided - OAuth auth code flow will be inferred
+  // We only require DT_ENVIRONMENT to be set
 
   // For dev and hardening stages, set unlimited budget (-1) unless explicitly overridden
   if (dtEnvironment.includes('apps.dynatracelabs.com') && !env.DT_GRAIL_QUERY_BUDGET_GB) {
