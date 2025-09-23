@@ -7,6 +7,9 @@ node_modules/
 
 tsconfig.tsbuildinfo
 
+# Token cache directory - contains sensitive OAuth tokens
+.dt-mcp/
+
 # mcp registry
 .mcpregistry_github_token
 .mcpregistry_registry_token
