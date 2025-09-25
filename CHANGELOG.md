@@ -1,5 +1,13 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## Unreleased Changes
+
+- Added human approval step via MCP's elicitation to ensure user consent before executing critical operations for the following tools:
+  - `send_email` (data sink)
+  - `send_slack_message` (data sink)
+  - `create_workflow_for_notification` (potentially destructive)
+  - `make_workflow_public` (potentially destructive)
+
 ## 0.6.1
 
 - Fixed an issue with MCP communication failing with `SyntaxError: Unexpected token 'd'` due to `dotenv`

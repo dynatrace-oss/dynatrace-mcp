@@ -17,6 +17,8 @@ import {
   NotificationSchema,
   Tool,
   ToolAnnotations,
+  ElicitRequest,
+  ElicitResult,
 } from '@modelcontextprotocol/sdk/types.js';
 import { config } from 'dotenv';
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
@@ -195,6 +197,7 @@ const main = async () => {
     {
       capabilities: {
         tools: {},
+        elicitation: {},
       },
     },
   );
@@ -247,6 +250,41 @@ const main = async () => {
     };
 
     server.tool(name, description, paramsSchema, annotations, (args: z.ZodRawShape) => wrappedCb(args));
+  };
+
+  /**
+   * Helper function to request human approval for potentially sensitive operations
+   * @param operation - Description of the operation requiring approval
+   * @param details - Detailed information about what will be performed
+   * @returns Promise<boolean> - true if approved, false if declined or cancelled
+   */
+  const requestHumanApproval = async (operation: string): Promise<boolean> => {
+    try {
+      const result = await server.server.elicitInput({
+        message: `Please review: ${operation}`,
+        requestedSchema: {
+          type: 'object',
+          properties: {
+            approval: {
+              type: 'boolean',
+              title: 'Approve this operation?',
+              description: 'Select true to approve this operation, or false to decline.',
+              default: false,
+            },
+          },
+          required: ['approval'],
+        },
+      });
+
+      if (result.action === 'accept' && result.content?.approval === true) {
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Failed to elicit human approval:', error);
+      return false; // Default to deny if elicitation fails
+    }
   };
 
   /** Tool Definitions below */
@@ -488,14 +526,25 @@ const main = async () => {
     'send_slack_message',
     'Sends a Slack message to a dedicated Slack Channel via Slack Connector on Dynatrace',
     {
-      channel: z.string().optional(),
-      message: z.string().optional(),
+      channel: z.string(),
+      message: z
+        .string()
+        .describe(
+          'Slack markdown supported. Avoid sending sensitive data like log lines. Focus on context, insights, links, and summaries.',
+        ),
     },
     {
       // not read-only, not open-world, not destructive
       readOnlyHint: false,
     },
     async ({ channel, message }) => {
+      // Request human approval before sending the message
+      const approved = await requestHumanApproval(`Send information via Slack to ${channel}`);
+
+      if (!approved) {
+        return 'Operation cancelled: Human approval was not granted for sending this Slack message.';
+      }
+
       const dtClient = await createDtHttpClient(
         dtEnvironment,
         scopesBase.concat('app-settings:objects:read'),
@@ -820,6 +869,15 @@ const main = async () => {
       idempotentHint: false, // creating the same workflow multiple times is possible
     },
     async ({ problemType, teamName, channel, isPrivate }) => {
+      // ask for human approval
+      const approved = await requestHumanApproval(
+        `Create a workflow for notifying team ${teamName} via ${channel} about ${problemType} problems`,
+      );
+
+      if (!approved) {
+        return 'Operation cancelled: Human approval was not granted for creating this workflow.';
+      }
+
       const dtClient = await createDtHttpClient(
         dtEnvironment,
         scopesBase.concat('automation:workflows:write', 'automation:workflows:read', 'automation:workflows:run'),
@@ -857,6 +915,15 @@ const main = async () => {
       idempotentHint: true, // making the same workflow public multiple times yields the same result
     },
     async ({ workflowId }) => {
+      // ask for human approval
+      const approved = await requestHumanApproval(
+        `Make workflow ${workflowId} publicly available to everyone on the Dynatrace Environment`,
+      );
+
+      if (!approved) {
+        return 'Operation cancelled: Human approval was not granted for making this workflow public.';
+      }
+
       const dtClient = await createDtHttpClient(
         dtEnvironment,
         scopesBase.concat('automation:workflows:write', 'automation:workflows:read', 'automation:workflows:run'),
@@ -967,7 +1034,11 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
       ccRecipients: z.array(z.string().email()).optional().describe('Array of email addresses for CC recipients'),
       bccRecipients: z.array(z.string().email()).optional().describe('Array of email addresses for BCC recipients'),
       subject: z.string().describe('Subject line of the email'),
-      body: z.string().describe('Body content of the email (plain text only)'),
+      body: z
+        .string()
+        .describe(
+          'Body content of the email (plain text only). Avoid sending sensitive data like log lines. Focus on context, insights, links, and summaries.',
+        ),
     },
     {
       openWorldHint: true, // email is as close to the open-world as we can get with our system
@@ -980,6 +1051,15 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
         throw new Error(
           `Total recipients (${totalRecipients}) exceeds maximum limit of 10 across TO, CC, and BCC fields`,
         );
+      }
+
+      // Request human approval before sending the email
+      const allRecipients = [...toRecipients, ...(ccRecipients || []), ...(bccRecipients || [])];
+
+      const approved = await requestHumanApproval(`Send information via Email to ${allRecipients.join(', ')}`);
+
+      if (!approved) {
+        return 'Operation cancelled: Human approval was not granted for sending this email.';
       }
 
       const dtClient = await createDtHttpClient(
