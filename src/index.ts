@@ -49,7 +49,22 @@ import { Http2ServerRequest } from 'node:http2';
 import { resetGrailBudgetTracker, getGrailBudgetTracker } from './utils/grail-budget-tracker';
 import { read } from 'node:fs';
 
-config();
+// Load environment variables from .env file if available, and suppress warnings/logging to stdio
+// as it breaks MCP communication when using stdio transport
+const dotEnvOutput = config({ quiet: true });
+
+if (dotEnvOutput.error) {
+  // Only log error if it's not about missing .env file
+  if ((dotEnvOutput.error as NodeJS.ErrnoException).code !== 'ENOENT') {
+    console.error('Error loading .env file:', dotEnvOutput.error);
+    process.exit(1);
+  }
+} else {
+  // Successfully loaded .env file
+  console.error(
+    `.env file loaded successfully - loaded ${dotEnvOutput.parsed ? Object.keys(dotEnvOutput.parsed).length : 0} environment variables: ${Object.keys(dotEnvOutput.parsed || {}).join(', ')}`,
+  );
+}
 
 let scopesBase = [
   'app-engine:apps:run', // needed for environmentInformationClient

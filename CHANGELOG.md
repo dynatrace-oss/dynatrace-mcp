@@ -1,6 +1,9 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
-## Unreleased Changes
+## 0.6.1
+
+- Fixed an issue with MCP communication failing with `SyntaxError: Unexpected token 'd'` due to `dotenv`
+- Added Support for Google Gemini CLI
 
 ## 0.6.0
 
