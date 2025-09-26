@@ -1,14 +1,14 @@
-import { getEntityTypeFromId, DYNATRACE_ENTITY_TYPES } from './dynatrace-entity-types';
+import { getEntityTypeFromId, DYNATRACE_ENTITY_TYPES_ALL } from './dynatrace-entity-types';
 
 describe('DYNATRACE_ENTITY_TYPES', () => {
   it('should be sorted alphabetically', () => {
-    const sortedTypes = [...DYNATRACE_ENTITY_TYPES].sort();
-    expect(DYNATRACE_ENTITY_TYPES).toEqual(sortedTypes);
+    const sortedTypes = [...DYNATRACE_ENTITY_TYPES_ALL].sort();
+    expect(DYNATRACE_ENTITY_TYPES_ALL).toEqual(sortedTypes);
   });
 
   it('should have unique values', () => {
-    const uniqueTypes = [...new Set(DYNATRACE_ENTITY_TYPES)];
-    expect(DYNATRACE_ENTITY_TYPES.length).toBe(uniqueTypes.length);
+    const uniqueTypes = [...new Set(DYNATRACE_ENTITY_TYPES_ALL)];
+    expect(DYNATRACE_ENTITY_TYPES_ALL.length).toBe(uniqueTypes.length);
   });
 });
 

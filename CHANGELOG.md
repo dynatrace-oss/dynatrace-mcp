@@ -1,5 +1,10 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## Unreleased changes
+
+- Removed tool `get_entity_details`, and consolidated details into `find_entity_by_name`
+- Auto-detect entity names
+
 ## 0.6.1
 
 - Fixed an issue with MCP communication failing with `SyntaxError: Unexpected token 'd'` due to `dotenv`
