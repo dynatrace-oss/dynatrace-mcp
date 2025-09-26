@@ -38,7 +38,7 @@ import { updateWorkflow } from './capabilities/update-workflow';
 import { executeDql, verifyDqlStatement } from './capabilities/execute-dql';
 import { sendSlackMessage } from './capabilities/send-slack-message';
 import { sendEmail } from './capabilities/send-email';
-import { findMonitoredEntityByName } from './capabilities/find-monitored-entity-by-name';
+import { findMonitoredEntitiesByName } from './capabilities/find-monitored-entity-by-name';
 import {
   chatWithDavisCopilot,
   explainDqlInNaturalLanguage,
@@ -321,7 +321,7 @@ const main = async () => {
 
   tool(
     'list_vulnerabilities',
-    'Retrieve all active (non-muted) vulnerabilities from Dynatrace for the last 30 days. An additional filter can be provided using DQL filter.',
+    'Retrieve all active (non-muted) vulnerabilities from Dynatrace for the last 30 days. An additional filter can be provided using DQL filter (filter for a specific entity type and id).',
     {
       riskScore: z
         .number()
@@ -332,7 +332,8 @@ const main = async () => {
         .string()
         .optional()
         .describe(
-          'Additional filter for DQL statement for vulnerabilities, e.g., \'vulnerability.stack == "CODE_LIBRARY"\' or \'vulnerability.risk.level == "CRITICAL"\' or \'affected_entity.name contains "prod"\' or \'vulnerability.davis_assessment.exposure_status == "PUBLIC_NETWORK"\'',
+          'Additional DQL-based filter for accessing vulnerabilities, e.g., by entity type (preferred), like \'dt.entity.<service|host|application|$type> == "<entity-id>"\', by entity name (not recommended) \'affected_entity.name contains "<entity-name>"\' , or by tags \'entity_tags == array("dt.owner:team-foobar", "tag:tag")\'. ' +
+            'You can also filter by vulnerability details like \'vulnerability.stack == "CODE_LIBRARY"\' or \'vulnerability.risk.level == "CRITICAL"\' or \'vulnerability.davis_assessment.exposure_status == "PUBLIC_NETWORK"\'',
         ),
       maxVulnerabilitiesToDisplay: z
         .number()
@@ -393,13 +394,13 @@ const main = async () => {
 
   tool(
     'list_problems',
-    'List all problems (dt.davis.problems) known on Dynatrace, sorted by their recency, for the last 12h. An additional filter can be provided using DQL filter.',
+    'List all problems (dt.davis.problems) known on Dynatrace, sorted by their recency, for the last 12h. An additional DQL based filter, like filtering for specific entities, can be provided.',
     {
       additionalFilter: z
         .string()
         .optional()
         .describe(
-          'Additional filter for DQL statement for dt.davis.problems, e.g., \'entity_tags == array("dt.owner:team-foobar", "tag:tag")\'',
+          'Additional DQL filter for dt.davis.problems - filter by entity type (preferred), like \'dt.entity.<service|host|application|$type> == "<entity-id>"\', or by entity tags \'entity_tags == array("dt.owner:team-foobar", "tag:tag")\'',
         ),
       maxProblemsToDisplay: z.number().default(10).describe('Maximum number of problems to display in the response.'),
     },
@@ -449,14 +450,24 @@ const main = async () => {
 
   tool(
     'find_entity_by_name',
-    'Get the entityId of a monitored entity (service, host, process-group, application, kubernetes-node, ...) within the topology based on the name of the entity on Dynatrace',
+    'Find the entityId and type of a monitored entity (service, host, process-group, application, kubernetes-node, custom-app, ...) within the topology on Dynatrace, based on the name of the entity. Run this before querying data like logs, metrics, problems, events. If no entity name is known, make an educated guess with common identifiers like package.json `id`/`name`, helm chart names, kubernetes manfiest names, and alike.',
     {
-      entityName: z.string().describe('Name of the entity to search for, e.g., "my-service" or "my-host"'),
+      entityNames: z
+        .array(z.string())
+        .describe(
+          'Names of the entities to search for - try with one name at first (identifiers like package.json id), and only try with multiple names if the first search was unsuccessful',
+        ),
+      maxEntitiesToDisplay: z.number().default(10).describe('Maximum number of entities to display in the response.'),
+      extendedSearch: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe('Set this to true if you want a comprehensive search over all available entity types.'),
     },
     {
       readOnlyHint: true,
     },
-    async ({ entityName }) => {
+    async ({ entityNames, maxEntitiesToDisplay, extendedSearch }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
         scopesBase.concat('storage:entities:read'),
@@ -464,12 +475,34 @@ const main = async () => {
         oauthClientSecret,
         dtPlatformToken,
       );
-      const entityResponse = await findMonitoredEntityByName(dtClient, entityName);
-      return entityResponse;
+      const result = await findMonitoredEntitiesByName(dtClient, entityNames, extendedSearch);
+
+      if (result && result.records && result.records.length > 0) {
+        let resp = `Found ${result.records.length} monitored entities! Displaying the first ${maxEntitiesToDisplay} entities:\n`;
+
+        // iterate over dqlResponse and create a string with the problem details, but only show the top maxEntitiesToDisplay problems
+        result.records.slice(0, maxEntitiesToDisplay).forEach((entity) => {
+          if (entity && entity.id) {
+            const entityType = getEntityTypeFromId(String(entity.id));
+            resp += `- Entity '${entity['entity.name']}' of type '${entity['entity.type']}' has entity id '${entity.id}' and tags ${entity['tags'] ? entity['tags'] : 'none'} - Use the DQL Filter: '| filter ${entityType} == "${entity.id}"'\n`;
+          }
+        });
+
+        resp +=
+          '\n\n**Next Steps:**\n' +
+          '1. Try to fetch more details about the entity, using the `execute_dql` tool with "describe(dt.entity.<entity-type>)", and "fetch dt.entity.<entity-type> | filter id == <entity-id> | fieldsAdd <field-1>, <field2>, ..."\n' +
+          '2. Perform a sanity check that found entities are actually the ones you are looking for, by comparing name and by type (hosts vs. containers vs. apps vs. functions) and technology (Java, TypeScript, .NET) with what is available in the local source code repo.\n' +
+          '3. Find and investigate available metrics for relevant entities, by using the `execute_dql` tool with the following DQL statement: "fetch metric.series | filter dt.entity.<entity-type> == <entity-id>"\n' +
+          '4. Find out whether any problems exist for this entity using the `list_problems` or `list_vulnerabilities` tool, and the provided DQL-Filter\n';
+
+        return resp;
+      } else {
+        return 'No monitored entity found with the specified name. Try to broaden your search term or check for typos.';
+      }
     },
   );
 
-  tool(
+  /*tool(
     'get_entity_details',
     'Get details of a monitored entity based on the entityId on Dynatrace',
     {
@@ -522,7 +555,7 @@ const main = async () => {
 
       return resp;
     },
-  );
+  ); */
 
   tool(
     'send_slack_message',
@@ -608,7 +641,8 @@ const main = async () => {
       dqlStatement: z
         .string()
         .describe(
-          'DQL Statement (Ex: "fetch [logs, spans, events] | filter <some-filter> | summarize count(), by:{some-fields}.", or for metrics: "timeseries { avg(<metric-name>), value.A = avg(<metric-name>, scalar: true) }")',
+          'DQL Statement (Ex: "fetch [logs, spans, events], from: now()-4h, to: now() | filter <some-filter> | summarize count(), by:{some-fields}.", or for metrics: "timeseries { avg(<metric-name>), value.A = avg(<metric-name>, scalar: true) }"). ' +
+            'When querying data for a specific entity, call the `find_entity_by_name` tool first to get an appropriate filter like `dt.entity.service == "SERVICE-1234"` or `dt.entity.host == "HOST-1234"` to be used in the DQL statement. ',
         ),
     },
     {

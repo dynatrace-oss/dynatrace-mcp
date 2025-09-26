@@ -9,6 +9,8 @@
   - `create_workflow_for_notification` (potentially destructive)
   - `make_workflow_public` (potentially destructive)
 - Added error handling for environments where Davis Copilot is not enabled, providing a link to enable it via logs
+- Removed tool `get_entity_details`, and consolidated details into `find_entity_by_name`
+- Auto-detect entity names when using `find_entity_by_name`
 
 ## 0.6.1
 
