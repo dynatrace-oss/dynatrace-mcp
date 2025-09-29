@@ -43,6 +43,8 @@ import {
   chatWithDavisCopilot,
   explainDqlInNaturalLanguage,
   generateDqlFromNaturalLanguage,
+  isDavisCopilotSkillAvailable,
+  DAVIS_COPILOT_DOCS,
 } from './capabilities/davis-copilot';
 import { DynatraceEnv, getDynatraceEnv } from './getDynatraceEnv';
 import { createTelemetry, Telemetry } from './utils/telemetry-openkit';
@@ -101,6 +103,7 @@ function handleClientRequestError(error: ClientRequestError): string {
     additionalErrorInformation =
       'Note: Your user or service-user is most likely lacking the necessary permissions/scopes for this API Call.';
   }
+
   return `Client Request Error: ${error.message} with HTTP status: ${error.response.status}. ${additionalErrorInformation} (body: ${JSON.stringify(error.body)})`;
 }
 
@@ -711,6 +714,12 @@ const main = async () => {
         dtPlatformToken,
       );
 
+      // Check if the nl2dql skill is available
+      const isAvailable = await isDavisCopilotSkillAvailable(dtClient, 'nl2dql');
+      if (!isAvailable) {
+        return `❌ The DQL generation skill is not available. Please visit: ${DAVIS_COPILOT_DOCS.ENABLE_COPILOT}`;
+      }
+
       const response = await generateDqlFromNaturalLanguage(dtClient, text);
 
       let resp = `🔤 Natural Language to DQL:\n\n`;
@@ -758,6 +767,12 @@ const main = async () => {
         dtPlatformToken,
       );
 
+      // Check if the dql2nl skill is available
+      const isAvailable = await isDavisCopilotSkillAvailable(dtClient, 'dql2nl');
+      if (!isAvailable) {
+        return `❌ The DQL explanation skill is not available. Please visit: ${DAVIS_COPILOT_DOCS.ENABLE_COPILOT}`;
+      }
+
       const response = await explainDqlInNaturalLanguage(dtClient, dql);
 
       let resp = `📝 DQL to Natural Language:\n\n`;
@@ -799,6 +814,12 @@ const main = async () => {
         oauthClientSecret,
         dtPlatformToken,
       );
+
+      // Check if the conversation skill is available
+      const isAvailable = await isDavisCopilotSkillAvailable(dtClient, 'conversation');
+      if (!isAvailable) {
+        return `❌ The conversation skill is not available. Please visit: ${DAVIS_COPILOT_DOCS.ENABLE_COPILOT}`;
+      }
 
       const conversationContext: any[] = [];
 

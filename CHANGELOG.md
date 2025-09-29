@@ -7,6 +7,7 @@
   - `send_slack_message` (data sink)
   - `create_workflow_for_notification` (potentially destructive)
   - `make_workflow_public` (potentially destructive)
+- Added error handling for environments where Davis Copilot is not enabled, providing a link to enable it via logs
 
 ## 0.6.1
 
