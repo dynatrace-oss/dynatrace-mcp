@@ -255,7 +255,6 @@ const main = async () => {
   /**
    * Helper function to request human approval for potentially sensitive operations
    * @param operation - Description of the operation requiring approval
-   * @param details - Detailed information about what will be performed
    * @returns Promise<boolean> - true if approved, false if declined or cancelled
    */
   const requestHumanApproval = async (operation: string): Promise<boolean> => {
