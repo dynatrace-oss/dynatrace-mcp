@@ -321,7 +321,7 @@ const main = async () => {
 
   tool(
     'list_vulnerabilities',
-    'List all non-muted vulnerabilities from Dynatrace for the last 30 days. An additional filter can be provided using DQL filter.',
+    'Retrieve all active (non-muted) vulnerabilities from Dynatrace for the last 30 days. An additional filter can be provided using DQL filter.',
     {
       riskScore: z
         .number()
@@ -562,7 +562,7 @@ const main = async () => {
 
   tool(
     'verify_dql',
-    'Verify a Dynatrace Query Language (DQL) statement on Dynatrace GRAIL before executing it. This step is recommended for DQL statements that have been dynamically created by non-expert tools. For statements coming from the `generate_dql_from_natural_language` tool as well as from documentation, this step can be omitted.',
+    'Syntactically verify a Dynatrace Query Language (DQL) statement on Dynatrace GRAIL before executing it. Recommended for generated DQL statements. Skip for statements created by `generate_dql_from_natural_language` tool, as well as from documentation.',
     {
       dqlStatement: z.string(),
     },
@@ -592,7 +592,7 @@ const main = async () => {
       if (response.valid) {
         resp += `The DQL statement is valid - you can use the "execute_dql" tool.\n`;
       } else {
-        resp += `The DQL statement is invalid. Please adapt your statement.\n`;
+        resp += `The DQL statement is invalid. Please adapt your statement. Consider using "generate_dql_from_natural_language" tool for help.\n`;
       }
 
       return resp;
@@ -602,8 +602,8 @@ const main = async () => {
   tool(
     'execute_dql',
     'Get Logs, Metrics, Spans or Events from Dynatrace GRAIL by executing a Dynatrace Query Language (DQL) statement. ' +
-      'You can also use the "generate_dql_from_natural_language" tool upfront to generate or refine a DQL statement based on your request. ' +
-      'Note: For more information about available fields for filters and aggregation, use the query "fetch dt.semantic_dictionary.models | filter data_object == \"logs\""',
+      'Use the "generate_dql_from_natural_language" tool upfront to generate or refine a DQL statement based on your request. ' +
+      'To learn about possible fields available for filtering, use the query "fetch dt.semantic_dictionary.models | filter data_object == \"logs\""',
     {
       dqlStatement: z
         .string()
@@ -795,7 +795,7 @@ const main = async () => {
 
   tool(
     'chat_with_davis_copilot',
-    'Use this tool in case no specific tool is available. Get an answer to any Dynatrace related question as well as troubleshooting, and guidance. *(Note: Davis CoPilot AI is GA, but the Davis CoPilot APIs are in preview)*',
+    'Use this tool to ask any Dynatrace related question, in case no other more specific tool is available.',
     {
       text: z.string().describe('Your question or request for Davis CoPilot'),
       context: z.string().optional().describe('Optional context to provide additional information'),
