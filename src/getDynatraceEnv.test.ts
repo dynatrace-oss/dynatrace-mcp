@@ -79,4 +79,38 @@ describe('getDynatraceEnv', () => {
     };
     expect(() => getDynatraceEnv(env)).not.toThrow();
   });
+
+  it('Defaults the Grail Budget to 1000', () => {
+    const env = {
+      ...baseEnv,
+      GRAIL_BUDGET_GB: undefined,
+      DT_ENVIRONMENT: 'https://abc123.apps.dynatrace.com',
+    };
+    const result = getDynatraceEnv(env);
+    expect(result).toEqual({
+      oauthClientId: env.OAUTH_CLIENT_ID,
+      oauthClientSecret: env.OAUTH_CLIENT_SECRET,
+      dtEnvironment: env.DT_ENVIRONMENT,
+      dtPlatformToken: env.DT_PLATFORM_TOKEN,
+      slackConnectionId: env.SLACK_CONNECTION_ID,
+      grailBudgetGB: 1000, // Default value
+    });
+  });
+
+  it('Resets the Grail Budget if a dev/sprint URL is used', () => {
+    const env = {
+      ...baseEnv,
+      GRAIL_BUDGET_GB: undefined,
+      DT_ENVIRONMENT: 'https://abc123.dev.apps.dynatracelabs.com',
+    };
+    const result = getDynatraceEnv(env);
+    expect(result).toEqual({
+      oauthClientId: env.OAUTH_CLIENT_ID,
+      oauthClientSecret: env.OAUTH_CLIENT_SECRET,
+      dtEnvironment: env.DT_ENVIRONMENT,
+      dtPlatformToken: env.DT_PLATFORM_TOKEN,
+      slackConnectionId: env.SLACK_CONNECTION_ID,
+      grailBudgetGB: -1, // Default value for dynatracelabs.com
+    });
+  });
 });

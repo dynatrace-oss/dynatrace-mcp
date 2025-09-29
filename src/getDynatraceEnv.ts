@@ -18,7 +18,7 @@ export function getDynatraceEnv(env: NodeJS.ProcessEnv = process.env): Dynatrace
   const dtPlatformToken = env.DT_PLATFORM_TOKEN;
   const dtEnvironment = env.DT_ENVIRONMENT;
   const slackConnectionId = env.SLACK_CONNECTION_ID || 'fake-slack-connection-id';
-  const grailBudgetGB = parseFloat(env.DT_GRAIL_QUERY_BUDGET_GB || '1000'); // Default to 1000 GB
+  let grailBudgetGB = parseFloat(env.DT_GRAIL_QUERY_BUDGET_GB || '1000'); // Default to 1000 GB
 
   if (!dtEnvironment) {
     throw new Error('Please set DT_ENVIRONMENT environment variable to your Dynatrace Platform Environment');
@@ -30,9 +30,16 @@ export function getDynatraceEnv(env: NodeJS.ProcessEnv = process.env): Dynatrace
     );
   }
 
+  // For dev and hardening stages, set unlimited budget (-1) unless explicitly overridden
+  if (dtEnvironment.includes('apps.dynatracelabs.com') && !env.DT_GRAIL_QUERY_BUDGET_GB) {
+    grailBudgetGB = -1;
+  }
+
   // ToDo: Allow the case of -1 for unlimited Budget
-  if (isNaN(grailBudgetGB) || (grailBudgetGB <= 0 && grailBudgetGB !== -1)) {
-    throw new Error('DT_GRAIL_QUERY_BUDGET_GB must be a positive number representing GB budget for Grail queries');
+  if (isNaN(grailBudgetGB) || (grailBudgetGB < 0 && grailBudgetGB !== -1)) {
+    throw new Error(
+      'DT_GRAIL_QUERY_BUDGET_GB must be a positive number or -1 (for unlimited) representing GB budget for Grail queries',
+    );
   }
 
   if (!dtEnvironment.startsWith('https://')) {

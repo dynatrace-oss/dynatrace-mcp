@@ -2,6 +2,7 @@
 
 ## Unreleased Changes
 
+- DQL Grail budget is not enforced for tenants on Dynatrace-internal dev or hardening stages
 - Added human approval step via MCP's elicitation to ensure user consent before executing critical operations for the following tools:
   - `send_email` (data sink)
   - `send_slack_message` (data sink)
