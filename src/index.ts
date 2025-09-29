@@ -30,7 +30,6 @@ import { getPackageJsonVersion } from './utils/version';
 import { createDtHttpClient } from './authentication/dynatrace-clients';
 import { listVulnerabilities } from './capabilities/list-vulnerabilities';
 import { listProblems } from './capabilities/list-problems';
-import { getMonitoredEntityDetails } from './capabilities/get-monitored-entity-details';
 import { getOwnershipInformation } from './capabilities/get-ownership-information';
 import { getEventsForCluster } from './capabilities/get-events-for-cluster';
 import { createWorkflowForProblemNotification } from './capabilities/create-workflow-for-problem-notification';
@@ -501,61 +500,6 @@ const main = async () => {
       }
     },
   );
-
-  /*tool(
-    'get_entity_details',
-    'Get details of a monitored entity based on the entityId on Dynatrace',
-    {
-      entityId: z.string().optional(),
-    },
-    {
-      readOnlyHint: true,
-    },
-    async ({ entityId }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase.concat('storage:entities:read'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
-      const entityDetails = await getMonitoredEntityDetails(dtClient, entityId);
-
-      if (!entityDetails) {
-        return `No entity found with entityId: ${entityId}`;
-      }
-
-      let resp =
-        `Entity ${entityDetails.displayName} of type ${entityDetails.type} with \`entityId\` ${entityDetails.entityId}\n` +
-        `Properties: ${JSON.stringify(entityDetails.allProperties)}\n`;
-
-      if (entityDetails.type == 'SERVICE') {
-        resp += `You can find more information about the service at ${dtEnvironment}/ui/apps/dynatrace.services/explorer?detailsId=${entityDetails.entityId}&sidebarOpen=false`;
-      } else if (entityDetails.type == 'HOST') {
-        resp += `You can find more information about the host at ${dtEnvironment}/ui/apps/dynatrace.infraops/hosts/${entityDetails.entityId}`;
-      } else if (entityDetails.type == 'KUBERNETES_CLUSTER') {
-        resp += `You can find more information about the cluster at ${dtEnvironment}/ui/apps/dynatrace.infraops/kubernetes/${entityDetails.entityId}`;
-      } else if (entityDetails.type == 'CLOUD_APPLICATION') {
-        resp += `You can find more details about the application at ${dtEnvironment}/ui/apps/dynatrace.kubernetes/explorer/workload?detailsId=${entityDetails.entityId}`;
-      }
-
-      resp += `\n\n**Filter**:`;
-
-      // Use entityTypeTable as the filter (e.g., fetch logs | filter dt.entity.service == "SERVICE-1234")
-      if (entityDetails.entityTypeTable) {
-        resp += ` You can use the following filter to get relevant information from other tools: \`| filter ${entityDetails.entityTypeTable} == "${entityDetails.entityId}"\`. `;
-      } else {
-        resp += ` Try to use search command as follows: \`| search "${entityDetails.entityId}"\`. `;
-      }
-
-      resp += `\n\n**Next Steps**\n\n`;
-      resp += `1. Find available metrics for this entity, by using execute_dql tool with the following DQL statement: "fetch metric.series" and the filter defined above\n`;
-      resp += `2. Find out whether any problems exist for this entity using the list_problems tool\n`;
-      resp += `3. Explore logs for this entity by using execute_dql with "fetch logs" and applying the filter mentioned above'\n`;
-
-      return resp;
-    },
-  ); */
 
   tool(
     'send_slack_message',
