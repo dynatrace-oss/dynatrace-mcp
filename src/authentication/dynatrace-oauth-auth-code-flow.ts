@@ -4,6 +4,7 @@ import { URL, URLSearchParams } from 'node:url';
 import { OAuthAuthorizationConfig, OAuthAuthorizationResult, OAuthTokenResponse } from './types';
 import { requestOAuthToken } from './dynatrace-oauth-base';
 import { base64URLEncode, generateRandomState } from './utils';
+import open from 'open';
 
 /**
  * Generates PKCE code verifier and challenge according to RFC 7636
@@ -214,13 +215,29 @@ export async function performOAuthAuthorizationCodeFlow(
     console.error('🔐 OAuth Authorization Required');
     console.error('='.repeat(60));
     console.error('');
-    console.error('Please click on the following URL to authorize the application:');
+    // Open the authorization URL in the default browser
+    console.error('Trying to open the authorization URL in your default browser...');
+    try {
+      open(authorizationUrl);
+    } catch (error: any) {
+      console.error(
+        'Failed to open browser automatically. Please click on the following URL to authorize the application:',
+        error.message,
+      );
+    }
     console.error('');
     console.error('👉 ' + authorizationUrl);
     console.error('');
     console.error('After authorization, you will be redirected back and the server will continue automatically.');
     console.error('');
     console.error('='.repeat(60) + '\n');
+
+    // Open the authorization URL in the default browser
+    try {
+      open(authorizationUrl);
+    } catch (error: any) {
+      console.error('Failed to open browser automatically. Please open the URL manually:', error.message);
+    }
 
     // Wait for the authorization code
     const { code, state: receivedState } = await waitForAuthorizationCode();
