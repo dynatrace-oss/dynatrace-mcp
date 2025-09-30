@@ -2,15 +2,23 @@
 
 ## Unreleased Changes
 
-- DQL Grail budget is not enforced for tenants on Dynatrace-internal dev or hardening stages
-- Added human approval step via MCP's elicitation to ensure user consent before executing critical operations for the following tools:
-  - `send_email` (data sink)
-  - `send_slack_message` (data sink)
-  - `create_workflow_for_notification` (potentially destructive)
-  - `make_workflow_public` (potentially destructive)
-- Added error handling for environments where Davis Copilot is not enabled, providing a link to enable it via logs
-- Removed tool `get_entity_details`, and consolidated details into `find_entity_by_name`
-- Auto-detect entity names when using `find_entity_by_name`
+## 0.7.0
+
+**Highlights**
+🔒 Human approval for critical operations
+🔍 Enhanced entity discovery with automatic detection
+🛠️ Improved error handling and internal optimizations
+
+### Tools
+
+- Removed the `get_entity_details` tool and consolidated its functionality into the `find_entity_by_name` tool for a streamlined user experience
+- Enhanced the `find_entity_by_name` tool with automatic entity name detection for improved usability
+- Added human approval steps for critical operations in `send_email`, `send_slack_message`, `create_workflow_for_notification`, and `make_workflow_public` tools to ensure user consent and prevent unintended actions
+
+### Other Changes
+
+- Disabled Grail budget enforcement for Dynatrace-internal development and hardening stages to facilitate testing and development workflows
+- Improved error handling for environments without Davis Copilot enabled, now providing direct links to enable the feature
 
 ## 0.6.1
 
