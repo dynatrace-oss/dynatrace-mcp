@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Added a limit argument to `get_kubernetes_events`
+
 ## 0.7.0
 
 **Highlights**

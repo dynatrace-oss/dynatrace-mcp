@@ -945,13 +945,38 @@ const main = async () => {
         .string()
         .optional()
         .describe(
-          `The Kubernetes (K8s) Cluster Id, referred to as k8s.cluster.uid (this is NOT the Dynatrace environment)`,
+          `The Kubernetes Cluster Id, referred to as k8s.cluster.uid, usually seen when using "kubectl" - this is NOT the Dynatrace environment and not the Dynatrace Kubernetes Entity Id. Leave empty if you don't know the Cluster Id.`,
         ),
+      kubernetesEntityId: z
+        .string()
+        .optional()
+        .describe(
+          `The Dynatrace Kubernetes Entity Id, referred to as dt.entity.kubernetes_cluster. Leave empty if you don't know the Entity Id, or use the "find_entity_by_name" tool to find the cluster by name.`,
+        ),
+      eventType: z
+        .enum([
+          'OMPLIANCE_FINDING',
+          'COMPLIANCE_SCAN_COMPLETED',
+          'CUSTOM_INFO',
+          'DETECTION_FINDING',
+          'ERROR_EVENT',
+          'OSI_UNEXPECTEDLY_UNAVAILABLE',
+          'PROCESS_RESTART',
+          'RESOURCE_CONTENTION_EVENT',
+          'SERVICE_CLIENT_ERROR_RATE_INCREASED',
+          'SERVICE_CLIENT_SLOWDOWN',
+          'SERVICE_ERROR_RATE_INCREASED',
+          'SERVICE_SLOWDOWN',
+          'SERVICE_UNEXPECTED_HIGH_LOAD',
+          'SERVICE_UNEXPECTED_LOW_LOAD',
+        ])
+        .optional(),
+      maxEventsToDisplay: z.number().default(10).describe('Maximum number of events to display in the response.'),
     },
     {
       readOnlyHint: true,
     },
-    async ({ clusterId }) => {
+    async ({ clusterId, kubernetesEntityId, eventType, maxEventsToDisplay }) => {
       const dtClient = await createDtHttpClient(
         dtEnvironment,
         scopesBase.concat('storage:events:read'),
@@ -959,9 +984,26 @@ const main = async () => {
         oauthClientSecret,
         dtPlatformToken,
       );
-      const events = await getEventsForCluster(dtClient, clusterId);
+      const result = await getEventsForCluster(dtClient, clusterId, kubernetesEntityId, eventType);
 
-      return `Kubernetes Events:\n${JSON.stringify(events)}`;
+      if (result && result.records && result.records.length > 0) {
+        let resp = `Found ${result.records.length} events! Displaying the top ${maxEventsToDisplay} events:\n`;
+        // iterate over dqlResponse and create a string with the problem details, but only show the top maxEntitiesToDisplay problems
+        result.records.slice(0, maxEventsToDisplay).forEach((event) => {
+          if (event) {
+            resp += `- Event ${event['event.id']} (${event['event.type']}) on Kubernetes Entity ID ${event['dt.entity.kubernetes_cluster']} with status ${event['event.status']}: ${event['event.name']} - started at ${event['event.start']}, ended at ${event['event.end']}, duration: ${event['duration']}\n`;
+          }
+        });
+
+        resp +=
+          `\nNext Steps:` +
+          `\n1. Consider filtering by \`eventType\` to find specific events of interest.` +
+          `\n2. Use "execute_dql" tool with the following query to get more details about a specific event: "fetch events | filter event.id == \"<event-id>\""`;
+
+        return resp;
+      }
+
+      return 'No events found for the specified Kubernetes cluster. Try to leave clusterId and kubernetesEntityId empty to get events from all clusters.';
     },
   );
 
