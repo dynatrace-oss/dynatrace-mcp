@@ -39,7 +39,7 @@ const requestToken = async (
 };
 
 /**
- * Create a Dynatrace Http Client (from the http-client SDK) based on the provided authentication credentails
+ * Create a Dynatrace Http Client (from the http-client SDK) based on the provided authentication credentials
  * @param environmentUrl
  * @param scopes
  * @param clientId
