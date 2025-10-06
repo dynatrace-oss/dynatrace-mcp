@@ -2,7 +2,16 @@
 
 ## Unreleased Changes
 
-- Added a limit argument to `get_kubernetes_events`
+## 0.8.0
+
+### Tools
+
+- Added a `limit` argument to the `get_kubernetes_events` tool, allowing you to control the number of events returned and improving performance for large clusters
+
+### Other Changes
+
+- Fixed some typos
+- Respond with a proper JSON RPC Error message
 
 ## 0.7.0
 
