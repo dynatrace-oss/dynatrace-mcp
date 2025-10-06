@@ -1,5 +1,5 @@
 {
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
   "name": "io.github.dynatrace-oss/Dynatrace-mcp",
   "description": "Model Context Protocol server for Dynatrace - access logs, events, metrics from Dynatrace via MCP.",
   "status": "active",
@@ -10,25 +10,25 @@
   "version": "0.7.0",
   "packages": [
     {
-      "registry_type": "npm",
-      "registry_base_url": "https://registry.npmjs.org",
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@dynatrace-oss/dynatrace-mcp-server",
       "version": "0.7.0",
-      "runtime_hint": "npx",
+      "runtimeHint": "npx",
       "transport": {
         "type": "stdio"
       },
-      "environment_variables": [
+      "environmentVariables": [
         {
           "description": "Your Dynatrace Platform Token",
-          "is_required": true,
+          "isRequired": true,
           "format": "string",
-          "is_secret": true,
+          "isSecret": true,
           "name": "DT_PLATFORM_TOKEN"
         },
         {
           "description": "The URL of your Dynatrace environment (e.g. 'https://abc12345.apps.dynatrace.com')",
-          "is_required": true,
+          "isRequired": true,
           "format": "string",
           "name": "DT_ENVIRONMENT"
         }
