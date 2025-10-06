@@ -1193,7 +1193,8 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
           body = JSON.parse(rawBody);
         } catch (error) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid JSON' }));
+          // Respond with a JSON-RPC Parse error
+          res.end(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } }));
           return;
         }
       }
