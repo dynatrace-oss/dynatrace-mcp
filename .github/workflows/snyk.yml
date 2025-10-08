@@ -27,7 +27,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_API_TOKEN }}
         with:
           # Fail the build on high severity vulnerabilities
-          args: --severity-threshold=high --project-tags=open-source
+          args: --severity-threshold=high
 
       - name: Run Snyk Monitor
         # Only monitor on main branch pushes and releases, not on PRs
@@ -37,4 +37,3 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_API_TOKEN }}
         with:
           command: monitor
-          args: --project-tags=open-source
