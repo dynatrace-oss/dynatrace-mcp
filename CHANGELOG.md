@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- **⚡ Simplified Setup**: OAuth authorization code flow is now automatically enabled when neither, OAuth credentials, nor a platform token are provided. Just provide `DT_ENVIRONMENT`, and authentication is handled automatically via an interactive OAuth authorization code flow
+
 ## 0.8.0
 
 ### Tools
@@ -35,8 +37,6 @@
 
 - Fixed an issue with MCP communication failing with `SyntaxError: Unexpected token 'd'` due to `dotenv`
 - Added Support for Google Gemini CLI
-
-- **⚡ Simplified Setup**: OAuth authorization code flow is now automatically enabled when neither, OAuth credentials, nor a platform token are provided. Just provide `DT_ENVIRONMENT`, and authentication is handled automatically via an interactive OAuth authorization code flow
 
 ## 0.6.0
 

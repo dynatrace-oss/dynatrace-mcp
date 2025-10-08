@@ -29,15 +29,11 @@ https://github.com/user-attachments/assets/25c05db1-8e09-4a7f-add2-ed486ffd4b5a
 
 ## Quickstart
 
-You can add this MCP server to your MCP Client like VSCode, Claude, Cursor, Amazon Q, Windsurf, ChatGPT, or Github Copilot via the npmjs package `@dynatrace-oss/dynatrace-mcp-server`, and type `stdio`.
-You can find more details about the configuration for different AI Assistants, Agents and MCP Clients in the [Configuration section below](#configuration).
+You can add this MCP server to your MCP Client like VSCode, Claude, Cursor, Amazon Q, Windsurf, ChatGPT, or Github Copilot via the command is `npx -y @dynatrace-oss/dynatrace-mcp-server` (type: `stdio`). For more details, please refer to the [configuration section below](#configuration).
 
-Furthermore, you need your Dynatrace environment URL, e.g., `https://abc12345.apps.dynatrace.com`, as well as a [Platform Token](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens), e.g., `dt0s16.SAMPLE.abcd1234`, with [required scopes](#scopes-for-authentication).
-
-Depending on your MCP Client, you need to configure these as environment variables or as settings in the UI:
+Furthermore, you need to configure the URL to a Dynatrace environment:
 
 - `DT_ENVIRONMENT` (string, e.g., `https://abc12345.apps.dynatrace.com`) - URL to your Dynatrace Platform (do not use Dynatrace classic URLs like `abc12345.live.dynatrace.com`)
-- `DT_PLATFORM_TOKEN` (string, e.g., `dt0s16.SAMPLE.abcd1234`) - **Recommended**: Dynatrace Platform Token
 
 Once you are done, we recommend looking into [example prompts](#-example-prompts-), like `Get all details of the entity 'my-service'` or `Show me error logs`. Please mind that these prompts lead to executing DQL statements which may incur [costs](#costs) in accordance to your licence.
 
@@ -142,7 +138,6 @@ This only works if the config is stored in the current workspaces, e.g., `<your-
       "command": "npx",
       "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
-        "DT_PLATFORM_TOKEN": "",
         "DT_ENVIRONMENT": ""
       }
     }
@@ -159,7 +154,6 @@ This only works if the config is stored in the current workspaces, e.g., `<your-
       "command": "npx",
       "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
-        "DT_PLATFORM_TOKEN": "",
         "DT_ENVIRONMENT": ""
       }
     }
@@ -178,7 +172,6 @@ The [Amazon Q Developer CLI](https://docs.aws.amazon.com/amazonq/latest/qdevelop
       "command": "npx",
       "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
-        "DT_PLATFORM_TOKEN": "",
         "DT_ENVIRONMENT": ""
       }
     }
@@ -196,7 +189,7 @@ Using `gemini` CLI directly (recommended):
 
 ```bash
 gemini extensions install https://github.com/dynatrace-oss/dynatrace-mcp
-export DT_PLATFORM_TOKEN=...
+export DT_PLATFORM_TOKEN=... # optional
 export DT_ENVIRONMENT=https://...
 ```
 
@@ -215,7 +208,6 @@ Or manually in your `~/.gemini/settings.json` or `.gemini/settings.json`:
       "command": "npx",
       "args": ["@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
-        "DT_PLATFORM_TOKEN": "",
         "DT_ENVIRONMENT": ""
       },
       "timeout": 30000,
@@ -290,17 +282,15 @@ For fetching just error-logs, add `| filter loglevel == "ERROR"`.
 
 ## Environment Variables
 
-You can set up authentication via **Platform Tokens** (recommended) or **OAuth Client** via the following environment variables:
+- `DT_ENVIRONMENT` (**required**, string, e.g., `https://abc12345.apps.dynatrace.com`) - URL to your Dynatrace Platform (do not use Dynatrace classic URLs like `abc12345.live.dynatrace.com`)
+- `DT_PLATFORM_TOKEN` (optional, string, e.g., `dt0s16.SAMPLE.abcd1234`) - Dynatrace Platform Token
+- `OAUTH_CLIENT_ID` (optional, string, e.g., `dt0s02.SAMPLE`) - Alternative: Dynatrace OAuth Client ID (for advanced use cases)
+- `OAUTH_CLIENT_SECRET` (optional, string, e.g., `dt0s02.SAMPLE.abcd1234`) - Alternative: Dynatrace OAuth Client Secret (for advanced use cases)
+- `DT_GRAIL_QUERY_BUDGET_GB` (optional, number, default: `1000`) - Budget limit in GB (base 1000) for Grail query bytes scanned per session. The MCP server tracks your Grail usage and warns when approaching or exceeding this limit.
 
-- `DT_ENVIRONMENT` (string, e.g., `https://abc12345.apps.dynatrace.com`) - URL to your Dynatrace Platform (do not use Dynatrace classic URLs like `abc12345.live.dynatrace.com`)
-- `DT_PLATFORM_TOKEN` (string, e.g., `dt0s16.SAMPLE.abcd1234`) - **Recommended**: Dynatrace Platform Token
-- `OAUTH_CLIENT_ID` (string, e.g., `dt0s02.SAMPLE`) - Alternative: Dynatrace OAuth Client ID (for advanced use cases)
-- `OAUTH_CLIENT_SECRET` (string, e.g., `dt0s02.SAMPLE.abcd1234`) - Alternative: Dynatrace OAuth Client Secret (for advanced use cases)
-- `DT_GRAIL_QUERY_BUDGET_GB` (number, default: `1000`) - Budget limit in GB (base 1000) for Grail query bytes scanned per session. The MCP server tracks your Grail usage and warns when approaching or exceeding this limit.
+When just providing `DT_ENVIRONMENT`, the local MCP server will try to open a browser window to authenticate against the Dynatrace SSO.
 
-**Platform Tokens are recommended** for most use cases as they provide a simpler authentication flow. OAuth Clients should only be used when specific OAuth features are required.
-
-For more information, please have a look at the documentation about
+For more information about the other authentication methods, please have a look at the documentation about
 [creating a Platform Token in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens), as well as
 [creating an OAuth Client in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/oauth-clients) for advanced scenarios.
 

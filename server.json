@@ -20,13 +20,6 @@
       },
       "environmentVariables": [
         {
-          "description": "Your Dynatrace Platform Token",
-          "isRequired": true,
-          "format": "string",
-          "isSecret": true,
-          "name": "DT_PLATFORM_TOKEN"
-        },
-        {
           "description": "The URL of your Dynatrace environment (e.g. 'https://abc12345.apps.dynatrace.com')",
           "isRequired": true,
           "format": "string",

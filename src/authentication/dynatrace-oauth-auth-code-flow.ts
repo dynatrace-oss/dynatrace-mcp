@@ -216,6 +216,7 @@ export async function performOAuthAuthorizationCodeFlow(
     console.error('🔐 OAuth Authorization Required');
     console.error('='.repeat(60));
     console.error('');
+
     // Open the authorization URL in the default browser
     console.error('Trying to open the authorization URL in your default browser...');
     try {
@@ -226,19 +227,13 @@ export async function performOAuthAuthorizationCodeFlow(
         error.message,
       );
     }
+
     console.error('');
     console.error('👉 ' + authorizationUrl);
     console.error('');
     console.error('After authorization, you will be redirected back and the server will continue automatically.');
     console.error('');
     console.error('='.repeat(60) + '\n');
-
-    // Open the authorization URL in the default browser
-    try {
-      open(authorizationUrl);
-    } catch (error: any) {
-      console.error('Failed to open browser automatically. Please open the URL manually:', error.message);
-    }
 
     // Wait for the authorization code
     const { code, state: receivedState } = await waitForAuthorizationCode();
