@@ -17,6 +17,7 @@ import {
   NotificationSchema,
   Tool,
   ToolAnnotations,
+  GetPromptResult,
   ElicitRequest,
   ElicitResult,
 } from '@modelcontextprotocol/sdk/types.js';
@@ -29,7 +30,6 @@ import { z, ZodRawShape, ZodTypeAny } from 'zod';
 import { getPackageJsonVersion } from './utils/version';
 import { createDtHttpClient } from './authentication/dynatrace-clients';
 import { listVulnerabilities } from './capabilities/list-vulnerabilities';
-import { listProblems } from './capabilities/list-problems';
 import { getOwnershipInformation } from './capabilities/get-ownership-information';
 import { getEventsForCluster } from './capabilities/get-events-for-cluster';
 import { createWorkflowForProblemNotification } from './capabilities/create-workflow-for-problem-notification';
@@ -200,6 +200,7 @@ const main = async () => {
       capabilities: {
         tools: {},
         elicitation: {},
+        prompts: {},
       },
     },
   );
@@ -252,6 +253,47 @@ const main = async () => {
     };
 
     server.tool(name, description, paramsSchema, annotations, (args: z.ZodRawShape) => wrappedCb(args));
+  };
+
+  // quick abstraction/wrapper to make it easier for prompts to reply text instead of JSON
+  const prompt = (
+    name: string,
+    description: string,
+    paramsSchema: ZodRawShape,
+    cb: (args: z.objectOutputType<ZodRawShape, ZodTypeAny>) => Promise<string>,
+  ) => {
+    const wrappedCb = async (args: ZodRawShape): Promise<GetPromptResult> => {
+      // track starttime for telemetry
+      const startTime = Date.now();
+      // track prompt call for telemetry
+      let promptCallSuccessful = false;
+
+      try {
+        // call the prompt
+        const response = await cb(args);
+        promptCallSuccessful = true;
+        return {
+          messages: [{ role: 'user', content: { type: 'text', text: response } }],
+        };
+      } catch (error: any) {
+        // Track error
+        telemetry.trackError(error, `prompt_${name}`).catch((e) => console.warn('Failed to track error:', e));
+
+        // else: We don't know what kind of error happened - best-case we can provide error.message
+        console.log(error);
+        return {
+          messages: [{ role: 'user', content: { type: 'text', text: `Error: ${error.message}` } }],
+        };
+      } finally {
+        // Track prompt usage
+        const duration = Date.now() - startTime;
+        telemetry
+          .trackMcpToolUsage(`prompt_${name}`, promptCallSuccessful, duration)
+          .catch((e) => console.warn('Failed to track prompt usage:', e));
+      }
+    };
+
+    server.prompt(name, description, paramsSchema, (args: z.ZodRawShape) => wrappedCb(args));
   };
 
   /**
@@ -388,62 +430,6 @@ const main = async () => {
         `\n3. Last but not least, tell the user to visit ${dtEnvironment}/ui/apps/dynatrace.security.vulnerabilities/vulnerabilities/<vulnerability-id> for full details.`;
 
       return resp;
-    },
-  );
-
-  tool(
-    'list_problems',
-    'List all problems (dt.davis.problems) known on Dynatrace, sorted by their recency, for the last 12h. An additional DQL based filter, like filtering for specific entities, can be provided.',
-    {
-      additionalFilter: z
-        .string()
-        .optional()
-        .describe(
-          'Additional DQL filter for dt.davis.problems - filter by entity type (preferred), like \'dt.entity.<service|host|application|$type> == "<entity-id>"\', or by entity tags \'entity_tags == array("dt.owner:team-foobar", "tag:tag")\'',
-        ),
-      maxProblemsToDisplay: z.number().default(10).describe('Maximum number of problems to display in the response.'),
-    },
-    {
-      readOnlyHint: true,
-    },
-    async ({ additionalFilter, maxProblemsToDisplay }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase.concat('storage:events:read', 'storage:buckets:read'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
-      // get problems (uses fetch)
-      const result = await listProblems(dtClient, additionalFilter);
-      if (result && result.records && result.records.length > 0) {
-        let resp = `Found ${result.records.length} problems! Displaying the top ${maxProblemsToDisplay} problems:\n`;
-        // iterate over dqlResponse and create a string with the problem details, but only show the top maxProblemsToDisplay problems
-        result.records.slice(0, maxProblemsToDisplay).forEach((problem) => {
-          if (problem) {
-            resp += `Problem ${problem['display_id']} (please refer to this problem with \`problemId\` or \`event.id\` ${problem['problem_id']}))
-                  with event.status ${problem['event.status']}, event.category ${problem['event.category']}: ${problem['event.name']} -
-                  affects ${problem['affected_users_count']} users and ${problem['affected_entity_count']} entities for a duration of ${problem['duration']}\n`;
-          }
-        });
-
-        resp +=
-          `\nNext Steps:` +
-          `\n1. Use "execute_dql" tool with the following query to get more details about a specific problem:
-          "fetch dt.davis.problems, from: now()-10h, to: now() | filter event.id == \"<problem-id>\" | fields event.description, event.status, event.category, event.start, event.end,
-            root_cause_entity_id, root_cause_entity_name, duration, affected_entities_count,
-            event_count, affected_users_count, problem_id, dt.davis.mute.status, dt.davis.mute.user,
-            entity_tags, labels.alerting_profile, maintenance.is_under_maintenance,
-            aws.account.id, azure.resource.group, azure.subscription, cloud.provider, cloud.region,
-            dt.cost.costcenter, dt.cost.product, dt.host_group.id, dt.security_context, gcp.project.id,
-            host.name, k8s.cluster.name, k8s.cluster.uid, k8s.container.name, k8s.namespace.name, k8s.node.name, k8s.pod.name, k8s.service.name, k8s.workload.kind, k8s.workload.name"` +
-          `\n2. Use "chat_with_davis_copilot" tool and provide \`problemId\` as context, to get insights about a specific problem via Davis Copilot.` +
-          `\n3. Tell the user to visit ${dtEnvironment}/ui/apps/dynatrace.davis.problems/problem/<problem-id> for more details.`;
-
-        return resp;
-      } else {
-        return 'No problems found';
-      }
     },
   );
 
@@ -1142,6 +1128,63 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
       responseMessage += `\nNext Steps:\n- Delivery is asynchronous.\n- Investigate any invalid, bouncing, or complaining destinations before retrying.`;
 
       return responseMessage;
+    },
+  );
+
+  prompt(
+    'list_problems',
+    'List all problems (dt.davis.problems) known on Dynatrace, sorted by their recency, for the last 12h. An additional DQL based filter, like filtering for specific entities, can be provided.',
+    {
+      additionalFilter: z
+        .string()
+        .optional()
+        .describe(
+          'Additional DQL filter for dt.davis.problems - filter by entity type (preferred), like \'dt.entity.<service|host|application|$type> == "<entity-id>"\', or by entity tags \'entity_tags == array("dt.owner:team-foobar", "tag:tag")\'',
+        ),
+      maxProblemsToDisplay: z.number().default(10).describe('Maximum number of problems to display in the response.'),
+    },
+    async ({ additionalFilter, maxProblemsToDisplay }) => {
+      const dql = `fetch dt.davis.problems, from: now()-12h, to: now()
+| filter isNull(dt.davis.is_duplicate) OR not(dt.davis.is_duplicate)
+${additionalFilter ? `| filter ${additionalFilter}` : ''}
+| fieldsAdd
+   duration = coalesce(event.end, now()) - event.start,
+   affected_entities_count = arraySize(affected_entity_ids),
+   event_count = arraySize(dt.davis.event_ids),
+   affected_users_count = dt.davis.affected_users_count,
+   problem_id = event.id
+| fields display_id, event.name, event.description, event.status, event.category, event.start, event.end,
+         root_cause_entity_id, root_cause_entity_name, duration, affected_entities_count,
+         event_count, affected_users_count, problem_id, dt.davis.mute.status, dt.davis.mute.user,
+         entity_tags, labels.alerting_profile, maintenance.is_under_maintenance,
+         aws.account.id, azure.resource.group, azure.subscription, cloud.provider, cloud.region,
+         dt.cost.costcenter, dt.cost.product, dt.host_group.id, dt.security_context, gcp.project.id,
+         host.name,
+         k8s.cluster.name, k8s.cluster.uid, k8s.container.name, k8s.namespace.name, k8s.node.name, k8s.pod.name, k8s.service.name, k8s.workload.kind, k8s.workload.name
+| sort event.status asc, event.start desc`;
+
+      return `Execute this DQL query using the execute_dql tool to list problems from the last 12 hours${additionalFilter ? ` with the additional filter: ${additionalFilter}` : ''}:
+
+\`\`\`
+${dql}
+\`\`\`
+
+After executing the query, you can analyze the results. Here are some tips for working with the problem data:
+
+1. **Display the top ${maxProblemsToDisplay} problems** by focusing on the most recent ones
+2. **Key fields to examine:**
+   - \`display_id\`: The problem ID (e.g., "P-12345")
+   - \`event.name\`: Problem title/summary
+   - \`event.status\`: Current status (OPEN, CLOSED, etc.)
+   - \`event.category\`: Problem category
+   - \`duration\`: How long the problem has been active
+   - \`affected_entities_count\`: Number of affected entities
+   - \`affected_users_count\`: Number of affected users
+
+3. **Next Steps:**
+   - Use "chat_with_davis_copilot" tool and provide \`problemId\` as context for insights about a specific problem
+   - Visit ${dtEnvironment}/ui/apps/dynatrace.davis.problems/problem/<problem-id> for full details
+   - For more details about a specific problem, you can execute additional DQL queries`;
     },
   );
 
