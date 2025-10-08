@@ -40,7 +40,8 @@ export function createAuthorizationUrl(ssoBaseURL: string, config: OAuthAuthoriz
 
   const queryString = queryParts.join('&');
 
-  const finalUrl = `${authUrl.origin}${authUrl.pathname}?${queryString}`; // What??? Why???
+  // Manually construct the final URL to ensure exact parameter order and encoding required by some OAuth implementations.
+  const finalUrl = `${authUrl.origin}${authUrl.pathname}?${queryString}`;
 
   return {
     authorizationUrl: finalUrl,

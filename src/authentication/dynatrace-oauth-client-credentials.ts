@@ -4,7 +4,7 @@ import { OAuthTokenResponse } from './types';
 /**
  * Uses the provided oauth Client ID and Secret and requests a token via client-credentials flow
  * @param clientId - OAuth Client ID for Dynatrace
- * @param clientSecret - Oauth Client Secret for Dynatrace
+ * @param clientSecret - OAuth Client Secret for Dynatrace
  * @param ssoBaseURL - SSO Base URL (e.g., sso.dynatrace.com)
  * @param scopes - List of requested scopes
  * @returns Response of the OAuth Endpoint (which, in the best case includes a token)

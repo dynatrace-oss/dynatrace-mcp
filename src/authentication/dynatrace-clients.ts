@@ -8,7 +8,7 @@ import { requestTokenForClientCredentials } from './dynatrace-oauth-client-crede
 
 /**
  * Create a Dynatrace Http Client (from the http-client SDK) based on the provided authentication credentials
- * Supports Platform Token, Oauth Client Credentials Flow, and OAuth Authorization Code Flow (interactive)
+ * Supports Platform Token, OAuth Client Credentials Flow, and OAuth Authorization Code Flow (interactive)
  * @param environmentUrl
  * @param scopes
  * @param clientId
@@ -67,7 +67,7 @@ const createPlatformTokenHttpClient = async (environmentUrl: string, dtPlatformT
 };
 
 /**
- * Create an Oauth Client based on clientId, clientSecret, environmentUrl and scopes
+ * Create an OAuth Client based on clientId, clientSecret, environmentUrl and scopes
  * This uses a client-credentials flow to request a token from the SSO endpoint.
  * Note: We do not refresh the token here, we always request a new one on each client creation.
  */
