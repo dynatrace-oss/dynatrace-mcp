@@ -2,7 +2,9 @@
 
 ## Unreleased Changes
 
-_No unreleased changes yet._
+## 0.9.1
+
+- Replaced file-based token cache with an in-memory cache to avoid writing credentials to disk. Tokens now reset on server restart.
 
 ## 0.9.0
 

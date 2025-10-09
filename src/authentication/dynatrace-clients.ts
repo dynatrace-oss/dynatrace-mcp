@@ -103,7 +103,8 @@ const createOAuthClientCredentialsHttpClient = async (
 
 /** Create an OAuth Client using authorization code flow (interactive authentication)
  * This starts a local HTTP server to handle the OAuth redirect and requires user interaction.
- * Implements token caching (via .dt-mcp/token.json) to avoid repeated OAuth flows.
+ * Implements an in-memory token cache (not persisted to disk). After every server restart a new
+ * authentication flow (or token refresh) may be required.
  * Note: Always requests a complete set of scopes for maximum token reusability. Else the user will end up having to approve multiple requests.
  */
 const createOAuthAuthCodeFlowHttpClient = async (
