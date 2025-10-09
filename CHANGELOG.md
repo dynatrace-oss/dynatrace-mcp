@@ -2,7 +2,18 @@
 
 ## Unreleased Changes
 
-- **⚡ Simplified Setup**: OAuth authorization code flow is now automatically enabled when neither, OAuth credentials, nor a platform token are provided. Just provide `DT_ENVIRONMENT`, and authentication is handled automatically via an interactive OAuth authorization code flow
+_No unreleased changes yet._
+
+## 0.9.0
+
+**Highlights**
+🔑 **Simplified Authentication**: Added OAuth authorization code flow. Users can now simply set `DT_ENVIRONMENT` and complete an interactive browser authentication flow.
+
+### Other Changes
+
+- Dependency updates
+- Added Snyk Dependency scans
+- Fixed publishing to official MCP Registry
 
 ## 0.8.0
 
