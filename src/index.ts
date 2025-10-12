@@ -83,7 +83,8 @@ const allRequiredScopes = scopesBase.concat([
   'storage:events:read', // Read events from Grail
   'storage:buckets:read', // Read all system data stored on Grail
   'storage:security.events:read', // Read Security events from Grail
-  'storage:entities:read', // Read Entities from Grail
+  'storage:entities:read', // Read classic Entities
+  'storage:smartscape:read', // Read Smartscape Entities from Grail
   'storage:logs:read', // Read logs for reliability guardian validations
   'storage:metrics:read', // Read metrics for reliability guardian validations
   'storage:bizevents:read', // Read bizevents for reliability guardian validations
