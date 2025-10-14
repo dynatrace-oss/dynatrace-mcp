@@ -28,10 +28,37 @@ export const generateDqlSearchEntityCommand = (entityNames: string[], extendedSe
 };
 
 /**
- * Find a monitored entity by name via DQL
+ * Find a monitored entity via "smartscapeNodes" by name via DQL
  * @param dtClient
- * @param entityName
- * @returns A string with the entity details like id, name and type, or an error message if no entity was found
+ * @param entityNames Array of entitiy names to search for
+ * @returns An array with the entity details like id, name and type
+ */
+export const findMonitoredEntityViaSmartscapeByName = async (dtClient: HttpClient, entityNames: string[]) => {
+  const dql = `smartscapeNodes "*" | search "*${entityNames.join('*" OR "*')}*" | fields id, name, type`;
+  console.error(`Executing DQL: ${dql}`);
+
+  try {
+    const smartscapeResult = await executeDql(dtClient, { query: dql });
+
+    if (smartscapeResult && smartscapeResult.records && smartscapeResult.records.length > 0) {
+      // return smartscape results if we found something
+      return smartscapeResult;
+    }
+  } catch (error) {
+    // ignore errors here, as smartscapeNodes may not be ready for all environments/users
+    console.error('Error while querying smartscapeNodes:', error);
+  }
+
+  console.error('No results from smartscapeNodes');
+  return null;
+};
+
+/**
+ * Find a monitored entity via "dt.entity.${entityType}" by name via DQL
+ * @param dtClient
+ * @param entityNames Array of entitiy names to search for
+ * @param extendedSearch If true, search over all entity types, otherwise only basic ones
+ * @returns An array with the entity details like id, name and type
  */
 export const findMonitoredEntitiesByName = async (
   dtClient: HttpClient,

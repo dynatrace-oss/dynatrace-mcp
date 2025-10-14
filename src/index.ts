@@ -31,7 +31,10 @@ import { updateWorkflow } from './capabilities/update-workflow';
 import { executeDql, verifyDqlStatement } from './capabilities/execute-dql';
 import { sendSlackMessage } from './capabilities/send-slack-message';
 import { sendEmail } from './capabilities/send-email';
-import { findMonitoredEntitiesByName } from './capabilities/find-monitored-entity-by-name';
+import {
+  findMonitoredEntitiesByName,
+  findMonitoredEntityViaSmartscapeByName,
+} from './capabilities/find-monitored-entity-by-name';
 import {
   chatWithDavisCopilot,
   explainDqlInNaturalLanguage,
@@ -464,8 +467,35 @@ const main = async () => {
       readOnlyHint: true,
     },
     async ({ entityNames, maxEntitiesToDisplay, extendedSearch }) => {
-      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('storage:entities:read'));
+      const dtClient = await createAuthenticatedHttpClient(
+        scopesBase.concat('storage:entities:read', 'storage:smartscape:read'),
+      );
 
+      const smartscapeResult = await findMonitoredEntityViaSmartscapeByName(dtClient, entityNames);
+
+      if (smartscapeResult && smartscapeResult.records && smartscapeResult.records.length > 0) {
+        let resp = `Found ${smartscapeResult.records.length} monitored entities via Smartscape! Displaying the first ${maxEntitiesToDisplay} entities:\n`;
+
+        // iterate over dqlResponse and create a string with the problem details, but only show the top maxEntitiesToDisplay problems
+        smartscapeResult.records.slice(0, maxEntitiesToDisplay).forEach((entity) => {
+          if (entity && entity.id && entity.type && entity.name) {
+            resp += `- Entity '${entity.name}' of entity-type '${entity.type}' has entity id '${entity.id}' and tags ${entity['tags'] ? JSON.stringify(entity['tags']) : 'none'} - DQL Filter: '| filter dt.smartscape.${String(entity.type).toLowerCase()} == "${entity.id}"'\n`;
+          }
+        });
+
+        // ToDo: Refine next-steps, this is not working properly yet.
+
+        resp +=
+          '\n\n**Next Steps:**\n' +
+          '1. Fetch more details about the entity, using the `execute_dql` tool with the following DQL Statement: "smartscapeNodes \"<entity-type>\" | filter id == <entity-id>"\n' +
+          '2. Perform a sanity check that found entities are actually the ones you are looking for, by comparing name and by type (hosts vs. containers vs. apps vs. functions) and technology (Java, TypeScript, .NET) with what is available in the local source code repo.\n' +
+          '3. Find and investigate available metrics for relevant entities, by using the `execute_dql` tool with the following DQL statement: "fetch metric.series | filter dt.smartscape.<entity-type> == <entity-id> | limit 20"\n' +
+          '4. Find out whether any problems exist for this entity using the `list_problems` or `list_vulnerabilities` tool, and the provided DQL-Filter\n';
+
+        return resp;
+      }
+
+      // If no result from Smartscape, try the classic entities API
       const result = await findMonitoredEntitiesByName(dtClient, entityNames, extendedSearch);
 
       if (result && result.records && result.records.length > 0) {
@@ -475,15 +505,15 @@ const main = async () => {
         result.records.slice(0, maxEntitiesToDisplay).forEach((entity) => {
           if (entity && entity.id) {
             const entityType = getEntityTypeFromId(String(entity.id));
-            resp += `- Entity '${entity['entity.name']}' of type '${entity['entity.type']}' has entity id '${entity.id}' and tags ${entity['tags'] ? entity['tags'] : 'none'} - Use the DQL Filter: '| filter ${entityType} == "${entity.id}"'\n`;
+            resp += `- Entity '${entity['entity.name']}' of entity-type '${entity['entity.type']}' has entity id '${entity.id}' and tags ${entity['tags'] ? entity['tags'] : 'none'} - DQL Filter: '| filter ${entityType} == "${entity.id}"'\n`;
           }
         });
 
         resp +=
           '\n\n**Next Steps:**\n' +
-          '1. Try to fetch more details about the entity, using the `execute_dql` tool with "describe(dt.entity.<entity-type>)", and "fetch dt.entity.<entity-type> | filter id == <entity-id> | fieldsAdd <field-1>, <field2>, ..."\n' +
+          '1. Fetch more details about the entity, using the `execute_dql` tool with the following DQL Statements: "describe(dt.entity.<entity-type>)", and "fetch dt.entity.<entity-type> | filter id == <entity-id> | fieldsAdd <field-1>, <field-2>, ..."\n' +
           '2. Perform a sanity check that found entities are actually the ones you are looking for, by comparing name and by type (hosts vs. containers vs. apps vs. functions) and technology (Java, TypeScript, .NET) with what is available in the local source code repo.\n' +
-          '3. Find and investigate available metrics for relevant entities, by using the `execute_dql` tool with the following DQL statement: "fetch metric.series | filter dt.entity.<entity-type> == <entity-id>"\n' +
+          '3. Find and investigate available metrics for relevant entities, by using the `execute_dql` tool with the following DQL statement: "fetch metric.series | filter dt.entity.<entity-type> == <entity-id> | limit 20"\n' +
           '4. Find out whether any problems exist for this entity using the `list_problems` or `list_vulnerabilities` tool, and the provided DQL-Filter\n';
 
         return resp;
@@ -558,14 +588,14 @@ const main = async () => {
 
   tool(
     'execute_dql',
-    'Get Logs, Metrics, Spans or Events from Dynatrace GRAIL by executing a Dynatrace Query Language (DQL) statement. ' +
+    'Get data like Logs, Metrics, Spans, Events, or Entity Data from Dynatrace GRAIL by executing a Dynatrace Query Language (DQL) statement. ' +
       'Use the "generate_dql_from_natural_language" tool upfront to generate or refine a DQL statement based on your request. ' +
       'To learn about possible fields available for filtering, use the query "fetch dt.semantic_dictionary.models | filter data_object == \"logs\""',
     {
       dqlStatement: z
         .string()
         .describe(
-          'DQL Statement (Ex: "fetch [logs, spans, events], from: now()-4h, to: now() | filter <some-filter> | summarize count(), by:{some-fields}.", or for metrics: "timeseries { avg(<metric-name>), value.A = avg(<metric-name>, scalar: true) }"). ' +
+          'DQL Statement (Ex: "fetch [logs, spans, events, metric.series, ...], from: now()-4h, to: now() [| filter <some-filter>] [| summarize count(), by:{some-fields}]", or for metrics: "timeseries { avg(<metric-name>), value.A = avg(<metric-name>, scalar: true) }", or for entities via smartscape: "smartscapeNodes \"[*, HOST, PROCESS, ...]\" [| filter id == "<ENTITY-ID>"]"). ' +
             'When querying data for a specific entity, call the `find_entity_by_name` tool first to get an appropriate filter like `dt.entity.service == "SERVICE-1234"` or `dt.entity.host == "HOST-1234"` to be used in the DQL statement. ',
         ),
     },
@@ -591,6 +621,7 @@ const main = async () => {
           'storage:user.events:read', // Read User events from Grail
           'storage:user.sessions:read', // Read User sessions from Grail
           'storage:security.events:read', // Read Security events from Grail
+          'storage:smartscape:read', // Read Smartscape Entities from Grail
         ),
       );
       const response = await executeDql(dtClient, { query: dqlStatement }, grailBudgetGB);

@@ -321,6 +321,7 @@ Depending on the features you are using, the following scopes are needed:
 - `storage:system:read` - needed for `execute_dql` tool to read System Data from Grail
 - `storage:user.events:read` - needed for `execute_dql` tool to read User events from Grail
 - `storage:user.sessions:read` - needed for `execute_dql` tool to read User sessions from Grail
+- `storage:smartscape:read` - needed for `execute_dql` tool to read Smartscape Data
 - `davis-copilot:conversations:execute` - execute conversational skill (chat with Copilot)
 - `davis-copilot:nl2dql:execute` - execute Davis Copilot Natural Language (NL) to DQL skill
 - `davis-copilot:dql2nl:execute` - execute DQL to Natural Language (NL) skill

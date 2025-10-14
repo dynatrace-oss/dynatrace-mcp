@@ -2,6 +2,14 @@
 
 ## Unreleased Changes
 
+### Tools
+
+- `find_entities_by_name` now uses `smartscapeNode` DQL command under the hood, and will fallback to `fetch dt.entity.${entityType}`.
+
+### Scopes
+
+- Added OAuth scope `storage:smartscape:read`
+
 ## 0.9.2
 
 - Improved error handling when initializing the connection for the first time
