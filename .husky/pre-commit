@@ -1,2 +1,5 @@
 npm run test:unit
 npm run prettier:fix
+
+# Update index changes caused by prettier
+git update-index --again || true
