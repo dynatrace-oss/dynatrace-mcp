@@ -565,9 +565,9 @@ The Dynatrace MCP Server includes sending Telemetry Data via Dynatrace OpenKit t
 **Configuration options:**
 
 - `DT_MCP_DISABLE_TELEMETRY` (boolean, default: `false`) - Disable Telemetry
-- `DT_MCP_TELEMETRY_APPLICATION_ID` (string, default: `dynatrace-mcp-server`) - Application ID for tracking
+- `DT_MCP_TELEMETRY_APPLICATION_ID` (string, default: auto-generated) - Application ID for tracking 
 - `DT_MCP_TELEMETRY_ENDPOINT_URL` (string, default: Dynatrace endpoint) - OpenKit endpoint URL
-- `DT_MCP_TELEMETRY_DEVICE_ID` (string, default: auto-generated) - Device identifier for tracking
+- `DT_MCP_TELEMETRY_DEVICE_ID` (string, default: `dynatrace-mcp-server`) - Device identifier for tracking 
 
 To disable usage tracking, add this to your environment:
 
