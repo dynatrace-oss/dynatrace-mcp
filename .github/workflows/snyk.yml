@@ -14,6 +14,8 @@ jobs:
   snyk:
     name: Snyk Security Scan
     runs-on: ubuntu-latest
+    # Skip Snyk for PRs from forks since secrets are not available
+    if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name != 'pull_request'
     permissions:
       # Required to fetch internal or private CodeCommits
       contents: read
