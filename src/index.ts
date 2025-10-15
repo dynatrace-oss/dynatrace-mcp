@@ -1,11 +1,6 @@
 #!/usr/bin/env node
 import { EnvironmentInformationClient } from '@dynatrace-sdk/client-platform-management-service';
-import {
-  ClientRequestError,
-  isApiClientError,
-  isApiGatewayError,
-  isClientRequestError,
-} from '@dynatrace-sdk/shared-errors';
+import { isClientRequestError } from '@dynatrace-sdk/shared-errors';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -22,7 +17,6 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { config } from 'dotenv';
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
-import { randomUUID } from 'node:crypto';
 import { Command } from 'commander';
 import { z, ZodRawShape, ZodTypeAny } from 'zod';
 
@@ -48,9 +42,8 @@ import {
 import { DynatraceEnv, getDynatraceEnv } from './getDynatraceEnv';
 import { createTelemetry, Telemetry } from './utils/telemetry-openkit';
 import { getEntityTypeFromId } from './utils/dynatrace-entity-types';
-import { Http2ServerRequest } from 'node:http2';
 import { resetGrailBudgetTracker, getGrailBudgetTracker } from './utils/grail-budget-tracker';
-import { read } from 'node:fs';
+import { handleClientRequestError } from './utils/dynatrace-connection-utils';
 
 // Load environment variables from .env file if available, and suppress warnings/logging to stdio
 // as it breaks MCP communication when using stdio transport
@@ -71,6 +64,7 @@ if (dotEnvOutput.error) {
 
 const DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID = 'dt0s08.dt-app-local'; // ToDo: Register our own oauth client
 
+// Base Scopes for MCP Server tools
 let scopesBase = [
   'app-engine:apps:run', // needed for environmentInformationClient
   'app-engine:functions:run', // needed for environmentInformationClient
@@ -110,80 +104,6 @@ const allRequiredScopes = scopesBase.concat([
   'email:emails:send', // Send emails
 ]);
 
-/**
- * Performs a connection test to the Dynatrace environment.
- * Throws an error if the connection or authentication fails.
- */
-async function testDynatraceConnection(
-  dtEnvironment: string,
-  oauthClientId?: string,
-  oauthClientSecret?: string,
-  dtPlatformToken?: string,
-) {
-  const dtClient = await createDtHttpClient(
-    dtEnvironment,
-    oauthClientId && !oauthClientSecret ? allRequiredScopes : scopesBase,
-    oauthClientId,
-    oauthClientSecret,
-    dtPlatformToken,
-  );
-  const environmentInformationClient = new EnvironmentInformationClient(dtClient);
-  // This call will fail if authentication is incorrect.
-  await environmentInformationClient.getEnvironmentInformation();
-}
-
-function handleClientRequestError(error: ClientRequestError): string {
-  let additionalErrorInformation = '';
-  if (error.response.status === 403) {
-    additionalErrorInformation =
-      'Note: Your user or service-user is most likely lacking the necessary permissions/scopes for this API Call.';
-  }
-
-  return `Client Request Error: ${error.message} with HTTP status: ${error.response.status}. ${additionalErrorInformation} (body: ${JSON.stringify(error.body)})`;
-}
-
-/**
- * Try to connect to Dynatrace environment with retries and exponential backoff.
- */
-async function retryTestDynatraceConnection(
-  dtEnvironment: string,
-  oauthClientId?: string,
-  oauthClientSecret?: string,
-  dtPlatformToken?: string,
-) {
-  let retryCount = 0;
-  const maxRetries = 3; // Max retries
-  const delayMs = 2000; // Initial delay of 2 seconds
-  while (true) {
-    try {
-      console.error(
-        `Testing connection to Dynatrace environment: ${dtEnvironment}... (Attempt ${retryCount + 1} of ${maxRetries})`,
-      );
-      await testDynatraceConnection(dtEnvironment, oauthClientId, oauthClientSecret, dtPlatformToken);
-      console.error(`Successfully connected to the Dynatrace environment at ${dtEnvironment}.`);
-      break;
-    } catch (error: any) {
-      console.error(`Error: Could not connect to the Dynatrace environment at ${dtEnvironment}.`);
-      if (isClientRequestError(error)) {
-        console.error(handleClientRequestError(error));
-      } else {
-        console.error(`Error: ${error.message}`);
-      }
-      retryCount++;
-      if (retryCount >= maxRetries) {
-        console.error(`Fatal: Maximum number of connection retries (${maxRetries}) exceeded. Exiting.`);
-        throw new Error(
-          `Failed to connect to Dynatrace environment ${dtEnvironment} after ${maxRetries} attempts. Most likely your configuration is incorrect. Last error: ${error.message}`,
-          { cause: error },
-        );
-      }
-      const delay = Math.pow(2, retryCount) * delayMs; // Exponential backoff
-      console.error(`Retrying in ${delay / 1000} seconds...`);
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-  }
-}
-
 const main = async () => {
   console.error(`Initializing Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
@@ -206,21 +126,6 @@ const main = async () => {
     console.error('No OAuth credentials or platform token provided - switching to OAuth authorization code flow.');
     oauthClientId = DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID; // Default OAuth client ID for auth code flow
   }
-
-  // Test connection on startup
-  try {
-    // Depending on the authentication type, there are multiple pitfalls
-    // * For Platform Tokens, we can just try to access "get environment info" and we will know whether it works
-    // * For Oauth Client Credentials flow, we can also try to request an access token upfront with limited scopes, and verify whether everything works
-    // * for Oauth Auth Code flow, we can only verify whether the client ID is valid and the OAuth verifier call works, but we can't verify whether the user will be able to authenticate successfully
-    await retryTestDynatraceConnection(dtEnvironment, oauthClientId, oauthClientSecret, dtPlatformToken);
-  } catch (err) {
-    console.error((err as Error).message);
-    process.exit(2);
-  }
-
-  // Ready to start the server
-  console.error(`Starting Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
   // Initialize usage tracking
   const telemetry = createTelemetry();
@@ -265,6 +170,51 @@ const main = async () => {
     );
   };
 
+  // Try to establish a Dynatrace connection upfront, to see if everything is configured properly
+  console.error(`Testing connection to Dynatrace environment: ${dtEnvironment}...`);
+  // First, we will try a simple "fetch" to connect to dtEnvironment, without authentication
+  // This should help to see if DNS lookup works, TCP connection can be established, and TLS handshake works
+  try {
+    const response = await fetch(`${dtEnvironment}`).then((response) => response.text());
+    // check response
+    if (response && response.length > 0) {
+      if (response.includes('Authentication required')) {
+        // all good - we reached the environment and authentication is required, which is going to be the next step
+      } else {
+        console.error(`⚠️ Tried to contact ${dtEnvironment}, got the following response: ${response}`);
+        // Note: We won't error out yet, but this information could already be helpful for troubleshooting
+      }
+    } else {
+      throw new Error('No response received');
+    }
+  } catch (error: any) {
+    console.error(`❌ Failed to connect to Dynatrace environment ${dtEnvironment}:`, error.message);
+    console.error(error);
+    process.exit(3);
+  }
+
+  // Second, we will try with proper authentication
+  try {
+    const dtClient = await createAuthenticatedHttpClient(scopesBase);
+    const environmentInformationClient = new EnvironmentInformationClient(dtClient);
+
+    await environmentInformationClient.getEnvironmentInformation();
+
+    console.error(`✅ Successfully connected to the Dynatrace environment at ${dtEnvironment}.`);
+  } catch (error: any) {
+    if (isClientRequestError(error)) {
+      console.error(`❌ Failed to connect to Dynatrace environment ${dtEnvironment}:`, handleClientRequestError(error));
+    } else {
+      console.error(`❌ Failed to connect to Dynatrace environment ${dtEnvironment}:`, error.message);
+      // Logging more exhaustive error details for troubleshooting
+      console.error(error);
+    }
+    process.exit(2);
+  }
+
+  // Ready to start the server
+  console.error(`Starting Dynatrace MCP Server v${getPackageJsonVersion()}...`);
+
   // quick abstraction/wrapper to make it easier for tools to reply text instead of JSON
   const tool = (
     name: string,
@@ -297,7 +247,7 @@ const main = async () => {
             isError: true,
           };
         }
-        // else: We don't know what kind of error happened - best-case we can provide error.message
+        // else: We don't know what kind of error happened - best case we can log the error and provide error.message as a tool response
         console.log(error);
         return {
           content: [{ type: 'text', text: `Error: ${error.message}` }],
