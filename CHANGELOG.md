@@ -2,7 +2,9 @@
 
 ## Unreleased Changes
 
-- Improved error handling when initializing connection the first time
+## 0.9.2
+
+- Improved error handling when initializing the connection for the first time
 
 ## 0.9.1
 
