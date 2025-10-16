@@ -2,6 +2,10 @@
 
 ## Unreleased Changes
 
+### Fixed
+
+- Suppress stack trace when telemetry is disabled via `DT_MCP_DISABLE_TELEMETRY=true`; now logs a concise message instead of throwing an error
+
 ### Tools
 
 - `find_entities_by_name` now uses `smartscapeNode` DQL command under the hood, and will fall back to `fetch dt.entity.${entityType}`.

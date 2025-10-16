@@ -203,8 +203,8 @@ export function createTelemetry(): Telemetry {
   try {
     return new DynatraceMcpTelemetry();
   } catch (e) {
-    // Failed to initialize
-    console.error(e);
+    // Failed to initialize (unexpected). Log concise message without stack trace spam.
+    console.error('Dynatrace Telemetry initialization failed:', (e as Error).message);
     // fallback to NoOp Telemetry
     return new NoOpTelemetry();
   }
