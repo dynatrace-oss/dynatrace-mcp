@@ -474,23 +474,25 @@ const main = async () => {
       const smartscapeResult = await findMonitoredEntityViaSmartscapeByName(dtClient, entityNames);
 
       if (smartscapeResult && smartscapeResult.records && smartscapeResult.records.length > 0) {
-        let resp = `Found ${smartscapeResult.records.length} monitored entities via Smartscape! Displaying the first ${maxEntitiesToDisplay} entities:\n`;
+        // Filter valid entities first, to ensure we display up to maxEntitiesToDisplay entities
+        const validSmartscapeEntities = smartscapeResult.records.filter(
+          (entity): entity is { id: string; type: string; name: string; [key: string]: any } =>
+            !!(entity && entity.id && entity.type && entity.name),
+        );
 
-        // iterate over dqlResponse and create a string with the problem details, but only show the top maxEntitiesToDisplay problems
-        smartscapeResult.records.slice(0, maxEntitiesToDisplay).forEach((entity) => {
-          if (entity && entity.id && entity.type && entity.name) {
-            resp += `- Entity '${entity.name}' of entity-type '${entity.type}' has entity id '${entity.id}' and tags ${entity['tags'] ? JSON.stringify(entity['tags']) : 'none'} - DQL Filter: '| filter dt.smartscape.${String(entity.type).toLowerCase()} == "${entity.id}"'\n`;
-          }
+        let resp = `Found ${validSmartscapeEntities.length} monitored entities via Smartscape! Displaying the first ${Math.min(maxEntitiesToDisplay, validSmartscapeEntities.length)} valid entities:\n`;
+
+        validSmartscapeEntities.slice(0, maxEntitiesToDisplay).forEach((entity) => {
+          resp += `- Entity '${entity.name}' of entity-type '${entity.type}' has entity id '${entity.id}' and tags ${entity['tags'] ? JSON.stringify(entity['tags']) : 'none'} - DQL Filter: '| filter dt.smartscape.${String(entity.type).toLowerCase()} == "${entity.id}"'\n`;
         });
-
-        // ToDo: Refine next-steps, this is not working properly yet.
 
         resp +=
           '\n\n**Next Steps:**\n' +
           '1. Fetch more details about the entity, using the `execute_dql` tool with the following DQL Statement: "smartscapeNodes \"<entity-type>\" | filter id == <entity-id>"\n' +
           '2. Perform a sanity check that found entities are actually the ones you are looking for, by comparing name and by type (hosts vs. containers vs. apps vs. functions) and technology (Java, TypeScript, .NET) with what is available in the local source code repo.\n' +
           '3. Find and investigate available metrics for relevant entities, by using the `execute_dql` tool with the following DQL statement: "fetch metric.series | filter dt.smartscape.<entity-type> == <entity-id> | limit 20"\n' +
-          '4. Find out whether any problems exist for this entity using the `list_problems` or `list_vulnerabilities` tool, and the provided DQL-Filter\n';
+          '4. Find out whether any problems exist for this entity using the `list_problems` or `list_vulnerabilities` tool, and the provided DQL-Filter\n' +
+          '5. Explore dependency & relationships with: "smartscapeEdges \"*\" | filter source_id == <entity-id> or target_id == <entity-id>" to list inbound/outbound edges (depends_on, dependency_of, owned_by, part_of) for graph context\n';
 
         return resp;
       }
@@ -499,10 +501,16 @@ const main = async () => {
       const result = await findMonitoredEntitiesByName(dtClient, entityNames, extendedSearch);
 
       if (result && result.records && result.records.length > 0) {
-        let resp = `Found ${result.records.length} monitored entities! Displaying the first ${maxEntitiesToDisplay} entities:\n`;
+        // Filter valid entities first, to ensure we display up to maxEntitiesToDisplay entities
+        const validClassicEntities = result.records.filter(
+          (entity): entity is { id: string; type: string; name: string; [key: string]: any } =>
+            !!(entity && entity.id && entity.type && entity.name),
+        );
+
+        let resp = `Found ${validClassicEntities.length} monitored entities! Displaying the first ${Math.min(maxEntitiesToDisplay, validClassicEntities.length)} entities:\n`;
 
         // iterate over dqlResponse and create a string with the problem details, but only show the top maxEntitiesToDisplay problems
-        result.records.slice(0, maxEntitiesToDisplay).forEach((entity) => {
+        validClassicEntities.slice(0, maxEntitiesToDisplay).forEach((entity) => {
           if (entity && entity.id) {
             const entityType = getEntityTypeFromId(String(entity.id));
             resp += `- Entity '${entity['entity.name']}' of entity-type '${entity['entity.type']}' has entity id '${entity.id}' and tags ${entity['tags'] ? entity['tags'] : 'none'} - DQL Filter: '| filter ${entityType} == "${entity.id}"'\n`;
