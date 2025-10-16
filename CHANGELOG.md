@@ -4,7 +4,7 @@
 
 ### Tools
 
-- `find_entities_by_name` now uses `smartscapeNode` DQL command under the hood, and will fallback to `fetch dt.entity.${entityType}`.
+- `find_entities_by_name` now uses `smartscapeNode` DQL command under the hood, and will fall back to `fetch dt.entity.${entityType}`.
 
 ### Scopes
 
