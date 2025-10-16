@@ -5,6 +5,7 @@
 ### Tools
 
 - `find_entities_by_name` now uses `smartscapeNode` DQL command under the hood, and will fall back to `fetch dt.entity.${entityType}`.
+- Added default response limiting to `execute_dql` tool with new parameters `recordLimit` (default 100) and `recordSizeLimitMB` (default 1 MB) to prevent overwhelming LLM context. These limits apply only to the returned payload, not the underlying DQL execution.
 
 ### Scopes
 

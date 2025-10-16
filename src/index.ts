@@ -124,7 +124,6 @@ const main = async () => {
     dynatraceEnv;
 
   // Infer OAuth auth code flow if no OAuth Client credentials are provided
-  // -> configure default OAuth client ID for auth code flow
   if (!oauthClientId && !oauthClientSecret && !dtPlatformToken) {
     console.error('No OAuth credentials or platform token provided - switching to OAuth authorization code flow.');
     oauthClientId = DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID; // Default OAuth client ID for auth code flow
@@ -606,6 +605,12 @@ const main = async () => {
           'DQL Statement (Ex: "fetch [logs, spans, events, metric.series, ...], from: now()-4h, to: now() [| filter <some-filter>] [| summarize count(), by:{some-fields}]", or for metrics: "timeseries { avg(<metric-name>), value.A = avg(<metric-name>, scalar: true) }", or for entities via smartscape: "smartscapeNodes \"[*, HOST, PROCESS, ...]\" [| filter id == "<ENTITY-ID>"]"). ' +
             'When querying data for a specific entity, call the `find_entity_by_name` tool first to get an appropriate filter like `dt.entity.service == "SERVICE-1234"` or `dt.entity.host == "HOST-1234"` to be used in the DQL statement. ',
         ),
+      recordLimit: z.number().optional().default(100).describe('Maximum number of records to return (default: 100)'),
+      recordSizeLimitMB: z
+        .number()
+        .optional()
+        .default(1)
+        .describe('Maximum size of the returned records in MB (default: 1MB)'),
     },
     {
       // not readonly (DQL statements may modify things), not idempotent (may change over time)
@@ -614,7 +619,7 @@ const main = async () => {
       // while we are not strictly talking to the open world here, the response from execute DQL could interpreted as a web-search, which often is referred to open-world
       openWorldHint: true,
     },
-    async ({ dqlStatement }) => {
+    async ({ dqlStatement, recordLimit = 100, recordSizeLimitMB = 1 }) => {
       // Create a HTTP Client that has all storage:*:read scopes
       const dtClient = await createAuthenticatedHttpClient(
         scopesBase.concat(
@@ -632,7 +637,11 @@ const main = async () => {
           'storage:smartscape:read', // Read Smartscape Entities from Grail
         ),
       );
-      const response = await executeDql(dtClient, { query: dqlStatement }, grailBudgetGB);
+      const response = await executeDql(
+        dtClient,
+        { query: dqlStatement, maxResultRecords: recordLimit, maxResultBytes: recordSizeLimitMB * 1024 * 1024 },
+        grailBudgetGB,
+      );
 
       if (!response) {
         return 'DQL execution failed or returned no result.';
@@ -675,6 +684,10 @@ const main = async () => {
 
       if (response.sampled !== undefined && response.sampled) {
         result += `- **⚠️ Sampling Used:** Yes (results may be approximate)\n`;
+      }
+
+      if (response.records.length === recordLimit) {
+        result += `- **⚠️ Record Limit Reached:** The result set was limited to ${recordLimit} records. Consider changing your query with a smaller timeframe, an aggregation or a more concise filter. Alternatively, increase the recordLimit if you expect more results.\n`;
       }
 
       result += `\n📋 **Query Results**: (${response.records?.length || 0} records):\n\n`;
