@@ -298,6 +298,24 @@ In addition, depending on the features you use, the following variables can be c
 
 - `SLACK_CONNECTION_ID` (string) - connection ID of a [Slack Connection](https://docs.dynatrace.com/docs/analyze-explore-automate/workflows/actions/slack)
 
+### Proxy Configuration
+
+The MCP server honors system proxy settings for corporate environments:
+
+- `https_proxy` or `HTTPS_PROXY` (optional, string, e.g., `http://proxy.example.com:8080`) - Proxy server URL for HTTPS requests
+- `http_proxy` or `HTTP_PROXY` (optional, string, e.g., `http://proxy.example.com:8080`) - Proxy server URL for HTTP requests
+- `no_proxy` or `NO_PROXY` (optional, string, e.g., `localhost,127.0.0.1,.local`) - Comma-separated list of hostnames or domains that should bypass the proxy
+
+**Note:** The `no_proxy` environment variable is currently logged for informational purposes but not fully enforced by the underlying HTTP client. If you need to bypass the proxy for specific hosts, consider configuring your proxy server to handle these exclusions.
+
+Example configuration with proxy:
+
+```bash
+export HTTPS_PROXY=http://proxy.company.com:8080
+export NO_PROXY=localhost,127.0.0.1,.company.local
+export DT_ENVIRONMENT=https://abc12345.apps.dynatrace.com
+```
+
 ### Scopes for Authentication
 
 Depending on the features you are using, the following scopes are needed:

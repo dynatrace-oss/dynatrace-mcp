@@ -47,6 +47,7 @@ import { createTelemetry, Telemetry } from './utils/telemetry-openkit';
 import { getEntityTypeFromId } from './utils/dynatrace-entity-types';
 import { resetGrailBudgetTracker, getGrailBudgetTracker } from './utils/grail-budget-tracker';
 import { handleClientRequestError } from './utils/dynatrace-connection-utils';
+import { configureProxyFromEnvironment } from './utils/proxy-config';
 
 // Load environment variables from .env file if available, and suppress warnings/logging to stdio
 // as it breaks MCP communication when using stdio transport
@@ -109,6 +110,9 @@ const allRequiredScopes = scopesBase.concat([
 
 const main = async () => {
   console.error(`Initializing Dynatrace MCP Server v${getPackageJsonVersion()}...`);
+
+  // Configure proxy from environment variables early in the startup process
+  configureProxyFromEnvironment();
 
   // read Environment variables
   let dynatraceEnv: DynatraceEnv;
