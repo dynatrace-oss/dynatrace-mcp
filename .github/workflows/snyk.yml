@@ -43,7 +43,7 @@ jobs:
             --all-projects
             --target-reference=${{ github.ref_name }}
             --project-environment=external
-            --project-lifecycle=experimental
+            --project-lifecycle=development
             --project-business-criticality=low
             --project-tags=team=team-se-cloud-automation,ticket-creation=true
             --exclude=node_modules
