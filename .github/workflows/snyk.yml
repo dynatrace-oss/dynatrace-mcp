@@ -39,3 +39,11 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_API_TOKEN }}
         with:
           command: monitor
+          args: >-
+            --all-projects
+            --target-reference=${{ github.ref_name }}
+            --project-environment=external
+            --project-lifecycle=experimental
+            --project-business-criticality=low
+            --project-tags=team=team-se-cloud-automation,ticket-creation=true
+            --exclude=node_modules
