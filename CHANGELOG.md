@@ -2,18 +2,20 @@
 
 ## Unreleased Changes
 
-### Fixed
-
-- Suppress stack trace when telemetry is disabled via `DT_MCP_DISABLE_TELEMETRY=true`; now logs a concise message instead of throwing an error
+## 0.10.0
 
 ### Tools
 
-- `find_entities_by_name` now uses `smartscapeNode` DQL command under the hood, and will fall back to `fetch dt.entity.${entityType}`.
-- Added default response limiting to `execute_dql` tool with new parameters `recordLimit` (default 100) and `recordSizeLimitMB` (default 1 MB) to prevent overwhelming LLM context. These limits apply only to the returned payload, not the underlying DQL execution.
+- Improved the `find_entities_by_name` tool to use the `smartscapeNode` DQL command for more efficient entity discovery, with a fallback to fetching entity types directly.
+- Added default response limiting to the `execute_dql` tool to prevent excessively large payloads. The new `recordLimit` and `recordSizeLimitMB` parameters help control the size of the data returned to the language model.
 
 ### Scopes
 
-- Added OAuth scope `storage:smartscape:read`
+- Added the `storage:smartscape:read` OAuth scope to support the improved `find_entities_by_name` tool.
+
+### Other Changes
+
+- Fixed an issue where disabling telemetry with `DT_MCP_DISABLE_TELEMETRY=true` would show a stack trace instead of a concise message.
 
 ## 0.9.2
 
