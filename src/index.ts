@@ -669,9 +669,17 @@ const main = async () => {
 
         // Show budget status if available
         if (response.budgetState) {
-          const usagePercentage =
-            (response.budgetState.totalBytesScanned / response.budgetState.budgetLimitBytes) * 100;
-          result += ` (Session total: ${(response.budgetState.totalBytesScanned / (1000 * 1000 * 1000)).toFixed(2)} GB / ${response.budgetState.budgetLimitGB} GB budget, ${usagePercentage.toFixed(1)}% used)`;
+          const totalScannedGB = (response.budgetState.totalBytesScanned / (1000 * 1000 * 1000)).toFixed(2);
+
+          if (response.budgetState.budgetLimitGB > 0) {
+            const usagePercentage = (
+              (response.budgetState.totalBytesScanned / response.budgetState.budgetLimitBytes) *
+              100
+            ).toFixed(1);
+            result += ` (Session total: ${totalScannedGB} GB / ${response.budgetState.budgetLimitGB} GB budget, ${usagePercentage}% used)`;
+          } else {
+            result += ` (Session total: ${totalScannedGB} GB)`;
+          }
         }
         result += '\n';
 
