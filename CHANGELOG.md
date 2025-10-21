@@ -2,6 +2,10 @@
 
 ## Unreleased Changes
 
+## 0.11.0
+
+- Updated dependencies to latest versions
+
 ## 0.10.0
 
 ### Tools
