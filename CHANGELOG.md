@@ -5,6 +5,7 @@
 ## 0.11.0
 
 - Updated dependencies to latest versions
+- Added proxy support for corporate environments via `HTTPS_PROXY`
 
 ## 0.10.0
 
