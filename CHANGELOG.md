@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Fixed usage percentage to no longer be printed when no budget is set
+
 ## 0.10.0
 
 ### Tools
