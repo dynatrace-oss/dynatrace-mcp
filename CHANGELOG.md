@@ -3,6 +3,7 @@
 ## Unreleased Changes
 
 - Fixed usage percentage to no longer be printed when no budget is set
+- Fixed an issue with `find_entity_by_name` tool filtering out valid entries
 
 ## 0.10.0
 
