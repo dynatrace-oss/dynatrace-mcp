@@ -506,18 +506,16 @@ const main = async () => {
       if (result && result.records && result.records.length > 0) {
         // Filter valid entities first, to ensure we display up to maxEntitiesToDisplay entities
         const validClassicEntities = result.records.filter(
-          (entity): entity is { id: string; type: string; name: string; [key: string]: any } =>
-            !!(entity && entity.id && entity.type && entity.name),
+          (entity): entity is { id: string; [key: string]: any } =>
+            !!(entity && entity.id && entity['entity.type'] && entity['entity.name']),
         );
 
         let resp = `Found ${validClassicEntities.length} monitored entities! Displaying the first ${Math.min(maxEntitiesToDisplay, validClassicEntities.length)} entities:\n`;
 
         // iterate over dqlResponse and create a string with the problem details, but only show the top maxEntitiesToDisplay problems
         validClassicEntities.slice(0, maxEntitiesToDisplay).forEach((entity) => {
-          if (entity && entity.id) {
-            const entityType = getEntityTypeFromId(String(entity.id));
-            resp += `- Entity '${entity['entity.name']}' of entity-type '${entity['entity.type']}' has entity id '${entity.id}' and tags ${entity['tags'] ? entity['tags'] : 'none'} - DQL Filter: '| filter ${entityType} == "${entity.id}"'\n`;
-          }
+          const entityType = getEntityTypeFromId(String(entity.id));
+          resp += `- Entity '${entity['entity.name']}' of entity-type '${entity['entity.type']}' has entity id '${entity.id}' and tags ${entity['tags'] ? entity['tags'] : 'none'} - DQL Filter: '| filter ${entityType} == "${entity.id}"'\n`;
         });
 
         resp +=
