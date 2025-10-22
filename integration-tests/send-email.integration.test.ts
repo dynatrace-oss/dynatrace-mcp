@@ -322,25 +322,25 @@ All recipients should receive this message according to their designation.`,
   });
 
   describe('Error Handling', () => {
-    it('should handle authentication errors gracefully', async () => {
+    it('should handle authorization errors gracefully', async () => {
       // Create client with invalid credentials
       const dtClient = await createDtHttpClient(
         dynatraceEnv.dtEnvironment,
-        scopesBase.concat(scopesEmail),
-        'invalid-client-id',
-        'invalid-client-secret',
-        undefined,
+        scopesBase.concat([]), // no scopesEmail
+        dynatraceEnv.oauthClientId,
+        dynatraceEnv.oauthClientSecret,
+        dynatraceEnv.dtPlatformToken,
       );
 
       const emailRequest: EmailRequest = {
         toRecipients: { emailAddresses: [TEST_EMAIL_TO] },
-        subject: '[Integration Test] Authentication Error Test',
+        subject: '[Integration Test] Authorization Error Test',
         body: {
-          body: 'This should fail due to invalid credentials.',
+          body: 'This should fail due to insufficient permissions.',
         },
       };
 
-      await expect(sendEmail(dtClient, emailRequest)).rejects.toThrow();
+      await expect(sendEmail(dtClient, emailRequest)).rejects.toThrow(`Forbidden`);
     }, 30000);
 
     it('should handle invalid email addresses appropriately', async () => {
