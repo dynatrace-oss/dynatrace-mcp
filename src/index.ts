@@ -365,7 +365,7 @@ const main = async () => {
       if (!result || result.length === 0) {
         return 'No vulnerabilities found in the last 30 days';
       }
-      let resp = `Found ${result.length} problems in the last 30 days! Displaying the top ${maxVulnerabilitiesToDisplay} problems:\n`;
+      let resp = `Found ${result.length} vulnerabilities in the last 30 days! Displaying the top ${maxVulnerabilitiesToDisplay} vulnerabilities:\n`;
       result.slice(0, maxVulnerabilitiesToDisplay).forEach((vulnerability) => {
         resp += `\n* ${vulnerability}`;
       });
