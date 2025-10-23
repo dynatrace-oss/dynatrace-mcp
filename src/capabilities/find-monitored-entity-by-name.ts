@@ -13,6 +13,10 @@ import {
  * @returns DQL Statement for searching all entity types
  */
 export const generateDqlSearchEntityCommand = (entityNames: string[], extendedSearch: boolean): string => {
+  if (entityNames == undefined || entityNames.length == 0) {
+    throw new Error(`No entity names supplied to search for`);
+  }
+
   // If extendedSearch is true, use all entity types, otherwise use only basic ones
   const fetchDqlCommands = (extendedSearch ? DYNATRACE_ENTITY_TYPES_ALL : DYNATRACE_ENTITY_TYPES_BASICS).map(
     (entityType, index) => {
