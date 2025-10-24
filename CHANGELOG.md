@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Breaking: Changed default HTTP server host binding from `0.0.0.0` to `127.0.0.1` for improved security
+
 ## 0.11.0
 
 - Fixed usage percentage to no longer be printed when no budget is set
