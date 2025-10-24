@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Fixed OAuth callback URL to work in GitHub Codespaces by detecting the environment and using the forwarded URL instead of localhost
+
 ## 0.11.0
 
 - Fixed usage percentage to no longer be printed when no budget is set

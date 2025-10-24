@@ -5,6 +5,7 @@ import { OAuthAuthorizationConfig, OAuthAuthorizationResult, OAuthTokenResponse 
 import { requestOAuthToken } from './dynatrace-oauth-base';
 import { base64URLEncode, generateRandomState } from './utils';
 import open from 'open';
+import { getCodespacesForwardedUrl } from '../utils/environment-detection';
 
 /**
  * Generates PKCE code verifier and challenge according to RFC 7636
@@ -101,7 +102,9 @@ export async function startOAuthRedirectServer(port: number = 5344): Promise<{
   redirectUri: string;
   waitForAuthorizationCode: () => Promise<{ code: string; state: string }>;
 }> {
-  const redirectUri = `http://localhost:${port}/auth/login`;
+  // Check if we're running in GitHub Codespaces and use forwarded URL if so
+  const forwardedUrl = getCodespacesForwardedUrl(port);
+  const redirectUri = forwardedUrl ? `${forwardedUrl}/auth/login` : `http://localhost:${port}/auth/login`;
 
   let resolveAuthCode: (value: { code: string; state: string }) => void;
   let rejectAuthCode: (error: Error) => void;
