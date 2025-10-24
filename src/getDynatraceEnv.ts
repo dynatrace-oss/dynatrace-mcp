@@ -45,9 +45,10 @@ export function getDynatraceEnv(env: NodeJS.ProcessEnv = process.env): Dynatrace
     );
   }
 
-  if (!dtEnvironment.includes('apps.dynatrace.com') && !dtEnvironment.includes('apps.dynatracelabs.com')) {
+  // Only allow certain Dynatrace specific Platform URLs (this is to avoid that users enter URLs like <enviornment-i>.live.dynatrace.com)
+  if (!/\.apps\.(dynatrace|dynatracelabs)\.com\/?$/.test(dtEnvironment)) {
     throw new Error(
-      'Please set DT_ENVIRONMENT to a valid Dynatrace Platform Environment URL (e.g., https://<environment-id>.apps.dynatrace.com)',
+      'Please set DT_ENVIRONMENT to a valid Dynatrace Platform Environment URL (e.g., https://<environment-id>.apps.dynatrace.com or https://<environment-id>.sprint.apps.dynatracelabs.com)',
     );
   }
 
