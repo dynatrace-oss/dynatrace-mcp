@@ -4,7 +4,7 @@
  * This test verifies the email sending functionality by making actual API calls
  * to the Dynatrace environment. These tests require valid authentication credentials
  * and the email:emails:send scope.
- * 
+ *
  * IMPORTANT: Update the TEST_EMAIL_* variables below with your own email addresses
  * be        subject: '[Integration Test] Invalid Email Test',
         body: {
@@ -25,7 +25,6 @@ const API_RATE_LIMIT_DELAY = 100; // Delay in milliseconds to avoid hitting API 
 
 const scopesBase = [
   'app-engine:apps:run', // needed for environmentInformationClient
-  'app-engine:functions:run', // needed for environmentInformationClient
 ];
 
 const scopesEmail = [
@@ -156,7 +155,7 @@ fetch logs
 This email was sent to multiple recipients to test the TO, CC, and BCC functionality:
 
 - **TO**: ${TEST_EMAIL_TO}, ${TEST_EMAIL_TO}
-- **CC**: ${TEST_EMAIL_CC}  
+- **CC**: ${TEST_EMAIL_CC}
 - **BCC**: ${TEST_EMAIL_BCC}
 
 All recipients should receive this message according to their designation.`,

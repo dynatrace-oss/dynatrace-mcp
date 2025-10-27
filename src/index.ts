@@ -71,7 +71,6 @@ const DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID = 'dt0s08.dt-app-local'; // ToDo: Re
 // Base Scopes for MCP Server tools
 let scopesBase = [
   'app-engine:apps:run', // needed for environmentInformationClient
-  'app-engine:functions:run', // needed for environmentInformationClient
 ];
 
 // All scopes needed by the MCP server tools
