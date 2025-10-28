@@ -7,6 +7,12 @@
   <a href="https://github.com/dynatrace-oss/dynatrace-mcp/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/license-mit-blue.svg" alt="Dynatrace MCP Server is released under the MIT License" />
   </a>
+  <a href="https://vscode.dev/redirect/mcp/install?name=dynatrace-mcp-server&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40dynatrace-oss%2Fdynatrace-mcp-server%22%5D%2C%22env%22%3A%7B%7D%7D">
+    <img src="https://img.shields.io/badge/Install_in-VS_Code-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white" />
+  </a>
+  <a href="[https://vscode.dev/redirect/mcp/install?name=dynatrace-mcp-server&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40dynatrace-oss%2Fdynatrace-mcp-server%22%5D%2C%22env%22%3A%7B%7D%7D](https://cursor.com/en/install-mcp?name=dynatrace-mcp-server&config=eyJuYW1lIjoiZHluYXRyYWNlLW1jcC1zZXJ2ZXIiLCJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkBkeW5hdHJhY2Utb3NzL2R5bmF0cmFjZS1tY3Atc2VydmVyIl0sImVudiI6e319)">
+    <img src="https://img.shields.io/badge/Install_in-Cursor-000000?style=flat-square&logoColor=white" />
+  </a>
   <a href="https://www.npmjs.com/package/@dynatrace-oss/dynatrace-mcp-server">
     <img src="https://img.shields.io/npm/dm/@dynatrace-oss/dynatrace-mcp-server?logo=npm&style=flat&color=red" alt="npm" />
   </a>
