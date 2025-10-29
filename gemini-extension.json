@@ -1,6 +1,7 @@
 {
-  "name": "dynatrace-mcp-server",
+  "name": "dynatrace",
   "version": "0.11.0",
+  "description": "Interact with the Dynatrace observability platform.",
   "mcpServers": {
     "dynatrace": {
       "command": "npx",
