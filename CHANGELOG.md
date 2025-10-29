@@ -4,6 +4,15 @@
 
 - Added rate limiting to tool calls: maximum 5 calls per 20 second
 
+### Tools
+
+- Added `list_davis_analyzers` tool to list all available Davis Analyzers including forecast, anomaly detection, and correlation analyzers
+- Added `execute_davis_analyzer` tool to execute Davis Analyzers with custom input parameters and timeframe configuration
+
+### Scopes
+
+- Added OAuth scopes `davis:analyzers:read` and `davis:analyzers:execute` to support Davis Analyzer operations
+
 ## 0.13.0
 
 ### Tools
@@ -15,6 +24,7 @@
 ### Scopes
 
 - Removed `settings:objects:read` and `environment-api:entities:read` scopes, as they are no longer required
+
 
 ## 0.12.0
 
