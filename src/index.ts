@@ -399,25 +399,44 @@ const main = async () => {
 
   tool(
     'list_problems',
-    'List all problems (dt.davis.problems) known on Dynatrace, sorted by their recency, for the last 12h. An additional DQL based filter, like filtering for specific entities, can be provided.',
+    'List all problems (based on "fetch dt.davis.problems") known on Dynatrace, sorted by their recency.',
     {
+      timeframe: z
+        .string()
+        .optional()
+        .default('24h')
+        .describe(
+          'Timeframe to query problems (e.g., "12h", "24h", "7d", "30d"). Default: "24h". Supports hours (h) and days (d).',
+        ),
+      status: z
+        .enum(['ACTIVE', 'CLOSED', 'ALL'])
+        .optional()
+        .default('ALL')
+        .describe(
+          'Fitler problems by their status. "ACTIVE": only active problems (those without an end time set), "CLOSED": only closed problems (those with an end time set), "ALL": active and closed problems (default)',
+        ),
       additionalFilter: z
         .string()
         .optional()
         .describe(
           'Additional DQL filter for dt.davis.problems - filter by entity type (preferred), like \'dt.entity.<service|host|application|$type> == "<entity-id>"\', or by entity tags \'entity_tags == array("dt.owner:team-foobar", "tag:tag")\'',
         ),
-      maxProblemsToDisplay: z.number().default(10).describe('Maximum number of problems to display in the response.'),
+      maxProblemsToDisplay: z
+        .number()
+        .min(1)
+        .max(5000)
+        .default(10)
+        .describe('Maximum number of problems to display in the response.'),
     },
     {
       readOnlyHint: true,
     },
-    async ({ additionalFilter, maxProblemsToDisplay }) => {
+    async ({ timeframe, status, additionalFilter, maxProblemsToDisplay }) => {
       const dtClient = await createAuthenticatedHttpClient(
         scopesBase.concat('storage:events:read', 'storage:buckets:read'),
       );
       // get problems (uses fetch)
-      const result = await listProblems(dtClient, additionalFilter);
+      const result = await listProblems(dtClient, additionalFilter, status, timeframe);
       if (result && result.records && result.records.length > 0) {
         let resp = `Found ${result.records.length} problems! Displaying the top ${maxProblemsToDisplay} problems:\n`;
         // iterate over dqlResponse and create a string with the problem details, but only show the top maxProblemsToDisplay problems
@@ -425,14 +444,14 @@ const main = async () => {
           if (problem) {
             resp += `Problem ${problem['display_id']} (please refer to this problem with \`problemId\` or \`event.id\` ${problem['problem_id']}))
                   with event.status ${problem['event.status']}, event.category ${problem['event.category']}: ${problem['event.name']} -
-                  affects ${problem['affected_users_count']} users and ${problem['affected_entity_count']} entities for a duration of ${problem['duration']}\n`;
+                  affects ${problem['affected_users_count']} users and ${problem['affected_entity_count']} entities for a duration of ${problem['duration']}s\n`;
           }
         });
 
         resp +=
           `\nNext Steps:` +
           `\n1. Use "execute_dql" tool with the following query to get more details about a specific problem:
-          "fetch dt.davis.problems, from: now()-10h, to: now() | filter event.id == \"<problem-id>\" | fields event.description, event.status, event.category, event.start, event.end,
+          "fetch dt.davis.problems, from: now()-${timeframe}, to: now() | filter event.id == \"<problem-id>\" | fields event.description, event.status, event.category, event.start, event.end,
             root_cause_entity_id, root_cause_entity_name, duration, affected_entities_count,
             event_count, affected_users_count, problem_id, dt.davis.mute.status, dt.davis.mute.user,
             entity_tags, labels.alerting_profile, maintenance.is_under_maintenance,
