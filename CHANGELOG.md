@@ -1,12 +1,9 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
-## Unreleased Changes
+## 0.12.0
 
 - Fixed OAuth callback URL to work in GitHub Codespaces by detecting the environment and using the forwarded URL instead of localhost
 - Breaking: Changed default HTTP server host binding from `0.0.0.0` to `127.0.0.1` for improved security
-
-### Scopes
-
 - Removed scope `app-engine:functions:run` as it's not needed
 
 ## 0.11.0
