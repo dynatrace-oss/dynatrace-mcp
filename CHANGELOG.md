@@ -6,6 +6,15 @@
 - Fixed zod version mismatch that caused errors during parameterized tool calls.
 - Refactored environment variable handling to remove `dotenv` dependency from production code in favour of [--env-files](https://nodejs.org/docs/v24.5.0/api/environment_variables.html#env-files).
 
+### Tools
+
+- Added `list_davis_analyzers` tool to list all available Davis Analyzers including forecast, anomaly detection, and correlation analyzers
+- Added `execute_davis_analyzer` tool to execute Davis Analyzers with custom input parameters and timeframe configuration
+
+### Scopes
+
+- Added OAuth scopes `davis:analyzers:read` and `davis:analyzers:execute` to support Davis Analyzer operations
+
 ## 0.13.0
 
 ### Tools
