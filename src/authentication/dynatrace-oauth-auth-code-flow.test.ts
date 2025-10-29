@@ -57,4 +57,50 @@ describe('OAuth Authorization Code Flow', () => {
     // Clean up
     result.server.close();
   });
+
+  test('startOAuthRedirectServer uses forwarded URL in GitHub Codespaces', async () => {
+    const originalEnv = process.env;
+
+    try {
+      // Mock Codespaces environment variables
+      process.env.CODESPACE_NAME = 'test-codespace';
+      process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN = 'app.github.dev';
+
+      const port = 8080;
+      const result = await startOAuthRedirectServer(port);
+
+      expect(result.redirectUri).toBe('https://test-codespace-8080.app.github.dev/auth/login');
+      expect(result.server).toBeDefined();
+      expect(result.waitForAuthorizationCode).toBeDefined();
+
+      // Clean up
+      result.server.close();
+    } finally {
+      // Restore original environment
+      process.env = originalEnv;
+    }
+  });
+
+  test('startOAuthRedirectServer falls back to localhost when not in Codespaces', async () => {
+    const originalEnv = process.env;
+
+    try {
+      // Ensure Codespaces environment variables are not set
+      delete process.env.CODESPACE_NAME;
+      delete process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN;
+
+      const port = 8080;
+      const result = await startOAuthRedirectServer(port);
+
+      expect(result.redirectUri).toBe('http://localhost:8080/auth/login');
+      expect(result.server).toBeDefined();
+      expect(result.waitForAuthorizationCode).toBeDefined();
+
+      // Clean up
+      result.server.close();
+    } finally {
+      // Restore original environment
+      process.env = originalEnv;
+    }
+  });
 });
