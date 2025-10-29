@@ -71,7 +71,6 @@ const DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID = 'dt0s08.dt-app-local'; // ToDo: Re
 // Base Scopes for MCP Server tools
 let scopesBase = [
   'app-engine:apps:run', // needed for environmentInformationClient
-  'app-engine:functions:run', // needed for environmentInformationClient
 ];
 
 // All scopes needed by the MCP server tools
@@ -1151,7 +1150,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
     .option('--http', 'enable HTTP server mode instead of stdio')
     .option('--server', 'enable HTTP server mode (alias for --http)')
     .option('-p, --port <number>', 'port for HTTP server', '3000')
-    .option('-H, --host <host>', 'host for HTTP server', '0.0.0.0')
+    .option('-H, --host <host>', 'host for HTTP server', '127.0.0.1')
     .parse();
 
   const options = program.opts();

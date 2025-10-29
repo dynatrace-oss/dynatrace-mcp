@@ -235,8 +235,9 @@ npx -y @dynatrace-oss/dynatrace-mcp-server@latest --server -p 8080
 npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --port 3001
 
 # Run with custom host/IP (using short or long flag)
-npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --host 127.0.0.1
-npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http -H 192.168.0.1
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --host 127.0.0.1 # recommended for local computers
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --host 0.0.0.0 # recommended for container
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http -H 192.168.0.1 # recommended when sharing connection over a local network
 
 # Check version
 npx -y @dynatrace-oss/dynatrace-mcp-server@latest --version
@@ -323,7 +324,6 @@ Depending on the features you are using, the following scopes are needed:
 **Available for both Platform Tokens and OAuth Clients:**
 
 - `app-engine:apps:run` - needed for almost all tools
-- `app-engine:functions:run` - needed for for almost all tools
 - `environment-api:entities:read` - for retrieving ownership details from monitored entities (_currently not available for Platform Tokens_)
 - `automation:workflows:read` - read Workflows
 - `automation:workflows:write` - create and update Workflows
@@ -346,9 +346,12 @@ Depending on the features you are using, the following scopes are needed:
 - `email:emails:send` - needed for `send_email` tool to send emails
 - `settings:objects:read` - needed for reading ownership information and Guardians (SRG) from settings
 
-  **Note**: Please ensure that `settings:objects:read` is used, and _not_ the similarly named scope `app-settings:objects:read`.
+**Notes**:
 
-**Important**: Some features requiring `environment-api:entities:read` will only work with OAuth Clients. For most use cases, Platform Tokens provide all necessary functionality.
+- Please ensure that `settings:objects:read` is used, and _not_ the similarly named scope `app-settings:objects:read`.
+- Versions before 0.12.0 required the scope `app-engine:functions:run`, which is no longer required.
+
+**Important**: Some features requiring `environment-api:entities:read` will not work with Platform Tokens.
 
 ## ✨ Example prompts ✨
 
@@ -530,7 +533,7 @@ In most cases, authentication issues are related to missing scopes or invalid to
 **For OAuth Clients:**
 In case of OAuth-related problems, you can troubleshoot SSO/OAuth issues based on our [Dynatrace Developer Documentation](https://developer.dynatrace.com/develop/access-platform-apis-from-outside/#get-bearer-token-and-call-app-function).
 
-It is recommended to test access with the following API (which requires minimal scopes `app-engine:apps:run` and `app-engine:functions:run`):
+It is recommended to test access with the following API (which requires minimal scopes `app-engine:apps:run` and, e.g., `storage:logs:read`):
 
 1. Use OAuth Client ID and Secret to retrieve a Bearer Token (only valid for a couple of minutes):
 
@@ -540,7 +543,7 @@ curl --request POST 'https://sso.dynatrace.com/sso/oauth2/token' \
   --data-urlencode 'grant_type=client_credentials' \
   --data-urlencode 'client_id={your-client-id}' \
   --data-urlencode 'client_secret={your-client-secret}' \
-  --data-urlencode 'scope=app-engine:apps:run app-engine:functions:run'
+  --data-urlencode 'scope=app-engine:apps:run storage:logs:read'
 ```
 
 2. Use `access_token` from the response of the above call as the bearer-token in the next call:

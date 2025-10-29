@@ -21,7 +21,6 @@ const API_RATE_LIMIT_DELAY = 100; // Delay in milliseconds to avoid hitting API 
 
 const scopesBase = [
   'app-engine:apps:run', // needed for environmentInformationClient
-  'app-engine:functions:run', // needed for environmentInformationClient
 ];
 
 describe('Dynatrace Clients Integration Tests', () => {

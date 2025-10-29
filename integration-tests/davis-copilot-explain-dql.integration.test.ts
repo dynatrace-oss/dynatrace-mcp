@@ -15,7 +15,6 @@ config();
 
 const scopesBase = [
   'app-engine:apps:run', // needed for environmentInformationClient
-  'app-engine:functions:run', // needed for environmentInformationClient
 ];
 
 describe('DQL Explanation Integration Tests', () => {
