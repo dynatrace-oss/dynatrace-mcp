@@ -32,6 +32,12 @@ npm test -- integration-tests/execute-dql.integration.test.ts
 # Davis CoPilot tests
 npm test -- integration-tests/davis-copilot-explain-dql.integration.test.ts
 
+# Davis Analyzers listing tests
+npm test -- integration-tests/davis-analyzers-list.integration.test.ts
+
+# Davis Analyzers forecasting tests
+npm test -- integration-tests/davis-analyzers-forecast-memory.integration.test.ts
+
 # Email tests
 npm test -- integration-tests/send-email.integration.test.ts
 ```
