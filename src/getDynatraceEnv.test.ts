@@ -68,6 +68,14 @@ describe('getDynatraceEnv', () => {
     expect(() => getDynatraceEnv(env)).toThrow(/Dynatrace Platform Environment URL/);
   });
 
+  it('throws if DT_ENVIRONMENT is malformed with extra domain', () => {
+    const env = {
+      ...baseEnv,
+      DT_ENVIRONMENT: 'https://demo.dev.apps.dynatracelabs.com.example.com',
+    };
+    expect(() => getDynatraceEnv(env)).toThrow(/Dynatrace Platform Environment URL/);
+  });
+
   it('accepts DT_ENVIRONMENT with apps.dynatracelabs.com', () => {
     const env = {
       ...baseEnv,
@@ -80,6 +88,22 @@ describe('getDynatraceEnv', () => {
     const env = {
       ...baseEnv,
       DT_ENVIRONMENT: 'https://env123.apps.dynatrace.com',
+    };
+    expect(() => getDynatraceEnv(env)).not.toThrow();
+  });
+
+  it('accepts DT_ENVIRONMENT with apps.dynatrace.com with trailing slash', () => {
+    const env = {
+      ...baseEnv,
+      DT_ENVIRONMENT: 'https://env123.apps.dynatrace.com/',
+    };
+    expect(() => getDynatraceEnv(env)).not.toThrow();
+  });
+
+  it('accepts DT_ENVIRONMENT with apps.dynatracelabs.com with trailing slash', () => {
+    const env = {
+      ...baseEnv,
+      DT_ENVIRONMENT: 'https://xyz789.apps.dynatracelabs.com/',
     };
     expect(() => getDynatraceEnv(env)).not.toThrow();
   });
