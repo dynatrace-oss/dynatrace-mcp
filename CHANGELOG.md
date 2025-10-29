@@ -1,5 +1,12 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## Unreleased Changes
+
+### Tools
+
+- Added `status` parameter to `list_problems` tool to filter problems by status (ACTIVE, CLOSED, or ALL).
+- Added `timeframe` parameter to `list_problems` tool to support flexible time ranges (e.g., "12h", "24h", "7d", "30d"). Default: "24h".
+
 ## 0.12.0
 
 - Fixed OAuth callback URL to work in GitHub Codespaces by detecting the environment and using the forwarded URL instead of localhost
