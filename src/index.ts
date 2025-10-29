@@ -14,11 +14,12 @@ import { createDtHttpClient } from './authentication/dynatrace-clients';
 import { listVulnerabilities } from './capabilities/list-vulnerabilities';
 import { listProblems } from './capabilities/list-problems';
 import { getEventsForCluster } from './capabilities/get-events-for-cluster';
-import { createWorkflowForProblemNotification } from './capabilities/create-workflow-for-problem-notification';
-import { updateWorkflow } from './capabilities/update-workflow';
-import { executeDql, verifyDqlStatement } from './capabilities/execute-dql';
+import { listDavisAnalyzers, executeDavisAnalyzer } from './capabilities/davis-analyzers';
 import { sendSlackMessage } from './capabilities/send-slack-message';
 import { sendEmail } from './capabilities/send-email';
+import { executeDql, verifyDqlStatement } from './capabilities/execute-dql';
+import { createWorkflowForProblemNotification } from './capabilities/create-workflow-for-problem-notification';
+import { updateWorkflow } from './capabilities/update-workflow';
 import {
   findMonitoredEntitiesByName,
   findMonitoredEntityViaSmartscapeByName,
@@ -71,6 +72,10 @@ const allRequiredScopes = scopesBase.concat([
   'davis-copilot:nl2dql:execute', // Convert natural language to DQL
   'davis-copilot:dql2nl:execute', // Convert DQL to natural language
   'davis-copilot:conversations:execute', // Chat with Davis CoPilot
+
+  // Davis Analyzers scopes
+  'davis:analyzers:read', // Read analyzer definitions
+  'davis:analyzers:execute', // Execute analyzers
 
   // Automation/Workflows scopes
   'automation:workflows:write', // Create and modify workflows
@@ -1186,6 +1191,102 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
         return resp;
       } else {
         return 'No exceptions found';
+      }
+    },
+  );
+
+  tool(
+    'list_davis_analyzers',
+    'List all available Davis Analyzers in Dynatrace (forecast, anomaly detection, correlation analyzers, and more)',
+    {},
+    {
+      readOnlyHint: true,
+    },
+    async ({}) => {
+      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('davis:analyzers:read'));
+      const analyzers = await listDavisAnalyzers(dtClient);
+
+      if (analyzers.length === 0) {
+        return 'No Davis Analyzers found.';
+      }
+
+      let resp = `Found ${analyzers.length} Davis Analyzers:\n\n`;
+      analyzers.forEach((analyzer) => {
+        resp += `**${analyzer.displayName}** (${analyzer.name})\n`;
+        resp += `Type: ${analyzer.type}\n`;
+        resp += `Category: ${analyzer.category || 'N/A'}\n`;
+        resp += `Description: ${analyzer.description}\n`;
+        if (analyzer.labels && analyzer.labels.length > 0) {
+          resp += `Labels: ${analyzer.labels.join(', ')}\n`;
+        }
+        resp += '\n';
+      });
+
+      resp += '\n**Next Steps:**\n';
+      resp +=
+        'Use the "execute_davis_analyzer" tool to run a specific analyzer by providing its name and required input parameters.\n';
+
+      return resp;
+    },
+  );
+
+  tool(
+    'execute_davis_analyzer',
+    'Execute a Davis Analyzer with custom input parameters. Use "list_davis_analyzers" first to see available analyzers and their names.',
+    {
+      analyzerName: z
+        .string()
+        .describe('The name of the Davis Analyzer to execute (e.g., "dt.statistics.GenericForecastAnalyzer")'),
+      input: z.record(z.any()).optional().describe('Input parameters for the analyzer as a JSON object'),
+      timeframeStart: z.string().optional().default('now-1h').describe('Start time for the analysis (default: now-1h)'),
+      timeframeEnd: z.string().optional().default('now').describe('End time for the analysis (default: now)'),
+    },
+    {
+      readOnlyHint: true,
+    },
+    async ({ analyzerName, input = {}, timeframeStart = 'now-1h', timeframeEnd = 'now' }) => {
+      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('davis:analyzers:execute'));
+
+      try {
+        // Execute Davis Analyzer
+        const result = await executeDavisAnalyzer(dtClient, analyzerName, {
+          generalParameters: {
+            timeframe: {
+              startTime: timeframeStart,
+              endTime: timeframeEnd,
+            },
+          },
+          ...input,
+        });
+
+        let resp = `Davis Analyzer Execution Result:\n\n`;
+        resp += `**Analyzer:** ${analyzerName}\n`;
+        resp += `**Execution Status:** ${result.executionStatus}\n`;
+        resp += `**Result Status:** ${result.resultStatus}\n\n`;
+
+        if (result.logs && result.logs.length > 0) {
+          resp += `**Logs:**\n`;
+          result.logs.forEach((log: any) => {
+            resp += `- ${log.level}: ${log.message}\n`;
+          });
+          resp += '\n';
+        }
+
+        // Note: result.output may be empty, but the result status might still be SUCCESS
+        // This indicates for instance that no anomalies were found
+        if (result.output && result.output.length > 0) {
+          resp += `**Output:**\n`;
+          result.output.forEach((output: any, index: number) => {
+            resp += `Output ${index + 1}:\n`;
+            resp += JSON.stringify(output, null, 2) + '\n\n';
+          });
+        } else {
+          resp += `**Output:** No output/findings returned by the analyzer.\n`;
+        }
+
+        return resp;
+      } catch (error: any) {
+        return `Error executing Davis Analyzer: ${error.message}`;
       }
     },
   );

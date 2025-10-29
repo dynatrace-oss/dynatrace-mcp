@@ -50,6 +50,12 @@ Please do not install any other dependencies.
 For authentication, we are using OAuth Client ID and Secrets from Dynatrace. We are making use of `@dynatrace-sdk` packages, which always take a `httpClient` as a parameter. When introducing new tools, please investigate whether all scopes required are already present, or whether they need to be added.
 Make sure to not just update the code, but also update README.md with those required scopes.
 
+**Important:** OAuth scopes must always be kept in sync between implementation and documentation:
+
+- Implementation: `src/index.ts` defines all scopes in the `allRequiredScopes` array
+- Documentation: `README.md` section "Scopes for Authentication" lists all scopes with descriptions
+- Use the same scope names and maintain consistent descriptions
+
 ## Building and Running
 
 Try to build every change using `npm run build`, and verify that you can still start the server using `npm start`. The server should be able to run without any errors.
