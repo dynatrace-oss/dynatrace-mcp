@@ -1,5 +1,16 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## Unreleased Changes
+
+### Tools
+
+- Added `list_davis_analyzers` tool to list all available Davis Analyzers including forecast, anomaly detection, and correlation analyzers
+- Added `execute_davis_analyzer` tool to execute Davis Analyzers with custom input parameters and timeframe configuration
+
+### Scopes
+
+- Added OAuth scopes `davis:analyzers:read` and `davis:analyzers:execute` to support Davis Analyzer operations
+
 ## 0.12.0
 
 - Fixed OAuth callback URL to work in GitHub Codespaces by detecting the environment and using the forwarded URL instead of localhost
