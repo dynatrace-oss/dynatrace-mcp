@@ -13,3 +13,6 @@ tsconfig.tsbuildinfo
 # mcp registry
 .mcpregistry_github_token
 .mcpregistry_registry_token
+
+# Jest coverage output
+coverage/
