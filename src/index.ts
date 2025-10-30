@@ -66,7 +66,7 @@ if (dotEnvOutput.error) {
   );
 }
 
-const DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID = 'dt0s08.dt-app-local'; // ToDo: Register our own oauth client
+const DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID = 'dt0s12.local-dt-mcp-server';
 
 // Base Scopes for MCP Server tools
 let scopesBase = [
