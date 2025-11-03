@@ -20,7 +20,7 @@ permissions:
 jobs:
   osv-scan:
     name: OSV Full Scan
-    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.2.3
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.2.4
     with:
       # Optional: override default scan arguments (defaults already recursive). Keep explicit for clarity.
       scan-args: |-
