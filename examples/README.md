@@ -7,14 +7,14 @@
 ## Prompts
 
 Use these example prompts as a starting point. Just copy them into your IDE or agent setup, adapt them to your services/stack/architecture,
-and extend them as needed. They're here to help you imagine how real-time observability and automation work together in the MCP context in your IDE.
+and extend them as needed. They're here to help you imagine how real-time observability and automation work together within the MCP context in your IDE.
 
 ### **Basic Queries & AI Assistance**
 
 **Find a monitored entity**
 
 ```
-Get all details of the entity 'my-service-name'
+Get all details of the entity 'my-service'
 ```
 
 or

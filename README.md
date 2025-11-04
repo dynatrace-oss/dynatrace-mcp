@@ -378,7 +378,7 @@ Depending on the features you are using, the following scopes are needed:
 
 ## ✨ Example prompts ✨
 
-You can start with something simple as "Is my component monitored by Dynatrace?", and follow up with more sophisitcated [examples](examples/).
+You can start with something as simple as "Is my component monitored by Dynatrace?", and follow up with more sophisticated [examples](examples/).
 
 ## Troubleshooting
 
