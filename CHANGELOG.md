@@ -6,6 +6,11 @@
 
 - Added `status` parameter to `list_problems` tool to filter problems by status (ACTIVE, CLOSED, or ALL).
 - Added `timeframe` parameter to `list_problems` tool to support flexible time ranges (e.g., "12h", "24h", "7d", "30d"). Default: "24h".
+- Removed `get_ownership` tool as it no longer works with OAuth Clients.
+
+### Scopes
+
+- Removed `settings:objects:read` and `environment-api:entities:read` scopes, as they are no longer required
 
 ## 0.12.0
 

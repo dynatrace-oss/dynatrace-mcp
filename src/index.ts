@@ -24,7 +24,6 @@ import { getPackageJsonVersion } from './utils/version';
 import { createDtHttpClient } from './authentication/dynatrace-clients';
 import { listVulnerabilities } from './capabilities/list-vulnerabilities';
 import { listProblems } from './capabilities/list-problems';
-import { getOwnershipInformation } from './capabilities/get-ownership-information';
 import { getEventsForCluster } from './capabilities/get-events-for-cluster';
 import { createWorkflowForProblemNotification } from './capabilities/create-workflow-for-problem-notification';
 import { updateWorkflow } from './capabilities/update-workflow';
@@ -90,8 +89,6 @@ const allRequiredScopes = scopesBase.concat([
 
   // Settings and configuration scopes
   'app-settings:objects:read', // Read app settings objects
-  'settings:objects:read', // Read settings objects
-  'environment-api:entities:read', // Read entities via environment API
 
   // Davis CoPilot scopes
   'davis-copilot:nl2dql:execute', // Convert natural language to DQL
@@ -1028,28 +1025,6 @@ const main = async () => {
       }
 
       return 'No events found for the specified Kubernetes cluster. Try to leave clusterId and kubernetesEntityId empty to get events from all clusters.';
-    },
-  );
-
-  tool(
-    'get_ownership',
-    'Get detailed Ownership information for one or multiple entities on Dynatrace',
-    {
-      entityIds: z.string().optional().describe('Comma separated list of entityIds'),
-    },
-    {
-      readOnlyHint: true,
-    },
-    async ({ entityIds }) => {
-      const dtClient = await createAuthenticatedHttpClient(
-        scopesBase.concat('environment-api:entities:read', 'settings:objects:read'),
-      );
-      console.error(`Fetching ownership for ${entityIds}`);
-      const ownershipInformation = await getOwnershipInformation(dtClient, entityIds);
-      console.error(`Done!`);
-      let resp = 'Ownership information:\n';
-      resp += JSON.stringify(ownershipInformation);
-      return resp;
     },
   );
 
