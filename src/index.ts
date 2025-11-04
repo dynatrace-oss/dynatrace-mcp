@@ -229,16 +229,19 @@ const main = async () => {
     cb: (args: z.objectOutputType<ZodRawShape, ZodTypeAny>) => Promise<string>,
   ) => {
     const wrappedCb = async (args: ZodRawShape): Promise<CallToolResult> => {
-      // track starttime for telemetry
+      // Capture starttime for telemetry and rate limiting
       const startTime = Date.now();
 
-      // Rate limiting: check 5 requests per 20 seconds
-      const now = Date.now();
-      const twentySecondsAgo = now - 20000;
+      /**
+       * Rate Limit: Max. 5 requests per 20 seconds
+       */
+      const twentySecondsAgo = startTime - 20000;
 
-      // Check per minute: maximum 20 calls in last 60 seconds
-      const recentCalls = toolCallTimestamps.filter((ts) => ts > twentySecondsAgo);
-      if (recentCalls.length >= 5) {
+      // First, remove all tool calls older than 20s
+      toolCallTimestamps = toolCallTimestamps.filter((ts) => ts > twentySecondsAgo);
+
+      // Second, check whether we have 5 or more calls in the past 20s
+      if (toolCallTimestamps.length >= 5) {
         return {
           content: [
             { type: 'text', text: 'Rate limit exceeded: Maximum 5 tool calls per 20 seconds. Please try again later.' },
@@ -247,10 +250,9 @@ const main = async () => {
         };
       }
 
-      // Record this call
-      toolCallTimestamps.push(now);
-      // Clean up old timestamps to prevent memory leak
-      toolCallTimestamps = toolCallTimestamps.filter((ts) => ts > twentySecondsAgo);
+      // Last but not least, record this call
+      toolCallTimestamps.push(startTime);
+      /** Rate Limit End */
 
       // track toolcall for telemetry
       let toolCallSuccessful = false;
