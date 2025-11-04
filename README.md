@@ -330,10 +330,10 @@ Depending on the features you are using, the following scopes are needed:
 **Available for both Platform Tokens and OAuth Clients:**
 
 - `app-engine:apps:run` - needed for almost all tools
-- `environment-api:entities:read` - for retrieving ownership details from monitored entities (_currently not available for Platform Tokens_)
 - `automation:workflows:read` - read Workflows
 - `automation:workflows:write` - create and update Workflows
 - `automation:workflows:run` - run Workflows
+- `app-settings:objects:read` - read app-settings - needed for `send_slack_message` tool to read connection details from App-Settings
 - `storage:buckets:read` - needed for `execute_dql` tool to read all system data stored on Grail
 - `storage:logs:read` - needed for `execute_dql` tool to read logs for reliability guardian validations
 - `storage:metrics:read` - needed for `execute_dql` tool to read metrics for reliability guardian validations
@@ -350,14 +350,11 @@ Depending on the features you are using, the following scopes are needed:
 - `davis-copilot:nl2dql:execute` - execute Davis Copilot Natural Language (NL) to DQL skill
 - `davis-copilot:dql2nl:execute` - execute DQL to Natural Language (NL) skill
 - `email:emails:send` - needed for `send_email` tool to send emails
-- `settings:objects:read` - needed for reading ownership information and Guardians (SRG) from settings
 
 **Notes**:
 
-- Please ensure that `settings:objects:read` is used, and _not_ the similarly named scope `app-settings:objects:read`.
 - Versions before 0.12.0 required the scope `app-engine:functions:run`, which is no longer required.
-
-**Important**: Some features requiring `environment-api:entities:read` will not work with Platform Tokens.
+- Versions before 0.13.0 required the scopes `settings:objects:read` and `environment-api:entities:read`, which are no longer required.
 
 ## ✨ Example prompts ✨
 
