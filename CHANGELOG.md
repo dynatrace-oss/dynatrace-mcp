@@ -2,10 +2,12 @@
 
 ## Unreleased Changes
 
+## 0.13.0
+
 ### Tools
 
-- Added `status` parameter to `list_problems` tool to filter problems by status (ACTIVE, CLOSED, or ALL).
-- Added `timeframe` parameter to `list_problems` tool to support flexible time ranges (e.g., "12h", "24h", "7d", "30d"). Default: "24h".
+- Added `status` parameter to `list_problems` tool, enabling you to filter problems by status (ACTIVE, CLOSED, or ALL).
+- Added `timeframe` parameter to `list_problems` tool, providing support for flexible time ranges (e.g., "12h", "24h", "7d", "30d"). Default: "24h".
 - Removed `get_ownership` tool as it no longer works with OAuth Clients.
 
 ### Scopes
