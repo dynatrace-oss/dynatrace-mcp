@@ -1,6 +1,6 @@
 {
   "name": "@dynatrace-oss/dynatrace-mcp-server",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "mcpName": "io.github.dynatrace-oss/Dynatrace-mcp",
   "description": "Model Context Protocol (MCP) server for Dynatrace",
   "keywords": [
