@@ -39,13 +39,13 @@ export async function executeDavisAnalyzer(
   const response = await analyzersClient.executeAnalyzer({
     analyzerName,
     body: {
+      ...input,
       generalParameters: {
         timeframe: {
           startTime: 'now-1h',
           endTime: 'now',
         },
       },
-      ...input,
     },
   });
 

@@ -1167,7 +1167,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
 
   tool(
     'list_davis_analyzers',
-    'List all available Davis Analyzers in Dynatrace, including forecast, anomaly detection, and correlation analyzers.',
+    'List all available Davis Analyzers in Dynatrace (forecast, anomaly detection, correlation analyzers, and more)',
     {},
     {
       readOnlyHint: true,
@@ -1218,6 +1218,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
       const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('davis:analyzers:execute'));
 
       try {
+        // Execute Davis Analyzer
         const result = await executeDavisAnalyzer(dtClient, analyzerName, {
           generalParameters: {
             timeframe: {
