@@ -25,7 +25,6 @@
 
 - Removed `settings:objects:read` and `environment-api:entities:read` scopes, as they are no longer required
 
-
 ## 0.12.0
 
 - Fixed OAuth callback URL to work in GitHub Codespaces by detecting the environment and using the forwarded URL instead of localhost
