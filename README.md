@@ -204,6 +204,7 @@ The [Amazon Kiro](https://kiro.dev/) is an agentic IDE that helps you do your be
   }
 }
 ```
+
 This configuration should be stored in `<your-repo>/.kiro/settings/mcp.json`.
 
 **Google Gemini CLI**
