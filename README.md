@@ -369,6 +369,8 @@ Depending on the features you are using, the following scopes are needed:
 - `davis-copilot:conversations:execute` - execute conversational skill (chat with Copilot)
 - `davis-copilot:nl2dql:execute` - execute Davis Copilot Natural Language (NL) to DQL skill
 - `davis-copilot:dql2nl:execute` - execute DQL to Natural Language (NL) skill
+- `davis:analyzers:read` - needed for listing and getting Davis analyzer definitions
+- `davis:analyzers:execute` - needed for executing Davis analyzers
 - `email:emails:send` - needed for `send_email` tool to send emails
 
 **Notes**:
