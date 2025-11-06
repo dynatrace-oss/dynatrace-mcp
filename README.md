@@ -189,7 +189,7 @@ This configuration should be stored in `<your-repo>/.amazonq/mcp.json`.
 
 **Amazon Kiro**
 
-The [Amazon Kiro](https://kiro.dev/) is an agentic IDE that helps you do your best work with features such as specs, steering, and hooks..
+The [Amazon Kiro](https://kiro.dev/) is an agentic IDE that helps you do your best work with features such as specs, steering, and hooks.
 
 ```json
 {
