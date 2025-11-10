@@ -7,7 +7,7 @@ export const listExceptions = async (
   timeframe: string = '24h',
   maxResultRecords: number = 5000,
 ) => {
-  // DQL Statement from Problems App to fetch all Davis Problems for the last 12 hours to now
+  // DQL statement to fetch exception data from user.events for the specified timeframe
   const dql = `fetch user.events, from: now()-${timeframe}, to: now()
 | filter isNotNull(exception.stack_trace)
 | filter isNotNull(error.id)
