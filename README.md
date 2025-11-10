@@ -187,6 +187,26 @@ The [Amazon Q Developer CLI](https://docs.aws.amazon.com/amazonq/latest/qdevelop
 
 This configuration should be stored in `<your-repo>/.amazonq/mcp.json`.
 
+**Amazon Kiro**
+
+The [Amazon Kiro](https://kiro.dev/) is an agentic IDE that helps you do your best work with features such as specs, steering, and hooks.
+
+```json
+{
+  "mcpServers": {
+    "dynatrace-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
+      "env": {
+        "DT_ENVIRONMENT": ""
+      }
+    }
+  }
+}
+```
+
+This configuration should be stored in `<your-repo>/.kiro/settings/mcp.json`.
+
 **Google Gemini CLI**
 
 The [Google Gemini CLI](https://github.com/google-gemini/gemini-cli) is Google's official command-line AI assistant that supports MCP server integration. You can add the Dynatrace MCP server using either the built-in management commands or manual configuration.

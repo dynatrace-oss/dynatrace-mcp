@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Added rate limiting to tool calls: maximum 5 calls per 20 second
+
 ## 0.13.0
 
 ### Tools

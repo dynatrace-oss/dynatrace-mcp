@@ -58,6 +58,9 @@ if (dotEnvOutput.error) {
 
 const DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID = 'dt0s12.local-dt-mcp-server';
 
+// Rate limiting state: store timestamps of tool calls
+let toolCallTimestamps: number[] = [];
+
 // Base Scopes for MCP Server tools
 let scopesBase = [
   'app-engine:apps:run', // needed for environmentInformationClient
@@ -218,8 +221,31 @@ const main = async () => {
     cb: (args: z.objectOutputType<ZodRawShape, ZodTypeAny>) => Promise<string>,
   ) => {
     const wrappedCb = async (args: ZodRawShape): Promise<CallToolResult> => {
-      // track starttime for telemetry
+      // Capture starttime for telemetry and rate limiting
       const startTime = Date.now();
+
+      /**
+       * Rate Limit: Max. 5 requests per 20 seconds
+       */
+      const twentySecondsAgo = startTime - 20000;
+
+      // First, remove all tool calls older than 20s
+      toolCallTimestamps = toolCallTimestamps.filter((ts) => ts > twentySecondsAgo);
+
+      // Second, check whether we have 5 or more calls in the past 20s
+      if (toolCallTimestamps.length >= 5) {
+        return {
+          content: [
+            { type: 'text', text: 'Rate limit exceeded: Maximum 5 tool calls per 20 seconds. Please try again later.' },
+          ],
+          isError: true,
+        };
+      }
+
+      // Last but not least, record this call
+      toolCallTimestamps.push(startTime);
+      /** Rate Limit End */
+
       // track toolcall for telemetry
       let toolCallSuccessful = false;
 
