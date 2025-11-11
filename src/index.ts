@@ -1182,9 +1182,6 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
         scopesBase.concat('storage:user.events:read', 'storage:buckets:read'),
       );
 
-      const environmentInformationClient = new EnvironmentInformationClient(dtClient);
-      const environmentInfo = await environmentInformationClient.getEnvironmentInformation();
-
       // get exceptions (uses fetch)
       const result = await listExceptions(dtClient, additionalFilter, timeframe, maxExceptionsToDisplay);
       if (result && result.records && result.records.length > 0) {
@@ -1198,10 +1195,11 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
           }
         });
 
-        resp += `\nNext Steps:
-          \n1. Use "execute_dql" tool with the following query to get more details about a specific stack trace:
-          "fetch user.events, from: now()-<timeframe>, to: now() | filter error.id == toUid(\"<error.id>\")" to get all occurrences with stack traces (exception.stack_trace) of this exception within this timeframe or use additional filters like dt.rum.application.id, dt.rum.application.entity or os.name as needed.
-          \n2. Tell the user to visit ${environmentInfo.environmentId}.dev.apps.dynatracelabs.com/ui/apps/dynatrace.error.inspector/explorer?tf=now-<timeframe>%3Bnow&perspective=impact&detailsId=<error.id>&sidebarOpen=false&expandedSections=details&tab=occurrence&group=occurrences for more details.`;
+        resp +=
+          `\nNext Steps:` +
+          `\n1. Use "execute_dql" tool with the following query to get more details about a specific stack trace:` +
+          `\n"fetch user.events, from: now()-<timeframe>, to: now() | filter error.id == toUid(\"<error.id>\")" to get all occurrences with stack traces (exception.stack_trace) of this exception within this timeframe or use additional filters like dt.rum.application.id, dt.rum.application.entity or os.name as needed.` +
+          `\n2. Tell the user to visit ${dtEnvironment}/ui/apps/dynatrace.error.inspector/explorer?tf=now-<timeframe>%3Bnow&perspective=impact&detailsId=<error.id>&sidebarOpen=false&expandedSections=details&tab=occurrence&group=occurrences for more details.`;
 
         return resp;
       } else {
