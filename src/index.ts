@@ -4,17 +4,7 @@ import { isClientRequestError } from '@dynatrace-sdk/shared-errors';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import {
-  CallToolRequest,
-  CallToolRequestSchema,
-  CallToolResult,
-  ListToolsRequestSchema,
-  NotificationSchema,
-  Tool,
-  ToolAnnotations,
-  ElicitRequest,
-  ElicitResult,
-} from '@modelcontextprotocol/sdk/types.js';
+import { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 import { config } from 'dotenv';
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { Command } from 'commander';
@@ -47,6 +37,7 @@ import { getEntityTypeFromId } from './utils/dynatrace-entity-types';
 import { resetGrailBudgetTracker, getGrailBudgetTracker } from './utils/grail-budget-tracker';
 import { handleClientRequestError } from './utils/dynatrace-connection-utils';
 import { configureProxyFromEnvironment } from './utils/proxy-config';
+import { listExceptions } from './capabilities/list-exceptions';
 
 // Load environment variables from .env file if available, and suppress warnings/logging to stdio
 // as it breaks MCP communication when using stdio transport
@@ -80,6 +71,7 @@ let scopesBase = [
 const allRequiredScopes = scopesBase.concat([
   // Storage (Grail) scopes
   'storage:events:read', // Read events from Grail
+  'storage:user.events:read', // Read user events from Grail
   'storage:buckets:read', // Read all system data stored on Grail
   'storage:security.events:read', // Read Security events from Grail
   'storage:entities:read', // Read classic Entities
@@ -1157,6 +1149,62 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
       responseMessage += `\nNext Steps:\n- Delivery is asynchronous.\n- Investigate any invalid, bouncing, or complaining destinations before retrying.`;
 
       return responseMessage;
+    },
+  );
+
+  tool(
+    'list_exceptions',
+    'List all exceptions known on Dynatrace starting with the most recent.',
+    {
+      timeframe: z
+        .string()
+        .optional()
+        .default('24h')
+        .describe(
+          'Timeframe to query problems (e.g., "12h", "24h", "7d", "30d", "30m"). Default: "24h". Supports days (d), hours (h) and minutes (m).',
+        ),
+      additionalFilter: z
+        .string()
+        .optional()
+        .describe(
+          'Additional DQL filter for user.events - filter by error id like \'error.id == "<error.id>"\', application id like \'dt.rum.application.id == "<dt.rum.application.id>"\', application entity like \'dt.rum.application.entity == "<dt.rum.application.entity>"\' or operating system name like \'os.name == "<os.name>"\'. Leave empty to get all exceptions within the timeframe.',
+        ),
+      maxExceptionsToDisplay: z
+        .number()
+        .default(10)
+        .describe('Maximum number of exceptions to display in the response.'),
+    },
+    {
+      readOnlyHint: true,
+    },
+    async ({ timeframe, additionalFilter, maxExceptionsToDisplay }) => {
+      const dtClient = await createAuthenticatedHttpClient(
+        scopesBase.concat('storage:user.events:read', 'storage:buckets:read'),
+      );
+
+      // get exceptions (uses fetch)
+      const result = await listExceptions(dtClient, additionalFilter, timeframe, maxExceptionsToDisplay);
+      if (result && result.records && result.records.length > 0) {
+        let resp = `Found ${result.records.length} exceptions! Displaying the top ${maxExceptionsToDisplay} exceptions:\n`;
+        // iterate over dqlResponse and create a string with the exception details, but only show the top maxExceptionsToDisplay exceptions
+        result.records.slice(0, maxExceptionsToDisplay).forEach((exception) => {
+          if (exception) {
+            resp += `At start_time ${exception['start_time']} the exception with error.type ${exception['error.type']}, error.id ${exception['error.id']} and os.name ${exception['os.name']}
+                  happened for dt.rum.application.id ${exception['dt.rum.application.id']} with dt.rum.application.entity ${exception['dt.rum.application.entity']}.\n\n
+                  The exception.message is ${exception['exception.message']}\n\n\n`;
+          }
+        });
+
+        resp +=
+          `\nNext Steps:` +
+          `\n1. Use "execute_dql" tool with the following query to get more details about a specific stack trace:` +
+          `\n"fetch user.events, from: now()-<timeframe>, to: now() | filter error.id == toUid(\"<error.id>\")" to get all occurrences with stack traces (exception.stack_trace) of this exception within this timeframe or use additional filters like dt.rum.application.id, dt.rum.application.entity or os.name as needed.` +
+          `\n2. Tell the user to visit ${dtEnvironment}/ui/apps/dynatrace.error.inspector/explorer?tf=now-<timeframe>%3Bnow&perspective=impact&detailsId=<error.id>&sidebarOpen=false&expandedSections=details&tab=occurrence&group=occurrences for more details.`;
+
+        return resp;
+      } else {
+        return 'No exceptions found';
+      }
     },
   );
 
