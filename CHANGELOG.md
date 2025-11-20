@@ -2,7 +2,8 @@
 
 ## Unreleased Changes
 
-- Added rate limiting to tool calls: maximum 5 calls per 20 second
+- Added rate limiting to tool calls: maximum 5 calls per 20 second.
+- Fixed zod version mismatch that caused errors during parameterized tool calls.
 
 ## 0.13.0
 
