@@ -1,6 +1,8 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
-## Unreleased Changes
+## 0.13.1
+
+- Fixed zod version mismatch that caused errors during parameterized tool calls.
 
 ## 0.13.0
 
