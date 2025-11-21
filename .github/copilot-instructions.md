@@ -39,7 +39,6 @@ Please try to follow basic TypeScript and Node.js coding conventions. We will de
 The following dependencies are allowed:
 
 - Core MCP SDK (`@modelcontextprotocol/sdk`),
-- environment utilities (`dotenv`),
 - ZOD schema validation (`zod-to-json-schema`),
 - the Dynatrace app framework (`dt-app`),
 - and `@dynatrace-sdk` packages.
