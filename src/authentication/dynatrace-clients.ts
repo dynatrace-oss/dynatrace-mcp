@@ -1,5 +1,5 @@
 import { HttpClient, PlatformHttpClient } from '@dynatrace-sdk/http-client';
-import { getSSOUrl } from 'dt-app';
+import { _GetSSOUrl as getSSOUrl } from 'dt-app';
 import { getUserAgent } from '../utils/user-agent';
 import { performOAuthAuthorizationCodeFlow, refreshAccessToken } from './dynatrace-oauth-auth-code-flow';
 import { globalTokenCache } from './token-cache';
