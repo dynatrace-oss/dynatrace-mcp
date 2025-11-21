@@ -4,6 +4,7 @@
 
 - Added rate limiting to tool calls: maximum 5 calls per 20 second.
 - Fixed zod version mismatch that caused errors during parameterized tool calls.
+- Refactored environment variable handling to remove `dotenv` dependency from production code in favour of [--env-files](https://nodejs.org/docs/v24.5.0/api/environment_variables.html#env-files).
 
 ## 0.13.0
 
