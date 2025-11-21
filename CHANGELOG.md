@@ -14,6 +14,7 @@
 ### Scopes
 
 - Added OAuth scopes `davis:analyzers:read` and `davis:analyzers:execute` to support Davis Analyzer operations
+- Improve `list_problems` tool to call `chat_with_davis_copilot` with context.
 
 ## 0.13.0
 

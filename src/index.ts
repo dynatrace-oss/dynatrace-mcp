@@ -460,7 +460,7 @@ const main = async () => {
             aws.account.id, azure.resource.group, azure.subscription, cloud.provider, cloud.region,
             dt.cost.costcenter, dt.cost.product, dt.host_group.id, dt.security_context, gcp.project.id,
             host.name, k8s.cluster.name, k8s.cluster.uid, k8s.container.name, k8s.namespace.name, k8s.node.name, k8s.pod.name, k8s.service.name, k8s.workload.kind, k8s.workload.name"` +
-          `\n2. Use "chat_with_davis_copilot" tool and provide \`problemId\` as context, to get insights about a specific problem via Davis Copilot.` +
+          `\n2. Use "chat_with_davis_copilot" tool and provide \`problemId\` along with all details from step 1 as context, to get insights about a specific problem via Davis Copilot (e.g., provide actionable steps to solve problem P-<problem-id>).` +
           `\n3. Tell the user to visit ${dtEnvironment}/ui/apps/dynatrace.davis.problems/problem/<problem-id> for more details.`;
 
         return resp;
@@ -822,7 +822,12 @@ const main = async () => {
     'Use this tool to ask any Dynatrace related question, in case no other more specific tool is available.',
     {
       text: z.string().describe('Your question or request for Davis CoPilot'),
-      context: z.string().optional().describe('Optional context to provide additional information'),
+      context: z
+        .string()
+        .optional()
+        .describe(
+          'Optional context to provide additional information (like problem details, vulnerability details, entity information)',
+        ),
       instruction: z.string().optional().describe('Optional instruction for how to format the response'),
     },
     {
