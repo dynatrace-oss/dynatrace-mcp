@@ -1,6 +1,6 @@
 import { createDtHttpClient } from './dynatrace-clients';
 import { PlatformHttpClient } from '@dynatrace-sdk/http-client';
-import { getSSOUrl } from 'dt-app';
+import { _GetSSOUrl as getSSOUrl } from 'dt-app';
 import { OAuthTokenResponse } from './types';
 import { performOAuthAuthorizationCodeFlow } from './dynatrace-oauth-auth-code-flow';
 import { globalTokenCache } from './token-cache';
