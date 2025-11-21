@@ -4,6 +4,7 @@
 
 - Added rate limiting to tool calls: maximum 5 calls per 20 second.
 - Fixed zod version mismatch that caused errors during parameterized tool calls.
+- Improve `list_problems` tool to call `chat_with_davis_copilot` with context.
 
 ## 0.13.0
 
