@@ -5,7 +5,6 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
-import { config } from 'dotenv';
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { Command } from 'commander';
 import { z, ZodRawShape, ZodTypeAny } from 'zod';
@@ -38,23 +37,6 @@ import { resetGrailBudgetTracker, getGrailBudgetTracker } from './utils/grail-bu
 import { handleClientRequestError } from './utils/dynatrace-connection-utils';
 import { configureProxyFromEnvironment } from './utils/proxy-config';
 import { listExceptions } from './capabilities/list-exceptions';
-
-// Load environment variables from .env file if available, and suppress warnings/logging to stdio
-// as it breaks MCP communication when using stdio transport
-const dotEnvOutput = config({ quiet: true });
-
-if (dotEnvOutput.error) {
-  // Only log error if it's not about missing .env file
-  if ((dotEnvOutput.error as NodeJS.ErrnoException).code !== 'ENOENT') {
-    console.error('Error loading .env file:', dotEnvOutput.error);
-    process.exit(1);
-  }
-} else {
-  // Successfully loaded .env file
-  console.error(
-    `.env file loaded successfully - loaded ${dotEnvOutput.parsed ? Object.keys(dotEnvOutput.parsed).length : 0} environment variables: ${Object.keys(dotEnvOutput.parsed || {}).join(', ')}`,
-  );
-}
 
 const DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID = 'dt0s12.local-dt-mcp-server';
 
