@@ -56,7 +56,7 @@
     "@modelcontextprotocol/sdk": "^1.8.0",
     "commander": "^14.0.0",
     "dotenv": "^17.2.1",
-    "dt-app": "^0.148.1",
+    "dt-app": "^1.3.1",
     "open": "^8.4.2",
     "zod-to-json-schema": "~3.24.5"
   },
