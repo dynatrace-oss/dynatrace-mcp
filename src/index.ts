@@ -1019,7 +1019,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
     .version(getPackageJsonVersion())
     .option('--http', 'enable HTTP server mode instead of stdio')
     .option('--server', 'enable HTTP server mode (alias for --http)')
-    .option('-p, --port <number>', 'port for HTTP server', '3000')
+    .option('-p, --port <number>', 'port for HTTP server', '5001')
     .option('-H, --host <host>', 'host for HTTP server', '0.0.0.0')
     .parse();
 
