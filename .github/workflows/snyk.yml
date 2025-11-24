@@ -21,7 +21,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@v1.0.0
