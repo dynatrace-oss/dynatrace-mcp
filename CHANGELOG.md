@@ -85,7 +85,8 @@
 ## 0.9.0
 
 **Highlights**
-🔑 **Simplified Authentication**: Added OAuth authorization code flow. Users can now simply set `DT_ENVIRONMENT` and complete an interactive browser authentication flow.
+
+- 🔑 **Simplified Authentication**: Added OAuth authorization code flow. Users can now simply set `DT_ENVIRONMENT` and complete an interactive browser authentication flow.
 
 ### Other Changes
 
@@ -107,9 +108,10 @@
 ## 0.7.0
 
 **Highlights**
-🔒 Human approval for critical operations
-🔍 Enhanced entity discovery with automatic detection
-🛠️ Improved error handling and internal optimizations
+
+- 🔒 Human approval for critical operations
+- 🔍 Enhanced entity discovery with automatic detection
+- 🛠️ Improved error handling and internal optimizations
 
 ### Tools
 
@@ -130,10 +132,11 @@
 ## 0.6.0
 
 **Highlights**:
-💰 Grail budget tracking and cost control
-📧 Send findings via E-Mail via the Dynatrace E-Mail API
-🔧 Enhanced tool annotations for better LLM integration
-🏪 Published to official MCP Registry and GitHub MCP Registry
+
+- 💰 Grail budget tracking and cost control
+- 📧 Send findings via E-Mail via the Dynatrace E-Mail API
+- 🔧 Enhanced tool annotations for better LLM integration
+- 🏪 Published to official MCP Registry and GitHub MCP Registry
 
 ### Scopes
 
@@ -177,10 +180,11 @@
 ## 0.5.0
 
 **Highlights**:
-🚀 Davis CoPilot AI, supporting natural language to DQL
-🌐 HTTP transport support
-🔑 Platform Token authentication
-📚 Tool consolidation into `execute_dql`
+
+- 🚀 Davis CoPilot AI, supporting natural language to DQL
+- 🌐 HTTP transport support
+- 🔑 Platform Token authentication
+- 📚 Tool consolidation into `execute_dql`
 
 ### Scopes
 
