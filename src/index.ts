@@ -255,7 +255,7 @@ const main = async () => {
           };
         }
         // else: We don't know what kind of error happened - best case we can log the error and provide error.message as a tool response
-        console.log(error);
+        console.error(error);
         return {
           content: [{ type: 'text', text: `Error: ${error.message}` }],
           isError: true,
