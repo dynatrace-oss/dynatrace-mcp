@@ -6,9 +6,9 @@
 
 **Highlights**:
 
-🧠 Davis Analyzers integration for advanced forecasting and anomaly detection
-⚡ Rate limiting and performance improvements
-🔧 Streamlined environment variable handling
+- 🧠 Davis Analyzers integration for advanced forecasting and anomaly detection
+- ⚡ Rate limiting and performance improvements
+- 🔧 Streamlined environment variable handling
 
 ### Tools
 
