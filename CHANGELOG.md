@@ -2,19 +2,29 @@
 
 ## Unreleased Changes
 
-- Added rate limiting to tool calls: maximum 5 calls per 20 second.
-- Fixed zod version mismatch that caused errors during parameterized tool calls.
-- Refactored environment variable handling to remove `dotenv` dependency from production code in favour of [--env-files](https://nodejs.org/docs/v24.5.0/api/environment_variables.html#env-files).
+## 1.0.0
+
+**Highlights**:
+
+🧠 Davis Analyzers integration for advanced forecasting and anomaly detection
+⚡ Rate limiting and performance improvements
+🔧 Streamlined environment variable handling
 
 ### Tools
 
-- Added `list_davis_analyzers` tool to list all available Davis Analyzers including forecast, anomaly detection, and correlation analyzers
-- Added `execute_davis_analyzer` tool to execute Davis Analyzers with custom input parameters and timeframe configuration
+- Added `list_davis_analyzers` tool to list all available Davis Analyzers, including forecast, anomaly detection, and correlation analyzers, enabling you to discover powerful analysis capabilities
+- Added `execute_davis_analyzer` tool to execute Davis Analyzers with custom input parameters and timeframe configuration, providing advanced forecasting and anomaly detection capabilities
+- Improved `list_problems` tool to call `chat_with_davis_copilot` with context, enhancing problem analysis with AI-powered insights
 
 ### Scopes
 
 - Added OAuth scopes `davis:analyzers:read` and `davis:analyzers:execute` to support Davis Analyzer operations
-- Improve `list_problems` tool to call `chat_with_davis_copilot` with context.
+
+### Other Changes
+
+- Added rate limiting to tool calls with a maximum of 5 calls per 20 seconds, ensuring stable performance and preventing API overload
+- Fixed zod version mismatch that caused errors during parameterized tool calls, improving reliability and compatibility
+- **Breaking**: Refactored environment variable handling to remove `dotenv` dependency from production code in favor of Node.js native `--env-file` flag, streamlining the setup process and reducing dependencies
 
 ## 0.13.0
 
