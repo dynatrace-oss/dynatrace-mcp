@@ -8,6 +8,3 @@
 # allow updates for markdown files and server.json
 *.md @krisdyna @dt-benedict
 server.json @krisdyna @dt-benedict
-
-# allow updates of agent rules
-dynatrace-agent-rules/** @dt-benedict

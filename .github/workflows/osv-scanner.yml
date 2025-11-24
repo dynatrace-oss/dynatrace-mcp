@@ -1,0 +1,34 @@
+name: OSV Scanner
+
+# Scans the repository for vulnerable dependencies using Google's OSV Scanner
+# Docs: https://google.github.io/osv-scanner/github-action/
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 3 * * 1' # Every Monday at 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  actions: read # required by reusable workflow to checkout and run
+  contents: read # minimal read access
+  security-events: write # needed to upload SARIF to code scanning
+
+jobs:
+  osv-scan:
+    name: OSV Full Scan
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.3.0
+    with:
+      # Optional: override default scan arguments (defaults already recursive). Keep explicit for clarity.
+      scan-args: |-
+        --recursive
+        ./
+      upload-sarif: true
+      fail-on-vuln: false
+    permissions:
+      actions: read
+      contents: read
+      security-events: write

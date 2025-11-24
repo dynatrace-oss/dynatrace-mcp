@@ -1,0 +1,49 @@
+name: Snyk Security Scan
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  merge_group: # run if triggered as part of a merge queue
+  push:
+    branches: [main]
+  release:
+    types: [published]
+
+jobs:
+  snyk:
+    name: Snyk Security Scan
+    runs-on: ubuntu-latest
+    # Skip Snyk for PRs from forks since secrets are not available
+    if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name != 'pull_request'
+    permissions:
+      # Required to fetch internal or private CodeCommits
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@v1.0.0
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_API_TOKEN }}
+        with:
+          # Fail the build on high severity vulnerabilities
+          args: --severity-threshold=high
+
+      - name: Run Snyk Monitor
+        # Only monitor on main branch pushes and releases, not on PRs
+        if: github.event_name != 'pull_request' && github.event_name != 'merge_group'
+        uses: snyk/actions/node@v1.0.0
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_API_TOKEN }}
+        with:
+          command: monitor
+          args: >-
+            --all-projects
+            --target-reference=${{ github.ref_name }}
+            --project-environment=external
+            --project-lifecycle=development
+            --project-business-criticality=low
+            --project-tags=team=team-se-cloud-automation,ticket-creation=true
+            --exclude=node_modules

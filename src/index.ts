@@ -1,26 +1,11 @@
 #!/usr/bin/env node
 import { EnvironmentInformationClient } from '@dynatrace-sdk/client-platform-management-service';
-import {
-  ClientRequestError,
-  isApiClientError,
-  isApiGatewayError,
-  isClientRequestError,
-} from '@dynatrace-sdk/shared-errors';
+import { isClientRequestError } from '@dynatrace-sdk/shared-errors';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import {
-  CallToolRequest,
-  CallToolRequestSchema,
-  CallToolResult,
-  ListToolsRequestSchema,
-  NotificationSchema,
-  Tool,
-  ToolAnnotations,
-} from '@modelcontextprotocol/sdk/types.js';
-import { config } from 'dotenv';
+import { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
-import { randomUUID } from 'node:crypto';
 import { Command } from 'commander';
 import { z, ZodRawShape, ZodTypeAny } from 'zod';
 
@@ -28,109 +13,84 @@ import { getPackageJsonVersion } from './utils/version';
 import { createDtHttpClient } from './authentication/dynatrace-clients';
 import { listVulnerabilities } from './capabilities/list-vulnerabilities';
 import { listProblems } from './capabilities/list-problems';
-import { getMonitoredEntityDetails } from './capabilities/get-monitored-entity-details';
-import { getOwnershipInformation } from './capabilities/get-ownership-information';
 import { getEventsForCluster } from './capabilities/get-events-for-cluster';
-import { createWorkflowForProblemNotification } from './capabilities/create-workflow-for-problem-notification';
-import { updateWorkflow } from './capabilities/update-workflow';
-import { executeDql, verifyDqlStatement } from './capabilities/execute-dql';
+import { listDavisAnalyzers, executeDavisAnalyzer } from './capabilities/davis-analyzers';
 import { sendSlackMessage } from './capabilities/send-slack-message';
 import { sendEmail } from './capabilities/send-email';
-import { findMonitoredEntityByName } from './capabilities/find-monitored-entity-by-name';
+import { executeDql, verifyDqlStatement } from './capabilities/execute-dql';
+import { createWorkflowForProblemNotification } from './capabilities/create-workflow-for-problem-notification';
+import { updateWorkflow } from './capabilities/update-workflow';
+import {
+  findMonitoredEntitiesByName,
+  findMonitoredEntityViaSmartscapeByName,
+} from './capabilities/find-monitored-entity-by-name';
 import {
   chatWithDavisCopilot,
   explainDqlInNaturalLanguage,
   generateDqlFromNaturalLanguage,
+  isDavisCopilotSkillAvailable,
+  DAVIS_COPILOT_DOCS,
 } from './capabilities/davis-copilot';
 import { DynatraceEnv, getDynatraceEnv } from './getDynatraceEnv';
 import { createTelemetry, Telemetry } from './utils/telemetry-openkit';
 import { getEntityTypeFromId } from './utils/dynatrace-entity-types';
-import { Http2ServerRequest } from 'node:http2';
 import { resetGrailBudgetTracker, getGrailBudgetTracker } from './utils/grail-budget-tracker';
-import { read } from 'node:fs';
+import { handleClientRequestError } from './utils/dynatrace-connection-utils';
+import { configureProxyFromEnvironment } from './utils/proxy-config';
+import { listExceptions } from './capabilities/list-exceptions';
 
-config();
+const DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID = 'dt0s12.local-dt-mcp-server';
 
+// Rate limiting state: store timestamps of tool calls
+let toolCallTimestamps: number[] = [];
+
+// Base Scopes for MCP Server tools
 let scopesBase = [
   'app-engine:apps:run', // needed for environmentInformationClient
-  'app-engine:functions:run', // needed for environmentInformationClient
 ];
 
-/**
- * Performs a connection test to the Dynatrace environment.
- * Throws an error if the connection or authentication fails.
- */
-async function testDynatraceConnection(
-  dtEnvironment: string,
-  oauthClientId?: string,
-  oauthClientSecret?: string,
-  dtPlatformToken?: string,
-) {
-  const dtClient = await createDtHttpClient(
-    dtEnvironment,
-    scopesBase,
-    oauthClientId,
-    oauthClientSecret,
-    dtPlatformToken,
-  );
-  const environmentInformationClient = new EnvironmentInformationClient(dtClient);
-  // This call will fail if authentication is incorrect.
-  await environmentInformationClient.getEnvironmentInformation();
-}
+// All scopes needed by the MCP server tools
+// Requesting all scopes upfront allows us to reuse a single token for all operations
+const allRequiredScopes = scopesBase.concat([
+  // Storage (Grail) scopes
+  'storage:events:read', // Read events from Grail
+  'storage:user.events:read', // Read user events from Grail
+  'storage:buckets:read', // Read all system data stored on Grail
+  'storage:security.events:read', // Read Security events from Grail
+  'storage:entities:read', // Read classic Entities
+  'storage:smartscape:read', // Read Smartscape Entities from Grail
+  'storage:logs:read', // Read logs for reliability guardian validations
+  'storage:metrics:read', // Read metrics for reliability guardian validations
+  'storage:bizevents:read', // Read bizevents for reliability guardian validations
+  'storage:spans:read', // Read spans from Grail
+  'storage:system:read', // Read System Data from Grail
 
-function handleClientRequestError(error: ClientRequestError): string {
-  let additionalErrorInformation = '';
-  if (error.response.status === 403) {
-    additionalErrorInformation =
-      'Note: Your user or service-user is most likely lacking the necessary permissions/scopes for this API Call.';
-  }
-  return `Client Request Error: ${error.message} with HTTP status: ${error.response.status}. ${additionalErrorInformation} (body: ${JSON.stringify(error.body)})`;
-}
+  // Settings and configuration scopes
+  'app-settings:objects:read', // Read app settings objects
 
-/**
- * Try to connect to Dynatrace environment with retries and exponential backoff.
- */
-async function retryTestDynatraceConnection(
-  dtEnvironment: string,
-  oauthClientId?: string,
-  oauthClientSecret?: string,
-  dtPlatformToken?: string,
-) {
-  let retryCount = 0;
-  const maxRetries = 3; // Max retries
-  const delayMs = 2000; // Initial delay of 2 seconds
-  while (true) {
-    try {
-      console.error(
-        `Testing connection to Dynatrace environment: ${dtEnvironment}... (Attempt ${retryCount + 1} of ${maxRetries})`,
-      );
-      await testDynatraceConnection(dtEnvironment, oauthClientId, oauthClientSecret, dtPlatformToken);
-      console.error(`Successfully connected to the Dynatrace environment at ${dtEnvironment}.`);
-      break;
-    } catch (error: any) {
-      console.error(`Error: Could not connect to the Dynatrace environment.`);
-      if (isClientRequestError(error)) {
-        console.error(handleClientRequestError(error));
-      } else {
-        console.error(`Error: ${error.message}`);
-      }
-      retryCount++;
-      if (retryCount >= maxRetries) {
-        console.error(`Fatal: Maximum number of connection retries (${maxRetries}) exceeded. Exiting.`);
-        throw new Error(
-          `Failed to connect to Dynatrace environment ${dtEnvironment} after ${maxRetries} attempts. Most likely your configuration is incorrect. Last error: ${error.message}`,
-          { cause: error },
-        );
-      }
-      const delay = Math.pow(2, retryCount) * delayMs; // Exponential backoff
-      console.error(`Retrying in ${delay / 1000} seconds...`);
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-  }
-}
+  // Davis CoPilot scopes
+  'davis-copilot:nl2dql:execute', // Convert natural language to DQL
+  'davis-copilot:dql2nl:execute', // Convert DQL to natural language
+  'davis-copilot:conversations:execute', // Chat with Davis CoPilot
+
+  // Davis Analyzers scopes
+  'davis:analyzers:read', // Read analyzer definitions
+  'davis:analyzers:execute', // Execute analyzers
+
+  // Automation/Workflows scopes
+  'automation:workflows:write', // Create and modify workflows
+  'automation:workflows:read', // Read workflows
+  'automation:workflows:run', // Execute workflows
+
+  // Communication scopes
+  'email:emails:send', // Send emails
+]);
 
 const main = async () => {
   console.error(`Initializing Dynatrace MCP Server v${getPackageJsonVersion()}...`);
+
+  // Configure proxy from environment variables early in the startup process
+  configureProxyFromEnvironment();
 
   // read Environment variables
   let dynatraceEnv: DynatraceEnv;
@@ -142,19 +102,14 @@ const main = async () => {
   }
 
   // Unpack environment variables
-  const { oauthClientId, oauthClientSecret, dtEnvironment, dtPlatformToken, slackConnectionId, grailBudgetGB } =
+  let { oauthClientId, oauthClientSecret, dtEnvironment, dtPlatformToken, slackConnectionId, grailBudgetGB } =
     dynatraceEnv;
 
-  // Test connection on startup
-  try {
-    await retryTestDynatraceConnection(dtEnvironment, oauthClientId, oauthClientSecret, dtPlatformToken);
-  } catch (err) {
-    console.error((err as Error).message);
-    process.exit(2);
+  // Infer OAuth auth code flow if no OAuth Client credentials are provided
+  if (!oauthClientId && !oauthClientSecret && !dtPlatformToken) {
+    console.error('No OAuth credentials or platform token provided - switching to OAuth authorization code flow.');
+    oauthClientId = DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID; // Default OAuth client ID for auth code flow
   }
-
-  // Ready to start the server
-  console.error(`Starting Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
   // Initialize usage tracking
   const telemetry = createTelemetry();
@@ -180,9 +135,69 @@ const main = async () => {
     {
       capabilities: {
         tools: {},
+        elicitation: {},
       },
     },
   );
+
+  // Helper function to create HTTP client with current auth settings
+  // This is used to provide global scopes for auth code flow
+  const createAuthenticatedHttpClient = async (scopes: string[]) => {
+    // If we use authorization code flow (e.g., oauthClientId is set, but oauthClientSecret is empty), we pass all scopes in.
+    // For all other cases, we use allRequiredScopes
+    return await createDtHttpClient(
+      dtEnvironment,
+      oauthClientId && !oauthClientSecret ? allRequiredScopes : scopes, // Always use all scopes for maximum reusability
+      oauthClientId,
+      oauthClientSecret,
+      dtPlatformToken,
+    );
+  };
+
+  // Try to establish a Dynatrace connection upfront, to see if everything is configured properly
+  console.error(`Testing connection to Dynatrace environment: ${dtEnvironment}...`);
+  // First, we will try a simple "fetch" to connect to dtEnvironment, without authentication
+  // This should help to see if DNS lookup works, TCP connection can be established, and TLS handshake works
+  try {
+    const response = await fetch(`${dtEnvironment}`).then((response) => response.text());
+    // check response
+    if (response && response.length > 0) {
+      if (response.includes('Authentication required')) {
+        // all good - we reached the environment and authentication is required, which is going to be the next step
+      } else {
+        console.error(`⚠️ Tried to contact ${dtEnvironment}, got the following response: ${response}`);
+        // Note: We won't error out yet, but this information could already be helpful for troubleshooting
+      }
+    } else {
+      throw new Error('No response received');
+    }
+  } catch (error: any) {
+    console.error(`❌ Failed to connect to Dynatrace environment ${dtEnvironment}:`, error.message);
+    console.error(error);
+    process.exit(3);
+  }
+
+  // Second, we will try with proper authentication
+  try {
+    const dtClient = await createAuthenticatedHttpClient(scopesBase);
+    const environmentInformationClient = new EnvironmentInformationClient(dtClient);
+
+    await environmentInformationClient.getEnvironmentInformation();
+
+    console.error(`✅ Successfully connected to the Dynatrace environment at ${dtEnvironment}.`);
+  } catch (error: any) {
+    if (isClientRequestError(error)) {
+      console.error(`❌ Failed to connect to Dynatrace environment ${dtEnvironment}:`, handleClientRequestError(error));
+    } else {
+      console.error(`❌ Failed to connect to Dynatrace environment ${dtEnvironment}:`, error.message);
+      // Logging more exhaustive error details for troubleshooting
+      console.error(error);
+    }
+    process.exit(2);
+  }
+
+  // Ready to start the server
+  console.error(`Starting Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
   // quick abstraction/wrapper to make it easier for tools to reply text instead of JSON
   const tool = (
@@ -193,8 +208,31 @@ const main = async () => {
     cb: (args: z.objectOutputType<ZodRawShape, ZodTypeAny>) => Promise<string>,
   ) => {
     const wrappedCb = async (args: ZodRawShape): Promise<CallToolResult> => {
-      // track starttime for telemetry
+      // Capture starttime for telemetry and rate limiting
       const startTime = Date.now();
+
+      /**
+       * Rate Limit: Max. 5 requests per 20 seconds
+       */
+      const twentySecondsAgo = startTime - 20000;
+
+      // First, remove all tool calls older than 20s
+      toolCallTimestamps = toolCallTimestamps.filter((ts) => ts > twentySecondsAgo);
+
+      // Second, check whether we have 5 or more calls in the past 20s
+      if (toolCallTimestamps.length >= 5) {
+        return {
+          content: [
+            { type: 'text', text: 'Rate limit exceeded: Maximum 5 tool calls per 20 seconds. Please try again later.' },
+          ],
+          isError: true,
+        };
+      }
+
+      // Last but not least, record this call
+      toolCallTimestamps.push(startTime);
+      /** Rate Limit End */
+
       // track toolcall for telemetry
       let toolCallSuccessful = false;
 
@@ -216,8 +254,8 @@ const main = async () => {
             isError: true,
           };
         }
-        // else: We don't know what kind of error happened - best-case we can provide error.message
-        console.log(error);
+        // else: We don't know what kind of error happened - best case we can log the error and provide error.message as a tool response
+        console.error(error);
         return {
           content: [{ type: 'text', text: `Error: ${error.message}` }],
           isError: true,
@@ -234,6 +272,40 @@ const main = async () => {
     server.tool(name, description, paramsSchema, annotations, (args: z.ZodRawShape) => wrappedCb(args));
   };
 
+  /**
+   * Helper function to request human approval for potentially sensitive operations
+   * @param operation - Description of the operation requiring approval
+   * @returns Promise<boolean> - true if approved, false if declined or cancelled
+   */
+  const requestHumanApproval = async (operation: string): Promise<boolean> => {
+    try {
+      const result = await server.server.elicitInput({
+        message: `Please review: ${operation}`,
+        requestedSchema: {
+          type: 'object',
+          properties: {
+            approval: {
+              type: 'boolean',
+              title: 'Approve this operation?',
+              description: 'Select true to approve this operation, or false to decline.',
+              default: false,
+            },
+          },
+          required: ['approval'],
+        },
+      });
+
+      if (result.action === 'accept' && result.content?.approval === true) {
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Failed to elicit human approval:', error);
+      return false; // Default to deny if elicitation fails
+    }
+  };
+
   /** Tool Definitions below */
 
   tool(
@@ -245,13 +317,7 @@ const main = async () => {
     },
     async ({}) => {
       // create an oauth-client
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase,
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
+      const dtClient = await createAuthenticatedHttpClient(scopesBase);
       const environmentInformationClient = new EnvironmentInformationClient(dtClient);
 
       const environmentInfo = await environmentInformationClient.getEnvironmentInformation();
@@ -266,7 +332,7 @@ const main = async () => {
 
   tool(
     'list_vulnerabilities',
-    'List all non-muted vulnerabilities from Dynatrace for the last 30 days. An additional filter can be provided using DQL filter.',
+    'Retrieve all active (non-muted) vulnerabilities from Dynatrace for the last 30 days. An additional filter can be provided using DQL filter (filter for a specific entity type and id).',
     {
       riskScore: z
         .number()
@@ -277,7 +343,8 @@ const main = async () => {
         .string()
         .optional()
         .describe(
-          'Additional filter for DQL statement for vulnerabilities, e.g., \'vulnerability.stack == "CODE_LIBRARY"\' or \'vulnerability.risk.level == "CRITICAL"\' or \'affected_entity.name contains "prod"\' or \'vulnerability.davis_assessment.exposure_status == "PUBLIC_NETWORK"\'',
+          'Additional DQL-based filter for accessing vulnerabilities, e.g., by entity type (preferred), like \'dt.entity.<service|host|application|$type> == "<entity-id>"\', by entity name (not recommended) \'affected_entity.name contains "<entity-name>"\' , or by tags \'entity_tags == array("dt.owner:team-foobar", "tag:tag")\'. ' +
+            'You can also filter by vulnerability details like \'vulnerability.stack == "CODE_LIBRARY"\' or \'vulnerability.risk.level == "CRITICAL"\' or \'vulnerability.davis_assessment.exposure_status == "PUBLIC_NETWORK"\'',
         ),
       maxVulnerabilitiesToDisplay: z
         .number()
@@ -288,22 +355,18 @@ const main = async () => {
       readOnlyHint: true,
     },
     async ({ riskScore, additionalFilter, maxVulnerabilitiesToDisplay }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
+      const dtClient = await createAuthenticatedHttpClient(
         scopesBase.concat(
           'storage:events:read',
           'storage:buckets:read',
           'storage:security.events:read', // Read Security events from Grail
         ),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
       );
       const result = await listVulnerabilities(dtClient, additionalFilter, riskScore);
       if (!result || result.length === 0) {
         return 'No vulnerabilities found in the last 30 days';
       }
-      let resp = `Found ${result.length} problems in the last 30 days! Displaying the top ${maxVulnerabilitiesToDisplay} problems:\n`;
+      let resp = `Found ${result.length} vulnerabilities in the last 30 days! Displaying the top ${maxVulnerabilitiesToDisplay} vulnerabilities:\n`;
       result.slice(0, maxVulnerabilitiesToDisplay).forEach((vulnerability) => {
         resp += `\n* ${vulnerability}`;
       });
@@ -338,29 +401,44 @@ const main = async () => {
 
   tool(
     'list_problems',
-    'List all problems (dt.davis.problems) known on Dynatrace, sorted by their recency, for the last 12h. An additional filter can be provided using DQL filter.',
+    'List all problems (based on "fetch dt.davis.problems") known on Dynatrace, sorted by their recency.',
     {
+      timeframe: z
+        .string()
+        .optional()
+        .default('24h')
+        .describe(
+          'Timeframe to query problems (e.g., "12h", "24h", "7d", "30d"). Default: "24h". Supports hours (h) and days (d).',
+        ),
+      status: z
+        .enum(['ACTIVE', 'CLOSED', 'ALL'])
+        .optional()
+        .default('ALL')
+        .describe(
+          'Fitler problems by their status. "ACTIVE": only active problems (those without an end time set), "CLOSED": only closed problems (those with an end time set), "ALL": active and closed problems (default)',
+        ),
       additionalFilter: z
         .string()
         .optional()
         .describe(
-          'Additional filter for DQL statement for dt.davis.problems, e.g., \'entity_tags == array("dt.owner:team-foobar", "tag:tag")\'',
+          'Additional DQL filter for dt.davis.problems - filter by entity type (preferred), like \'dt.entity.<service|host|application|$type> == "<entity-id>"\', or by entity tags \'entity_tags == array("dt.owner:team-foobar", "tag:tag")\'',
         ),
-      maxProblemsToDisplay: z.number().default(10).describe('Maximum number of problems to display in the response.'),
+      maxProblemsToDisplay: z
+        .number()
+        .min(1)
+        .max(5000)
+        .default(10)
+        .describe('Maximum number of problems to display in the response.'),
     },
     {
       readOnlyHint: true,
     },
-    async ({ additionalFilter, maxProblemsToDisplay }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
+    async ({ timeframe, status, additionalFilter, maxProblemsToDisplay }) => {
+      const dtClient = await createAuthenticatedHttpClient(
         scopesBase.concat('storage:events:read', 'storage:buckets:read'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
       );
       // get problems (uses fetch)
-      const result = await listProblems(dtClient, additionalFilter);
+      const result = await listProblems(dtClient, additionalFilter, status, timeframe);
       if (result && result.records && result.records.length > 0) {
         let resp = `Found ${result.records.length} problems! Displaying the top ${maxProblemsToDisplay} problems:\n`;
         // iterate over dqlResponse and create a string with the problem details, but only show the top maxProblemsToDisplay problems
@@ -368,21 +446,21 @@ const main = async () => {
           if (problem) {
             resp += `Problem ${problem['display_id']} (please refer to this problem with \`problemId\` or \`event.id\` ${problem['problem_id']}))
                   with event.status ${problem['event.status']}, event.category ${problem['event.category']}: ${problem['event.name']} -
-                  affects ${problem['affected_users_count']} users and ${problem['affected_entity_count']} entities for a duration of ${problem['duration']}\n`;
+                  affects ${problem['affected_users_count']} users and ${problem['affected_entity_count']} entities for a duration of ${problem['duration']}s\n`;
           }
         });
 
         resp +=
           `\nNext Steps:` +
           `\n1. Use "execute_dql" tool with the following query to get more details about a specific problem:
-          "fetch dt.davis.problems, from: now()-10h, to: now() | filter event.id == \"<problem-id>\" | fields event.description, event.status, event.category, event.start, event.end,
+          "fetch dt.davis.problems, from: now()-${timeframe}, to: now() | filter event.id == \"<problem-id>\" | fields event.description, event.status, event.category, event.start, event.end,
             root_cause_entity_id, root_cause_entity_name, duration, affected_entities_count,
             event_count, affected_users_count, problem_id, dt.davis.mute.status, dt.davis.mute.user,
             entity_tags, labels.alerting_profile, maintenance.is_under_maintenance,
             aws.account.id, azure.resource.group, azure.subscription, cloud.provider, cloud.region,
             dt.cost.costcenter, dt.cost.product, dt.host_group.id, dt.security_context, gcp.project.id,
             host.name, k8s.cluster.name, k8s.cluster.uid, k8s.container.name, k8s.namespace.name, k8s.node.name, k8s.pod.name, k8s.service.name, k8s.workload.kind, k8s.workload.name"` +
-          `\n2. Use "chat_with_davis_copilot" tool and provide \`problemId\` as context, to get insights about a specific problem via Davis Copilot.` +
+          `\n2. Use "chat_with_davis_copilot" tool and provide \`problemId\` along with all details from step 1 as context, to get insights about a specific problem via Davis Copilot (e.g., provide actionable steps to solve problem P-<problem-id>).` +
           `\n3. Tell the user to visit ${dtEnvironment}/ui/apps/dynatrace.davis.problems/problem/<problem-id> for more details.`;
 
         return resp;
@@ -394,78 +472,83 @@ const main = async () => {
 
   tool(
     'find_entity_by_name',
-    'Get the entityId of a monitored entity (service, host, process-group, application, kubernetes-node, ...) within the topology based on the name of the entity on Dynatrace',
+    'Find the entityId and type of a monitored entity (service, host, process-group, application, kubernetes-node, custom-app, ...) within the topology on Dynatrace, based on the name of the entity. Run this before querying data like logs, metrics, problems, events. If no entity name is known, make an educated guess with common identifiers like package.json `id`/`name`, helm chart names, kubernetes manifest names, and alike.',
     {
-      entityName: z.string().describe('Name of the entity to search for, e.g., "my-service" or "my-host"'),
-    },
-    {
-      readOnlyHint: true,
-    },
-    async ({ entityName }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase.concat('storage:entities:read'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
-      const entityResponse = await findMonitoredEntityByName(dtClient, entityName);
-      return entityResponse;
-    },
-  );
-
-  tool(
-    'get_entity_details',
-    'Get details of a monitored entity based on the entityId on Dynatrace',
-    {
-      entityId: z.string().optional(),
+      entityNames: z
+        .array(z.string())
+        .describe(
+          'Names of the entities to search for - try with one name at first (identifiers like package.json id), and only try with multiple names if the first search was unsuccessful',
+        ),
+      maxEntitiesToDisplay: z.number().default(10).describe('Maximum number of entities to display in the response.'),
+      extendedSearch: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe('Set this to true if you want a comprehensive search over all available entity types.'),
     },
     {
       readOnlyHint: true,
     },
-    async ({ entityId }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase.concat('storage:entities:read'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
+    async ({ entityNames, maxEntitiesToDisplay, extendedSearch }) => {
+      const dtClient = await createAuthenticatedHttpClient(
+        scopesBase.concat('storage:entities:read', 'storage:smartscape:read'),
       );
-      const entityDetails = await getMonitoredEntityDetails(dtClient, entityId);
 
-      if (!entityDetails) {
-        return `No entity found with entityId: ${entityId}`;
+      const smartscapeResult = await findMonitoredEntityViaSmartscapeByName(dtClient, entityNames);
+
+      if (smartscapeResult && smartscapeResult.records && smartscapeResult.records.length > 0) {
+        // Filter valid entities first, to ensure we display up to maxEntitiesToDisplay entities
+        const validSmartscapeEntities = smartscapeResult.records.filter(
+          (entity): entity is { id: string; type: string; name: string; [key: string]: any } =>
+            !!(entity && entity.id && entity.type && entity.name),
+        );
+
+        let resp = `Found ${validSmartscapeEntities.length} monitored entities via Smartscape! Displaying the first ${Math.min(maxEntitiesToDisplay, validSmartscapeEntities.length)} valid entities:\n`;
+
+        validSmartscapeEntities.slice(0, maxEntitiesToDisplay).forEach((entity) => {
+          resp += `- Entity '${entity.name}' of entity-type '${entity.type}' has entity id '${entity.id}' and tags ${entity['tags'] ? JSON.stringify(entity['tags']) : 'none'} - DQL Filter: '| filter dt.smartscape.${String(entity.type).toLowerCase()} == "${entity.id}"'\n`;
+        });
+
+        resp +=
+          '\n\n**Next Steps:**\n' +
+          '1. Fetch more details about the entity, using the `execute_dql` tool with the following DQL Statement: "smartscapeNodes \"<entity-type>\" | filter id == <entity-id>"\n' +
+          '2. Perform a sanity check that found entities are actually the ones you are looking for, by comparing name and by type (hosts vs. containers vs. apps vs. functions) and technology (Java, TypeScript, .NET) with what is available in the local source code repo.\n' +
+          '3. Find and investigate available metrics for relevant entities, by using the `execute_dql` tool with the following DQL statement: "fetch metric.series | filter dt.smartscape.<entity-type> == <entity-id> | limit 20"\n' +
+          '4. Find out whether any problems exist for this entity using the `list_problems` or `list_vulnerabilities` tool, and the provided DQL-Filter\n' +
+          '5. Explore dependency & relationships with: "smartscapeEdges \"*\" | filter source_id == <entity-id> or target_id == <entity-id>" to list inbound/outbound edges (depends_on, dependency_of, owned_by, part_of) for graph context\n';
+
+        return resp;
       }
 
-      let resp =
-        `Entity ${entityDetails.displayName} of type ${entityDetails.type} with \`entityId\` ${entityDetails.entityId}\n` +
-        `Properties: ${JSON.stringify(entityDetails.allProperties)}\n`;
+      // If no result from Smartscape, try the classic entities API
+      const result = await findMonitoredEntitiesByName(dtClient, entityNames, extendedSearch);
 
-      if (entityDetails.type == 'SERVICE') {
-        resp += `You can find more information about the service at ${dtEnvironment}/ui/apps/dynatrace.services/explorer?detailsId=${entityDetails.entityId}&sidebarOpen=false`;
-      } else if (entityDetails.type == 'HOST') {
-        resp += `You can find more information about the host at ${dtEnvironment}/ui/apps/dynatrace.infraops/hosts/${entityDetails.entityId}`;
-      } else if (entityDetails.type == 'KUBERNETES_CLUSTER') {
-        resp += `You can find more information about the cluster at ${dtEnvironment}/ui/apps/dynatrace.infraops/kubernetes/${entityDetails.entityId}`;
-      } else if (entityDetails.type == 'CLOUD_APPLICATION') {
-        resp += `You can find more details about the application at ${dtEnvironment}/ui/apps/dynatrace.kubernetes/explorer/workload?detailsId=${entityDetails.entityId}`;
-      }
+      if (result && result.records && result.records.length > 0) {
+        // Filter valid entities first, to ensure we display up to maxEntitiesToDisplay entities
+        const validClassicEntities = result.records.filter(
+          (entity): entity is { id: string; [key: string]: any } =>
+            !!(entity && entity.id && entity['entity.type'] && entity['entity.name']),
+        );
 
-      resp += `\n\n**Filter**:`;
+        let resp = `Found ${validClassicEntities.length} monitored entities! Displaying the first ${Math.min(maxEntitiesToDisplay, validClassicEntities.length)} entities:\n`;
 
-      // Use entityTypeTable as the filter (e.g., fetch logs | filter dt.entity.service == "SERVICE-1234")
-      if (entityDetails.entityTypeTable) {
-        resp += ` You can use the following filter to get relevant information from other tools: \`| filter ${entityDetails.entityTypeTable} == "${entityDetails.entityId}"\`. `;
+        // iterate over dqlResponse and create a string with the problem details, but only show the top maxEntitiesToDisplay problems
+        validClassicEntities.slice(0, maxEntitiesToDisplay).forEach((entity) => {
+          const entityType = getEntityTypeFromId(String(entity.id));
+          resp += `- Entity '${entity['entity.name']}' of entity-type '${entity['entity.type']}' has entity id '${entity.id}' and tags ${entity['tags'] ? entity['tags'] : 'none'} - DQL Filter: '| filter ${entityType} == "${entity.id}"'\n`;
+        });
+
+        resp +=
+          '\n\n**Next Steps:**\n' +
+          '1. Fetch more details about the entity, using the `execute_dql` tool with the following DQL Statements: "describe(dt.entity.<entity-type>)", and "fetch dt.entity.<entity-type> | filter id == <entity-id> | fieldsAdd <field-1>, <field-2>, ..."\n' +
+          '2. Perform a sanity check that found entities are actually the ones you are looking for, by comparing name and by type (hosts vs. containers vs. apps vs. functions) and technology (Java, TypeScript, .NET) with what is available in the local source code repo.\n' +
+          '3. Find and investigate available metrics for relevant entities, by using the `execute_dql` tool with the following DQL statement: "fetch metric.series | filter dt.entity.<entity-type> == <entity-id> | limit 20"\n' +
+          '4. Find out whether any problems exist for this entity using the `list_problems` or `list_vulnerabilities` tool, and the provided DQL-Filter\n';
+
+        return resp;
       } else {
-        resp += ` Try to use search command as follows: \`| search "${entityDetails.entityId}"\`. `;
+        return 'No monitored entity found with the specified name. Try to broaden your search term or check for typos.';
       }
-
-      resp += `\n\n**Next Steps**\n\n`;
-      resp += `1. Find available metrics for this entity, by using execute_dql tool with the following DQL statement: "fetch metric.series" and the filter defined above\n`;
-      resp += `2. Find out whether any problems exist for this entity using the list_problems tool\n`;
-      resp += `3. Explore logs for this entity by using execute_dql with "fetch logs" and applying the filter mentioned above'\n`;
-
-      return resp;
     },
   );
 
@@ -473,21 +556,26 @@ const main = async () => {
     'send_slack_message',
     'Sends a Slack message to a dedicated Slack Channel via Slack Connector on Dynatrace',
     {
-      channel: z.string().optional(),
-      message: z.string().optional(),
+      channel: z.string(),
+      message: z
+        .string()
+        .describe(
+          'Slack markdown supported. Avoid sending sensitive data like log lines. Focus on context, insights, links, and summaries.',
+        ),
     },
     {
       // not read-only, not open-world, not destructive
       readOnlyHint: false,
     },
     async ({ channel, message }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase.concat('app-settings:objects:read'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
+      // Request human approval before sending the message
+      const approved = await requestHumanApproval(`Send information via Slack to ${channel}`);
+
+      if (!approved) {
+        return 'Operation cancelled: Human approval was not granted for sending this Slack message.';
+      }
+
+      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('app-settings:objects:read'));
       const response = await sendSlackMessage(dtClient, slackConnectionId, channel, message);
 
       return `Message sent to Slack channel: ${JSON.stringify(response)}`;
@@ -496,7 +584,7 @@ const main = async () => {
 
   tool(
     'verify_dql',
-    'Verify a Dynatrace Query Language (DQL) statement on Dynatrace GRAIL before executing it. This step is recommended for DQL statements that have been dynamically created by non-expert tools. For statements coming from the `generate_dql_from_natural_language` tool as well as from documentation, this step can be omitted.',
+    'Syntactically verify a Dynatrace Query Language (DQL) statement on Dynatrace GRAIL before executing it. Recommended for generated DQL statements. Skip for statements created by `generate_dql_from_natural_language` tool, as well as from documentation.',
     {
       dqlStatement: z.string(),
     },
@@ -505,13 +593,7 @@ const main = async () => {
       idempotentHint: true, // same input always yields same output
     },
     async ({ dqlStatement }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase,
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
+      const dtClient = await createAuthenticatedHttpClient(scopesBase);
       const response = await verifyDqlStatement(dtClient, dqlStatement);
 
       let resp = 'DQL Statement Verification:\n';
@@ -526,7 +608,7 @@ const main = async () => {
       if (response.valid) {
         resp += `The DQL statement is valid - you can use the "execute_dql" tool.\n`;
       } else {
-        resp += `The DQL statement is invalid. Please adapt your statement.\n`;
+        resp += `The DQL statement is invalid. Please adapt your statement. Consider using "generate_dql_from_natural_language" tool for help.\n`;
       }
 
       return resp;
@@ -535,15 +617,22 @@ const main = async () => {
 
   tool(
     'execute_dql',
-    'Get Logs, Metrics, Spans or Events from Dynatrace GRAIL by executing a Dynatrace Query Language (DQL) statement. ' +
-      'You can also use the "generate_dql_from_natural_language" tool upfront to generate or refine a DQL statement based on your request. ' +
-      'Note: For more information about available fields for filters and aggregation, use the query "fetch dt.semantic_dictionary.models | filter data_object == \"logs\""',
+    'Get data like Logs, Metrics, Spans, Events, or Entity Data from Dynatrace GRAIL by executing a Dynatrace Query Language (DQL) statement. ' +
+      'Use the "generate_dql_from_natural_language" tool upfront to generate or refine a DQL statement based on your request. ' +
+      'To learn about possible fields available for filtering, use the query "fetch dt.semantic_dictionary.models | filter data_object == \"logs\""',
     {
       dqlStatement: z
         .string()
         .describe(
-          'DQL Statement (Ex: "fetch [logs, spans, events] | filter <some-filter> | summarize count(), by:{some-fields}.", or for metrics: "timeseries { avg(<metric-name>), value.A = avg(<metric-name>, scalar: true) }")',
+          'DQL Statement (Ex: "fetch [logs, spans, events, metric.series, ...], from: now()-4h, to: now() [| filter <some-filter>] [| summarize count(), by:{some-fields}]", or for metrics: "timeseries { avg(<metric-name>), value.A = avg(<metric-name>, scalar: true) }", or for entities via smartscape: "smartscapeNodes \"[*, HOST, PROCESS, ...]\" [| filter id == "<ENTITY-ID>"]"). ' +
+            'When querying data for a specific entity, call the `find_entity_by_name` tool first to get an appropriate filter like `dt.entity.service == "SERVICE-1234"` or `dt.entity.host == "HOST-1234"` to be used in the DQL statement. ',
         ),
+      recordLimit: z.number().optional().default(100).describe('Maximum number of records to return (default: 100)'),
+      recordSizeLimitMB: z
+        .number()
+        .optional()
+        .default(1)
+        .describe('Maximum size of the returned records in MB (default: 1MB)'),
     },
     {
       // not readonly (DQL statements may modify things), not idempotent (may change over time)
@@ -552,10 +641,9 @@ const main = async () => {
       // while we are not strictly talking to the open world here, the response from execute DQL could interpreted as a web-search, which often is referred to open-world
       openWorldHint: true,
     },
-    async ({ dqlStatement }) => {
+    async ({ dqlStatement, recordLimit = 100, recordSizeLimitMB = 1 }) => {
       // Create a HTTP Client that has all storage:*:read scopes
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
+      const dtClient = await createAuthenticatedHttpClient(
         scopesBase.concat(
           'storage:buckets:read', // Read all system data stored on Grail
           'storage:logs:read', // Read logs for reliability guardian validations
@@ -568,12 +656,14 @@ const main = async () => {
           'storage:user.events:read', // Read User events from Grail
           'storage:user.sessions:read', // Read User sessions from Grail
           'storage:security.events:read', // Read Security events from Grail
+          'storage:smartscape:read', // Read Smartscape Entities from Grail
         ),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
       );
-      const response = await executeDql(dtClient, { query: dqlStatement }, grailBudgetGB);
+      const response = await executeDql(
+        dtClient,
+        { query: dqlStatement, maxResultRecords: recordLimit, maxResultBytes: recordSizeLimitMB * 1024 * 1024 },
+        grailBudgetGB,
+      );
 
       if (!response) {
         return 'DQL execution failed or returned no result.';
@@ -597,9 +687,17 @@ const main = async () => {
 
         // Show budget status if available
         if (response.budgetState) {
-          const usagePercentage =
-            (response.budgetState.totalBytesScanned / response.budgetState.budgetLimitBytes) * 100;
-          result += ` (Session total: ${(response.budgetState.totalBytesScanned / (1000 * 1000 * 1000)).toFixed(2)} GB / ${response.budgetState.budgetLimitGB} GB budget, ${usagePercentage.toFixed(1)}% used)`;
+          const totalScannedGB = (response.budgetState.totalBytesScanned / (1000 * 1000 * 1000)).toFixed(2);
+
+          if (response.budgetState.budgetLimitGB > 0) {
+            const usagePercentage = (
+              (response.budgetState.totalBytesScanned / response.budgetState.budgetLimitBytes) *
+              100
+            ).toFixed(1);
+            result += ` (Session total: ${totalScannedGB} GB / ${response.budgetState.budgetLimitGB} GB budget, ${usagePercentage}% used)`;
+          } else {
+            result += ` (Session total: ${totalScannedGB} GB)`;
+          }
         }
         result += '\n';
 
@@ -616,6 +714,10 @@ const main = async () => {
 
       if (response.sampled !== undefined && response.sampled) {
         result += `- **⚠️ Sampling Used:** Yes (results may be approximate)\n`;
+      }
+
+      if (response.records.length === recordLimit) {
+        result += `- **⚠️ Record Limit Reached:** The result set was limited to ${recordLimit} records. Consider changing your query with a smaller timeframe, an aggregation or a more concise filter. Alternatively, increase the recordLimit if you expect more results.\n`;
       }
 
       result += `\n📋 **Query Results**: (${response.records?.length || 0} records):\n\n`;
@@ -640,13 +742,13 @@ const main = async () => {
       idempotentHint: true,
     },
     async ({ text }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase.concat('davis-copilot:nl2dql:execute'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
+      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('davis-copilot:nl2dql:execute'));
+
+      // Check if the nl2dql skill is available
+      const isAvailable = await isDavisCopilotSkillAvailable(dtClient, 'nl2dql');
+      if (!isAvailable) {
+        return `❌ The DQL generation skill is not available. Please visit: ${DAVIS_COPILOT_DOCS.ENABLE_COPILOT}`;
+      }
 
       const response = await generateDqlFromNaturalLanguage(dtClient, text);
 
@@ -687,13 +789,13 @@ const main = async () => {
       idempotentHint: true,
     },
     async ({ dql }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase.concat('davis-copilot:dql2nl:execute'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
+      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('davis-copilot:dql2nl:execute'));
+
+      // Check if the dql2nl skill is available
+      const isAvailable = await isDavisCopilotSkillAvailable(dtClient, 'dql2nl');
+      if (!isAvailable) {
+        return `❌ The DQL explanation skill is not available. Please visit: ${DAVIS_COPILOT_DOCS.ENABLE_COPILOT}`;
+      }
 
       const response = await explainDqlInNaturalLanguage(dtClient, dql);
 
@@ -717,10 +819,15 @@ const main = async () => {
 
   tool(
     'chat_with_davis_copilot',
-    'Use this tool in case no specific tool is available. Get an answer to any Dynatrace related question as well as troubleshooting, and guidance. *(Note: Davis CoPilot AI is GA, but the Davis CoPilot APIs are in preview)*',
+    'Use this tool to ask any Dynatrace related question, in case no other more specific tool is available.',
     {
       text: z.string().describe('Your question or request for Davis CoPilot'),
-      context: z.string().optional().describe('Optional context to provide additional information'),
+      context: z
+        .string()
+        .optional()
+        .describe(
+          'Optional context to provide additional information (like problem details, vulnerability details, entity information)',
+        ),
       instruction: z.string().optional().describe('Optional instruction for how to format the response'),
     },
     {
@@ -729,13 +836,13 @@ const main = async () => {
       openWorldHint: true, // web-search like characteristics
     },
     async ({ text, context, instruction }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase.concat('davis-copilot:conversations:execute'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
+      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('davis-copilot:conversations:execute'));
+
+      // Check if the conversation skill is available
+      const isAvailable = await isDavisCopilotSkillAvailable(dtClient, 'conversation');
+      if (!isAvailable) {
+        return `❌ The conversation skill is not available. Please visit: ${DAVIS_COPILOT_DOCS.ENABLE_COPILOT}`;
+      }
 
       const conversationContext: any[] = [];
 
@@ -805,12 +912,17 @@ const main = async () => {
       idempotentHint: false, // creating the same workflow multiple times is possible
     },
     async ({ problemType, teamName, channel, isPrivate }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
+      // ask for human approval
+      const approved = await requestHumanApproval(
+        `Create a workflow for notifying team ${teamName} via ${channel} about ${problemType} problems`,
+      );
+
+      if (!approved) {
+        return 'Operation cancelled: Human approval was not granted for creating this workflow.';
+      }
+
+      const dtClient = await createAuthenticatedHttpClient(
         scopesBase.concat('automation:workflows:write', 'automation:workflows:read', 'automation:workflows:run'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
       );
       const response = await createWorkflowForProblemNotification(dtClient, teamName, channel, problemType, isPrivate);
 
@@ -842,12 +954,17 @@ const main = async () => {
       idempotentHint: true, // making the same workflow public multiple times yields the same result
     },
     async ({ workflowId }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
+      // ask for human approval
+      const approved = await requestHumanApproval(
+        `Make workflow ${workflowId} publicly available to everyone on the Dynatrace Environment`,
+      );
+
+      if (!approved) {
+        return 'Operation cancelled: Human approval was not granted for making this workflow public.';
+      }
+
+      const dtClient = await createAuthenticatedHttpClient(
         scopesBase.concat('automation:workflows:write', 'automation:workflows:read', 'automation:workflows:run'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
       );
       const response = await updateWorkflow(dtClient, workflowId, {
         isPrivate: false,
@@ -865,49 +982,59 @@ const main = async () => {
         .string()
         .optional()
         .describe(
-          `The Kubernetes (K8s) Cluster Id, referred to as k8s.cluster.uid (this is NOT the Dynatrace environment)`,
+          `The Kubernetes Cluster Id, referred to as k8s.cluster.uid, usually seen when using "kubectl" - this is NOT the Dynatrace environment and not the Dynatrace Kubernetes Entity Id. Leave empty if you don't know the Cluster Id.`,
         ),
+      kubernetesEntityId: z
+        .string()
+        .optional()
+        .describe(
+          `The Dynatrace Kubernetes Entity Id, referred to as dt.entity.kubernetes_cluster. Leave empty if you don't know the Entity Id, or use the "find_entity_by_name" tool to find the cluster by name.`,
+        ),
+      eventType: z
+        .enum([
+          'OMPLIANCE_FINDING',
+          'COMPLIANCE_SCAN_COMPLETED',
+          'CUSTOM_INFO',
+          'DETECTION_FINDING',
+          'ERROR_EVENT',
+          'OSI_UNEXPECTEDLY_UNAVAILABLE',
+          'PROCESS_RESTART',
+          'RESOURCE_CONTENTION_EVENT',
+          'SERVICE_CLIENT_ERROR_RATE_INCREASED',
+          'SERVICE_CLIENT_SLOWDOWN',
+          'SERVICE_ERROR_RATE_INCREASED',
+          'SERVICE_SLOWDOWN',
+          'SERVICE_UNEXPECTED_HIGH_LOAD',
+          'SERVICE_UNEXPECTED_LOW_LOAD',
+        ])
+        .optional(),
+      maxEventsToDisplay: z.number().default(10).describe('Maximum number of events to display in the response.'),
     },
     {
       readOnlyHint: true,
     },
-    async ({ clusterId }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase.concat('storage:events:read'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
-      const events = await getEventsForCluster(dtClient, clusterId);
+    async ({ clusterId, kubernetesEntityId, eventType, maxEventsToDisplay }) => {
+      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('storage:events:read'));
+      const result = await getEventsForCluster(dtClient, clusterId, kubernetesEntityId, eventType);
 
-      return `Kubernetes Events:\n${JSON.stringify(events)}`;
-    },
-  );
+      if (result && result.records && result.records.length > 0) {
+        let resp = `Found ${result.records.length} events! Displaying the top ${maxEventsToDisplay} events:\n`;
+        // iterate over dqlResponse and create a string with the problem details, but only show the top maxEntitiesToDisplay problems
+        result.records.slice(0, maxEventsToDisplay).forEach((event) => {
+          if (event) {
+            resp += `- Event ${event['event.id']} (${event['event.type']}) on Kubernetes Entity ID ${event['dt.entity.kubernetes_cluster']} with status ${event['event.status']}: ${event['event.name']} - started at ${event['event.start']}, ended at ${event['event.end']}, duration: ${event['duration']}\n`;
+          }
+        });
 
-  tool(
-    'get_ownership',
-    'Get detailed Ownership information for one or multiple entities on Dynatrace',
-    {
-      entityIds: z.string().optional().describe('Comma separated list of entityIds'),
-    },
-    {
-      readOnlyHint: true,
-    },
-    async ({ entityIds }) => {
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase.concat('environment-api:entities:read', 'settings:objects:read'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
-      console.error(`Fetching ownership for ${entityIds}`);
-      const ownershipInformation = await getOwnershipInformation(dtClient, entityIds);
-      console.error(`Done!`);
-      let resp = 'Ownership information:\n';
-      resp += JSON.stringify(ownershipInformation);
-      return resp;
+        resp +=
+          `\nNext Steps:` +
+          `\n1. Consider filtering by \`eventType\` to find specific events of interest.` +
+          `\n2. Use "execute_dql" tool with the following query to get more details about a specific event: "fetch events | filter event.id == \"<event-id>\""`;
+
+        return resp;
+      }
+
+      return 'No events found for the specified Kubernetes cluster. Try to leave clusterId and kubernetesEntityId empty to get events from all clusters.';
     },
   );
 
@@ -952,7 +1079,11 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
       ccRecipients: z.array(z.string().email()).optional().describe('Array of email addresses for CC recipients'),
       bccRecipients: z.array(z.string().email()).optional().describe('Array of email addresses for BCC recipients'),
       subject: z.string().describe('Subject line of the email'),
-      body: z.string().describe('Body content of the email (plain text only)'),
+      body: z
+        .string()
+        .describe(
+          'Body content of the email (plain text only). Avoid sending sensitive data like log lines. Focus on context, insights, links, and summaries.',
+        ),
     },
     {
       openWorldHint: true, // email is as close to the open-world as we can get with our system
@@ -967,13 +1098,16 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
         );
       }
 
-      const dtClient = await createDtHttpClient(
-        dtEnvironment,
-        scopesBase.concat('email:emails:send'),
-        oauthClientId,
-        oauthClientSecret,
-        dtPlatformToken,
-      );
+      // Request human approval before sending the email
+      const allRecipients = [...toRecipients, ...(ccRecipients || []), ...(bccRecipients || [])];
+
+      const approved = await requestHumanApproval(`Send information via Email to ${allRecipients.join(', ')}`);
+
+      if (!approved) {
+        return 'Operation cancelled: Human approval was not granted for sending this email.';
+      }
+
+      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('email:emails:send'));
 
       const emailRequest = {
         toRecipients: { emailAddresses: toRecipients },
@@ -1007,6 +1141,158 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
       responseMessage += `\nNext Steps:\n- Delivery is asynchronous.\n- Investigate any invalid, bouncing, or complaining destinations before retrying.`;
 
       return responseMessage;
+    },
+  );
+
+  tool(
+    'list_exceptions',
+    'List all exceptions known on Dynatrace starting with the most recent.',
+    {
+      timeframe: z
+        .string()
+        .optional()
+        .default('24h')
+        .describe(
+          'Timeframe to query problems (e.g., "12h", "24h", "7d", "30d", "30m"). Default: "24h". Supports days (d), hours (h) and minutes (m).',
+        ),
+      additionalFilter: z
+        .string()
+        .optional()
+        .describe(
+          'Additional DQL filter for user.events - filter by error id like \'error.id == "<error.id>"\', application id like \'dt.rum.application.id == "<dt.rum.application.id>"\', application entity like \'dt.rum.application.entity == "<dt.rum.application.entity>"\' or operating system name like \'os.name == "<os.name>"\'. Leave empty to get all exceptions within the timeframe.',
+        ),
+      maxExceptionsToDisplay: z
+        .number()
+        .default(10)
+        .describe('Maximum number of exceptions to display in the response.'),
+    },
+    {
+      readOnlyHint: true,
+    },
+    async ({ timeframe, additionalFilter, maxExceptionsToDisplay }) => {
+      const dtClient = await createAuthenticatedHttpClient(
+        scopesBase.concat('storage:user.events:read', 'storage:buckets:read'),
+      );
+
+      // get exceptions (uses fetch)
+      const result = await listExceptions(dtClient, additionalFilter, timeframe, maxExceptionsToDisplay);
+      if (result && result.records && result.records.length > 0) {
+        let resp = `Found ${result.records.length} exceptions! Displaying the top ${maxExceptionsToDisplay} exceptions:\n`;
+        // iterate over dqlResponse and create a string with the exception details, but only show the top maxExceptionsToDisplay exceptions
+        result.records.slice(0, maxExceptionsToDisplay).forEach((exception) => {
+          if (exception) {
+            resp += `At start_time ${exception['start_time']} the exception with error.type ${exception['error.type']}, error.id ${exception['error.id']} and os.name ${exception['os.name']}
+                  happened for dt.rum.application.id ${exception['dt.rum.application.id']} with dt.rum.application.entity ${exception['dt.rum.application.entity']}.\n\n
+                  The exception.message is ${exception['exception.message']}\n\n\n`;
+          }
+        });
+
+        resp +=
+          `\nNext Steps:` +
+          `\n1. Use "execute_dql" tool with the following query to get more details about a specific stack trace:` +
+          `\n"fetch user.events, from: now()-<timeframe>, to: now() | filter error.id == toUid(\"<error.id>\")" to get all occurrences with stack traces (exception.stack_trace) of this exception within this timeframe or use additional filters like dt.rum.application.id, dt.rum.application.entity or os.name as needed.` +
+          `\n2. Tell the user to visit ${dtEnvironment}/ui/apps/dynatrace.error.inspector/explorer?tf=now-<timeframe>%3Bnow&perspective=impact&detailsId=<error.id>&sidebarOpen=false&expandedSections=details&tab=occurrence&group=occurrences for more details.`;
+
+        return resp;
+      } else {
+        return 'No exceptions found';
+      }
+    },
+  );
+
+  tool(
+    'list_davis_analyzers',
+    'List all available Davis Analyzers in Dynatrace (forecast, anomaly detection, correlation analyzers, and more)',
+    {},
+    {
+      readOnlyHint: true,
+    },
+    async ({}) => {
+      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('davis:analyzers:read'));
+      const analyzers = await listDavisAnalyzers(dtClient);
+
+      if (analyzers.length === 0) {
+        return 'No Davis Analyzers found.';
+      }
+
+      let resp = `Found ${analyzers.length} Davis Analyzers:\n\n`;
+      analyzers.forEach((analyzer) => {
+        resp += `**${analyzer.displayName}** (${analyzer.name})\n`;
+        resp += `Type: ${analyzer.type}\n`;
+        resp += `Category: ${analyzer.category || 'N/A'}\n`;
+        resp += `Description: ${analyzer.description}\n`;
+        if (analyzer.labels && analyzer.labels.length > 0) {
+          resp += `Labels: ${analyzer.labels.join(', ')}\n`;
+        }
+        resp += '\n';
+      });
+
+      resp += '\n**Next Steps:**\n';
+      resp +=
+        'Use the "execute_davis_analyzer" tool to run a specific analyzer by providing its name and required input parameters.\n';
+
+      return resp;
+    },
+  );
+
+  tool(
+    'execute_davis_analyzer',
+    'Execute a Davis Analyzer with custom input parameters. Use "list_davis_analyzers" first to see available analyzers and their names.',
+    {
+      analyzerName: z
+        .string()
+        .describe('The name of the Davis Analyzer to execute (e.g., "dt.statistics.GenericForecastAnalyzer")'),
+      input: z.record(z.any()).optional().describe('Input parameters for the analyzer as a JSON object'),
+      timeframeStart: z.string().optional().default('now-1h').describe('Start time for the analysis (default: now-1h)'),
+      timeframeEnd: z.string().optional().default('now').describe('End time for the analysis (default: now)'),
+    },
+    {
+      readOnlyHint: true,
+    },
+    async ({ analyzerName, input = {}, timeframeStart = 'now-1h', timeframeEnd = 'now' }) => {
+      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('davis:analyzers:execute'));
+
+      try {
+        // Execute Davis Analyzer
+        const result = await executeDavisAnalyzer(dtClient, analyzerName, {
+          generalParameters: {
+            timeframe: {
+              startTime: timeframeStart,
+              endTime: timeframeEnd,
+            },
+          },
+          ...input,
+        });
+
+        let resp = `Davis Analyzer Execution Result:\n\n`;
+        resp += `**Analyzer:** ${analyzerName}\n`;
+        resp += `**Execution Status:** ${result.executionStatus}\n`;
+        resp += `**Result Status:** ${result.resultStatus}\n\n`;
+
+        if (result.logs && result.logs.length > 0) {
+          resp += `**Logs:**\n`;
+          result.logs.forEach((log: any) => {
+            resp += `- ${log.level}: ${log.message}\n`;
+          });
+          resp += '\n';
+        }
+
+        // Note: result.output may be empty, but the result status might still be SUCCESS
+        // This indicates for instance that no anomalies were found
+        if (result.output && result.output.length > 0) {
+          resp += `**Output:**\n`;
+          result.output.forEach((output: any, index: number) => {
+            resp += `Output ${index + 1}:\n`;
+            resp += JSON.stringify(output, null, 2) + '\n\n';
+          });
+        } else {
+          resp += `**Output:** No output/findings returned by the analyzer.\n`;
+        }
+
+        return resp;
+      } catch (error: any) {
+        return `Error executing Davis Analyzer: ${error.message}`;
+      }
     },
   );
 
@@ -1153,7 +1439,8 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
           body = JSON.parse(rawBody);
         } catch (error) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid JSON' }));
+          // Respond with a JSON-RPC Parse error
+          res.end(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } }));
           return;
         }
       } else if (req.method === 'GET') {

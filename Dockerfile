@@ -1,5 +1,7 @@
 FROM node:22-alpine
 
+
+
 WORKDIR /app
 
 # Copiar archivos de configuración
@@ -13,8 +15,8 @@ RUN npm ci --omit=dev --ignore-scripts
 # Copiar código fuente
 COPY src/ ./src/
 
-# Compilar TypeScript
 RUN npx tsc --project tsconfig.prod.json
+
 
 # Exponer puerto
 EXPOSE 3000

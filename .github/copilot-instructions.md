@@ -39,7 +39,6 @@ Please try to follow basic TypeScript and Node.js coding conventions. We will de
 The following dependencies are allowed:
 
 - Core MCP SDK (`@modelcontextprotocol/sdk`),
-- environment utilities (`dotenv`),
 - ZOD schema validation (`zod-to-json-schema`),
 - the Dynatrace app framework (`dt-app`),
 - and `@dynatrace-sdk` packages.
@@ -50,6 +49,12 @@ Please do not install any other dependencies.
 
 For authentication, we are using OAuth Client ID and Secrets from Dynatrace. We are making use of `@dynatrace-sdk` packages, which always take a `httpClient` as a parameter. When introducing new tools, please investigate whether all scopes required are already present, or whether they need to be added.
 Make sure to not just update the code, but also update README.md with those required scopes.
+
+**Important:** OAuth scopes must always be kept in sync between implementation and documentation:
+
+- Implementation: `src/index.ts` defines all scopes in the `allRequiredScopes` array
+- Documentation: `README.md` section "Scopes for Authentication" lists all scopes with descriptions
+- Use the same scope names and maintain consistent descriptions
 
 ## Building and Running
 

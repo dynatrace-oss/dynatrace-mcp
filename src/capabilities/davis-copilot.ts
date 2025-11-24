@@ -29,6 +29,28 @@ import {
 // Re-export types that are used externally
 export type { Dql2NlResponse };
 
+// Documentation links for Davis Copilot
+export const DAVIS_COPILOT_DOCS = {
+  ENABLE_COPILOT:
+    'https://docs.dynatrace.com/docs/discover-dynatrace/platform/davis-ai/copilot/copilot-getting-started#enable-davis-copilot',
+} as const;
+
+/**
+ * Check if a specific Davis Copilot skill is available
+ * Returns true if the skill is available, false otherwise
+ */
+export const isDavisCopilotSkillAvailable = async (dtClient: HttpClient, skill: string): Promise<boolean> => {
+  try {
+    const client = new PublicClient(dtClient);
+    const response = await client.listAvailableSkills();
+    const availableSkills = response.skills || [];
+    return availableSkills.includes(skill as any);
+  } catch (error: any) {
+    // If Davis Copilot is not enabled or any other error occurs, return false
+    return false;
+  }
+};
+
 /**
  * Generate DQL from natural language
  * Converts plain English descriptions into powerful Dynatrace Query Language (DQL) statements.

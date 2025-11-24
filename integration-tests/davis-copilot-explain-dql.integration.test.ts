@@ -15,7 +15,6 @@ config();
 
 const scopesBase = [
   'app-engine:apps:run', // needed for environmentInformationClient
-  'app-engine:functions:run', // needed for environmentInformationClient
 ];
 
 describe('DQL Explanation Integration Tests', () => {
@@ -102,8 +101,17 @@ describe('DQL Explanation Integration Tests', () => {
 
     expect(response.status === 'SUCCESSFUL' || response.status === 'SUCCESSFUL_WITH_WARNINGS').toBeTruthy();
 
+    // Can say any of:
+    //   - "...calculate the total number of logs"
+    //   - "...calculate the total number of log entries"
+    //   - "...count the number of logs"
+    //   - "...count the number of log entries"
+    //
+    // Can also fail intermittently with:
+    //   - "I'm sorry, but I can't generate a response for you right now due to unusually high
+    //     demand. Please try again in a few minutes."
     expect(response.summary.toLowerCase()).toContain('group logs by');
-    expect(response.summary.toLowerCase()).toContain('calculate the total number of logs');
+    expect(response.summary.toLowerCase()).toMatch(/calculate the total number of log|count the number of log/);
     // The explanation should be reasonably detailed
     expect(response.explanation.length).toBeGreaterThan(50);
   });

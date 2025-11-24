@@ -9,10 +9,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Use Node.js # will read version from .nvmrc
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
 
@@ -22,8 +22,14 @@ jobs:
       - name: Prettier
         run: npm run prettier
 
-      - name: Test
-        run: npm run test:unit
+      - name: Run tests with coverage
+        run: npm run test:unit -- --coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-report
+          path: coverage/
 
       - name: Build
         run: npm run build

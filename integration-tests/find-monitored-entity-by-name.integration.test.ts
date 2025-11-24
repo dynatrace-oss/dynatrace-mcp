@@ -7,8 +7,9 @@
 
 import { config } from 'dotenv';
 import { createDtHttpClient } from '../src/authentication/dynatrace-clients';
-import { findMonitoredEntityByName } from '../src/capabilities/find-monitored-entity-by-name';
+import { findMonitoredEntitiesByName } from '../src/capabilities/find-monitored-entity-by-name';
 import { getDynatraceEnv, DynatraceEnv } from '../src/getDynatraceEnv';
+import { getEntityTypeFromId } from '../src/utils/dynatrace-entity-types';
 
 // Load environment variables
 config();
@@ -17,7 +18,6 @@ const API_RATE_LIMIT_DELAY = 100; // Delay in milliseconds to avoid hitting API 
 
 const scopesBase = [
   'app-engine:apps:run', // needed for environmentInformationClient
-  'app-engine:functions:run', // needed for environmentInformationClient
 ];
 
 const scopesEntitySearch = [
@@ -60,27 +60,25 @@ describe('Find Monitored Entity by Name Integration Tests', () => {
 
     // Search for an entity name that is very unlikely to exist
     const searchTerm = 'this-entity-definitely-does-not-exist-12345';
+    const extendedSearch = false;
 
-    const response = await findMonitoredEntityByName(dtClient, searchTerm);
+    const response = await findMonitoredEntitiesByName(dtClient, [searchTerm], extendedSearch);
 
     expect(response).toBeDefined();
-    expect(typeof response).toBe('string');
-    expect(response).toBe('No monitored entity found with the specified name.');
+    expect(response?.records).toBeDefined();
+    expect(response?.records?.length).toEqual(0);
   }, 30_000); // Increased timeout for API calls
 
-  test('should handle search with empty string', async () => {
+  test('should handle search with empty list', async () => {
     const dtClient = await createHttpClient();
 
     // Test with empty string
-    const searchTerm = '';
+    const searchTerms = [] as string[];
+    const extendedSearch = false;
 
-    const response = await findMonitoredEntityByName(dtClient, searchTerm);
-
-    expect(response).toBeDefined();
-    expect(typeof response).toBe('string');
-
-    // Should handle gracefully - likely will return many results or handle empty search
-    expect(response).toContain('You need to provide an entity name to search for');
+    await expect(findMonitoredEntitiesByName(dtClient, searchTerms, extendedSearch)).rejects.toThrow(
+      /No entity names supplied to search for/,
+    );
   });
 
   test('should return properly formatted response when entities are found', async () => {
@@ -89,20 +87,19 @@ describe('Find Monitored Entity by Name Integration Tests', () => {
     // Search for a pattern that is likely to find at least one entity
     // "host" is common in most Dynatrace environments
     const searchTerm = 'host';
+    const extendedSearch = false;
 
-    const response = await findMonitoredEntityByName(dtClient, searchTerm);
+    const response = await findMonitoredEntitiesByName(dtClient, [searchTerm], extendedSearch);
 
+    // Assert, based on the DqlExecutionResult
     expect(response).toBeDefined();
-    expect(typeof response).toBe('string');
-
-    // If entities are found, check the format
-    if (response.includes('The following monitored entities were found:')) {
-      // Each line should follow the expected format
-      const lines = response.split('\n').filter((line) => line.startsWith('- Entity'));
-
-      lines.forEach((line) => {
-        expect(line).toMatch(/^- Entity '.*' of type '.* has entity id '.*'$/);
+    if (response?.records && response.records.length > 0) {
+      response.records.forEach((entity) => {
+        expect(entity?.id).toBeDefined();
+        expect(getEntityTypeFromId(String(entity?.id))).toBeDefined();
       });
+    } else {
+      // Nothing to assert; environment for testing has no entities found.
     }
   });
 });

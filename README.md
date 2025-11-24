@@ -7,6 +7,12 @@
   <a href="https://github.com/dynatrace-oss/dynatrace-mcp/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/license-mit-blue.svg" alt="Dynatrace MCP Server is released under the MIT License" />
   </a>
+  <a href="https://vscode.dev/redirect/mcp/install?name=dynatrace-mcp-server&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40dynatrace-oss%2Fdynatrace-mcp-server%22%5D%2C%22env%22%3A%7B%7D%7D">
+    <img src="https://img.shields.io/badge/Install_in-VS_Code-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white" />
+  </a>
+  <a href="[https://vscode.dev/redirect/mcp/install?name=dynatrace-mcp-server&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40dynatrace-oss%2Fdynatrace-mcp-server%22%5D%2C%22env%22%3A%7B%7D%7D](https://cursor.com/en/install-mcp?name=dynatrace-mcp-server&config=eyJuYW1lIjoiZHluYXRyYWNlLW1jcC1zZXJ2ZXIiLCJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkBkeW5hdHJhY2Utb3NzL2R5bmF0cmFjZS1tY3Atc2VydmVyIl0sImVudiI6e319)">
+    <img src="https://img.shields.io/badge/Install_in-Cursor-000000?style=flat-square&logoColor=white" />
+  </a>
   <a href="https://www.npmjs.com/package/@dynatrace-oss/dynatrace-mcp-server">
     <img src="https://img.shields.io/npm/dm/@dynatrace-oss/dynatrace-mcp-server?logo=npm&style=flat&color=red" alt="npm" />
   </a>
@@ -25,17 +31,15 @@ bringing real-time observability data directly into your development workflow.
 
 If you need help, please contact us via [GitHub Issues](https://github.com/dynatrace-oss/dynatrace-mcp/issues) if you have feature requests, questions, or need help.
 
+https://github.com/user-attachments/assets/25c05db1-8e09-4a7f-add2-ed486ffd4b5a
+
 ## Quickstart
 
-You can add this MCP server to your MCP Client like VSCode, Claude, Cursor, Amazon Q, Windsurf, ChatGPT, or Github Copilot via the npmjs package `@dynatrace-oss/dynatrace-mcp-server`, and type `stdio`.
-You can find more details about the configuration for different AI Assistants, Agents and MCP Clients in the [Configuration section below](#configuration).
+You can add this MCP server to your MCP Client like VSCode, Claude, Cursor, Amazon Q, Windsurf, ChatGPT, or Github Copilot via the command is `npx -y @dynatrace-oss/dynatrace-mcp-server` (type: `stdio`). For more details, please refer to the [configuration section below](#configuration).
 
-Furthermore, you need your Dynatrace environment URL, e.g., `https://abc12345.apps.dynatrace.com`, as well as a [Platform Token](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens), e.g., `dt0s16.SAMPLE.abcd1234`, with [required scopes](#scopes-for-authentication).
-
-Depending on your MCP Client, you need to configure these as environment variables or as settings in the UI:
+Furthermore, you need to configure the URL to a Dynatrace environment:
 
 - `DT_ENVIRONMENT` (string, e.g., `https://abc12345.apps.dynatrace.com`) - URL to your Dynatrace Platform (do not use Dynatrace classic URLs like `abc12345.live.dynatrace.com`)
-- `DT_PLATFORM_TOKEN` (string, e.g., `dt0s16.SAMPLE.abcd1234`) - **Recommended**: Dynatrace Platform Token
 
 Once you are done, we recommend looking into [example prompts](#-example-prompts-), like `Get all details of the entity 'my-service'` or `Show me error logs`. Please mind that these prompts lead to executing DQL statements which may incur [costs](#costs) in accordance to your licence.
 
@@ -109,97 +113,6 @@ fetch dt.system.events
 
 > **Note:** While Davis CoPilot AI is generally available (GA), the Davis CoPilot APIs are currently in preview. For more information, visit the [Davis CoPilot Preview Community](https://dt-url.net/copilot-community).
 
-## 🎯 AI-Powered Observability Workshop Rules
-
-Enhance your AI assistant with comprehensive Dynatrace observability analysis capabilities through our streamlined workshop rules. These rules provide hierarchical workflows for security, compliance, incident response, and distributed systems investigation.
-
-### **🚀 Quick Setup for AI Assistants**
-
-Copy the comprehensive rule files from the [`dynatrace-agent-rules/rules/`](./dynatrace-agent-rules/rules/) directory to your AI assistant's rules directory:
-
-**IDE-Specific Locations:**
-
-- **Amazon Q**: `.amazonq/rules/` (project) or `~/.aws/amazonq/rules/` (global)
-- **Cursor**: `.cursor/rules/` (project) or via Settings → Rules (global)
-- **Windsurf**: `.windsurfrules/` (project) or via Customizations → Rules (global)
-- **Cline**: `.clinerules/` (project) or `~/Documents/Cline/Rules/` (global)
-- **GitHub Copilot**: `.github/copilot-instructions.md` (project only)
-
-Then initialize the agent in your AI chat:
-
-```
-load dynatrace mcp
-```
-
-### **🏗️ Enhanced Analysis Capabilities**
-
-The workshop rules unlock advanced observability analysis modes:
-
-#### **🚨 Incident Response & Problem Investigation**
-
-- **4-phase structured investigation** workflow (Detection → Impact → Root Cause → Resolution)
-- **Cross-data source correlation** (problems → logs → spans → metrics)
-- **Kubernetes-aware incident analysis** with namespace and pod context
-- **User impact assessment** with Davis AI integration
-
-#### **📊 Comprehensive Data Investigation**
-
-- **Unified log-service-process analysis** in single workflow
-- **Business logic error detection** patterns
-- **Deployment correlation analysis** with ArgoCD/GitOps integration
-- **Golden signals monitoring** (Rate, Errors, Duration, Saturation)
-
-#### **🔗 Advanced Transaction Analysis**
-
-- **Precise root cause identification** with file/line numbers
-- **Exception stack trace analysis** with business context
-- **Multi-service cascade failure analysis**
-- **Performance impact correlation** across distributed systems
-
-#### **🛡️ Enhanced Security & Compliance**
-
-- **Latest-scan analysis** prevents outdated data aggregation
-- **Multi-cloud compliance** (AWS, Azure, GCP, Kubernetes)
-- **Evidence-based investigation** with detailed remediation paths
-- **Risk-based scoring** with team-specific guidance
-
-#### **⚡ DevOps Automation & SRE**
-
-- **Deployment health gates** with automated promotion/rollback
-- **SLO/SLI automation** with error budget calculations
-- **Infrastructure as Code remediation** with auto-generated templates
-- **Alert optimization workflows** with pattern recognition
-
-### **📁 Hierarchical Rule Architecture**
-
-The rules are organized in a context-window optimized structure:
-
-```
-rules/
-├── DynatraceMcpIntegration.md                    # 🎯 MAIN ORCHESTRATOR
-├── workflows/                                    # 🔧 ANALYSIS WORKFLOWS
-│   ├── incidentResponse.md                       # Core incident investigation
-│   ├── DynatraceSecurityCompliance.md           # Security & compliance analysis
-│   ├── DynatraceDevOpsIntegration.md            # CI/CD automation
-│   └── dataSourceGuides/                        # 📊 DATA ANALYSIS GUIDES
-│       ├── dataInvestigation.md                 # Logs, services, processes
-│       └── DynatraceSpanAnalysis.md             # Transaction tracing
-└── reference/                                   # 📚 TECHNICAL DOCUMENTATION
-    ├── DynatraceQueryLanguage.md                # DQL syntax foundation
-    ├── DynatraceExplore.md                      # Field discovery patterns
-    ├── DynatraceSecurityEvents.md               # Security events schema
-    └── DynatraceProblemsSpec.md                 # Problems schema reference
-```
-
-**Key Architectural Benefits:**
-
-- **All files under 6,500 tokens** - Compatible with most LLM context limits
-- **Hierarchical organization** - Clear entry points and specialized guides
-- **Eliminated circular references** - No more confusing cross-referencing webs
-- **DQL-first approach** - Prefer flexible queries over rigid MCP calls
-
-For detailed information about the workshop rules, see the [Rules README](./dynatrace-agent-rules/rules/README.md).
-
 ## Configuration
 
 You can add this MCP server (using STDIO) to your MCP Client like VS Code, Claude, Cursor, Amazon Q Developer CLI, Windsurf Github Copilot via the package `@dynatrace-oss/dynatrace-mcp-server`.
@@ -231,7 +144,6 @@ This only works if the config is stored in the current workspaces, e.g., `<your-
       "command": "npx",
       "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
-        "DT_PLATFORM_TOKEN": "",
         "DT_ENVIRONMENT": ""
       }
     }
@@ -248,7 +160,6 @@ This only works if the config is stored in the current workspaces, e.g., `<your-
       "command": "npx",
       "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
-        "DT_PLATFORM_TOKEN": "",
         "DT_ENVIRONMENT": ""
       }
     }
@@ -267,7 +178,6 @@ The [Amazon Q Developer CLI](https://docs.aws.amazon.com/amazonq/latest/qdevelop
       "command": "npx",
       "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
-        "DT_PLATFORM_TOKEN": "",
         "DT_ENVIRONMENT": ""
       }
     }
@@ -276,6 +186,62 @@ The [Amazon Q Developer CLI](https://docs.aws.amazon.com/amazonq/latest/qdevelop
 ```
 
 This configuration should be stored in `<your-repo>/.amazonq/mcp.json`.
+
+**Amazon Kiro**
+
+The [Amazon Kiro](https://kiro.dev/) is an agentic IDE that helps you do your best work with features such as specs, steering, and hooks.
+
+```json
+{
+  "mcpServers": {
+    "dynatrace-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
+      "env": {
+        "DT_ENVIRONMENT": ""
+      }
+    }
+  }
+}
+```
+
+This configuration should be stored in `<your-repo>/.kiro/settings/mcp.json`.
+
+**Google Gemini CLI**
+
+The [Google Gemini CLI](https://github.com/google-gemini/gemini-cli) is Google's official command-line AI assistant that supports MCP server integration. You can add the Dynatrace MCP server using either the built-in management commands or manual configuration.
+
+Using `gemini` CLI directly (recommended):
+
+```bash
+gemini extensions install https://github.com/dynatrace-oss/dynatrace-mcp
+export DT_PLATFORM_TOKEN=... # optional
+export DT_ENVIRONMENT=https://...
+```
+
+and verify that the server is running via
+
+```bash
+gemini mcp list
+```
+
+Or manually in your `~/.gemini/settings.json` or `.gemini/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "dynatrace": {
+      "command": "npx",
+      "args": ["@dynatrace-oss/dynatrace-mcp-server@latest"],
+      "env": {
+        "DT_ENVIRONMENT": ""
+      },
+      "timeout": 30000,
+      "trust": false
+    }
+  }
+}
+```
 
 ### HTTP Server Mode (Alternative)
 
@@ -295,8 +261,9 @@ npx -y @dynatrace-oss/dynatrace-mcp-server@latest --server -p 8080
 npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --port 3001
 
 # Run with custom host/IP (using short or long flag)
-npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --host 127.0.0.1
-npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http -H 192.168.0.1
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --host 127.0.0.1 # recommended for local computers
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --host 0.0.0.0 # recommended for container
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http -H 192.168.0.1 # recommended when sharing connection over a local network
 
 # Check version
 npx -y @dynatrace-oss/dynatrace-mcp-server@latest --version
@@ -342,23 +309,41 @@ For fetching just error-logs, add `| filter loglevel == "ERROR"`.
 
 ## Environment Variables
 
-You can set up authentication via **Platform Tokens** (recommended) or **OAuth Client** via the following environment variables:
+> **Breaking Change in v1.0.0:** The MCP server no longer automatically loads `.env` files. To use environment variables from a `.env` file, you need to configure your MCP client to load environment variables using the native `envFile` configuration option. See the [configuration examples](#configuration) below for details.
 
-- `DT_ENVIRONMENT` (string, e.g., `https://abc12345.apps.dynatrace.com`) - URL to your Dynatrace Platform (do not use Dynatrace classic URLs like `abc12345.live.dynatrace.com`)
-- `DT_PLATFORM_TOKEN` (string, e.g., `dt0s16.SAMPLE.abcd1234`) - **Recommended**: Dynatrace Platform Token
-- `OAUTH_CLIENT_ID` (string, e.g., `dt0s02.SAMPLE`) - Alternative: Dynatrace OAuth Client ID (for advanced use cases)
-- `OAUTH_CLIENT_SECRET` (string, e.g., `dt0s02.SAMPLE.abcd1234`) - Alternative: Dynatrace OAuth Client Secret (for advanced use cases)
-- `DT_GRAIL_QUERY_BUDGET_GB` (number, default: `1000`) - Budget limit in GB (base 1000) for Grail query bytes scanned per session. The MCP server tracks your Grail usage and warns when approaching or exceeding this limit.
+- `DT_ENVIRONMENT` (**required**, string, e.g., `https://abc12345.apps.dynatrace.com`) - URL to your Dynatrace Platform (do not use Dynatrace classic URLs like `abc12345.live.dynatrace.com`)
+- `DT_PLATFORM_TOKEN` (optional, string, e.g., `dt0s16.SAMPLE.abcd1234`) - Dynatrace Platform Token
+- `OAUTH_CLIENT_ID` (optional, string, e.g., `dt0s02.SAMPLE`) - Alternative: Dynatrace OAuth Client ID (for advanced use cases)
+- `OAUTH_CLIENT_SECRET` (optional, string, e.g., `dt0s02.SAMPLE.abcd1234`) - Alternative: Dynatrace OAuth Client Secret (for advanced use cases)
+- `DT_GRAIL_QUERY_BUDGET_GB` (optional, number, default: `1000`) - Budget limit in GB (base 1000) for Grail query bytes scanned per session. The MCP server tracks your Grail usage and warns when approaching or exceeding this limit.
 
-**Platform Tokens are recommended** for most use cases as they provide a simpler authentication flow. OAuth Clients should only be used when specific OAuth features are required.
+When just providing `DT_ENVIRONMENT`, the local MCP server will try to open a browser window to authenticate against the Dynatrace SSO.
 
-For more information, please have a look at the documentation about
+For more information about the other authentication methods, please have a look at the documentation about
 [creating a Platform Token in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens), as well as
 [creating an OAuth Client in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/oauth-clients) for advanced scenarios.
 
 In addition, depending on the features you use, the following variables can be configured:
 
 - `SLACK_CONNECTION_ID` (string) - connection ID of a [Slack Connection](https://docs.dynatrace.com/docs/analyze-explore-automate/workflows/actions/slack)
+
+### Proxy Configuration
+
+The MCP server honors system proxy settings for corporate environments:
+
+- `https_proxy` or `HTTPS_PROXY` (optional, string, e.g., `http://proxy.example.com:8080`) - Proxy server URL for HTTPS requests
+- `http_proxy` or `HTTP_PROXY` (optional, string, e.g., `http://proxy.example.com:8080`) - Proxy server URL for HTTP requests
+- `no_proxy` or `NO_PROXY` (optional, string, e.g., `localhost,127.0.0.1,.local`) - Comma-separated list of hostnames or domains that should bypass the proxy
+
+**Note:** The `no_proxy` environment variable is currently logged for informational purposes but not fully enforced by the underlying HTTP client. If you need to bypass the proxy for specific hosts, consider configuring your proxy server to handle these exclusions.
+
+Example configuration with proxy:
+
+```bash
+export HTTPS_PROXY=http://proxy.company.com:8080
+export NO_PROXY=localhost,127.0.0.1,.company.local
+export DT_ENVIRONMENT=https://abc12345.apps.dynatrace.com
+```
 
 ### Scopes for Authentication
 
@@ -367,11 +352,10 @@ Depending on the features you are using, the following scopes are needed:
 **Available for both Platform Tokens and OAuth Clients:**
 
 - `app-engine:apps:run` - needed for almost all tools
-- `app-engine:functions:run` - needed for for almost all tools
-- `environment-api:entities:read` - for retrieving ownership details from monitored entities (_currently not available for Platform Tokens_)
 - `automation:workflows:read` - read Workflows
 - `automation:workflows:write` - create and update Workflows
 - `automation:workflows:run` - run Workflows
+- `app-settings:objects:read` - read app-settings - needed for `send_slack_message` tool to read connection details from App-Settings
 - `storage:buckets:read` - needed for `execute_dql` tool to read all system data stored on Grail
 - `storage:logs:read` - needed for `execute_dql` tool to read logs for reliability guardian validations
 - `storage:metrics:read` - needed for `execute_dql` tool to read metrics for reliability guardian validations
@@ -383,180 +367,22 @@ Depending on the features you are using, the following scopes are needed:
 - `storage:system:read` - needed for `execute_dql` tool to read System Data from Grail
 - `storage:user.events:read` - needed for `execute_dql` tool to read User events from Grail
 - `storage:user.sessions:read` - needed for `execute_dql` tool to read User sessions from Grail
+- `storage:smartscape:read` - needed for `execute_dql` tool to read Smartscape Data
 - `davis-copilot:conversations:execute` - execute conversational skill (chat with Copilot)
 - `davis-copilot:nl2dql:execute` - execute Davis Copilot Natural Language (NL) to DQL skill
 - `davis-copilot:dql2nl:execute` - execute DQL to Natural Language (NL) skill
+- `davis:analyzers:read` - needed for listing and getting Davis analyzer definitions
+- `davis:analyzers:execute` - needed for executing Davis analyzers
 - `email:emails:send` - needed for `send_email` tool to send emails
-- `settings:objects:read` - needed for reading ownership information and Guardians (SRG) from settings
 
-  **Note**: Please ensure that `settings:objects:read` is used, and _not_ the similarly named scope `app-settings:objects:read`.
+**Notes**:
 
-**Important**: Some features requiring `environment-api:entities:read` will only work with OAuth Clients. For most use cases, Platform Tokens provide all necessary functionality.
+- Versions before 0.12.0 required the scope `app-engine:functions:run`, which is no longer required.
+- Versions before 0.13.0 required the scopes `settings:objects:read` and `environment-api:entities:read`, which are no longer required.
 
 ## ✨ Example prompts ✨
 
-Use these example prompts as a starting point. Just copy them into your IDE or agent setup, adapt them to your services/stack/architecture,
-and extend them as needed. They're here to help you imagine how real-time observability and automation work together in the MCP context in your IDE.
-
-### **Basic Queries & AI Assistance**
-
-**Find a monitored entity**
-
-```
-Get all details of the entity 'my-service'
-```
-
-**Find error logs**
-
-```
-Show me error logs
-```
-
-**Write a DQL query from natural language:**
-
-```
-Show me error rates for the payment service in the last hour
-```
-
-**Explain a DQL query:**
-
-```
-What does this DQL do?
-fetch logs | filter dt.source_entity == 'SERVICE-123' | summarize count(), by:{severity} | sort count() desc
-```
-
-**Chat with Davis CoPilot:**
-
-```
-How can I investigate slow database queries in Dynatrace?
-```
-
-**Send email notifications:**
-
-```
-Send an email notification about the incident to the responsible team at team@example.com with CC to manager@example.com
-```
-
-### **Advanced Incident Investigation**
-
-**Multi-phase incident response:**
-
-```
-Our checkout service is experiencing high error rates. Start a systematic 4-phase incident investigation:
-1. Detect and triage the active problems
-2. Assess user impact and affected services
-3. Perform cross-data source analysis (problems → spans → logs)
-4. Identify root cause with file/line-level precision
-```
-
-**Cross-service failure analysis:**
-
-```
-We have cascading failures across our microservices architecture.
-Analyze the entity relationships and trace the failure propagation from the initial problem
-through all downstream services. Show me the correlation timeline.
-```
-
-### **Security & Compliance Analysis**
-
-**Latest-scan vulnerability assessment:**
-
-```
-Perform a comprehensive security analysis using the latest scan data:
-- Check for new vulnerabilities in our production environment
-- Focus on critical and high-severity findings
-- Provide evidence-based remediation paths
-- Generate risk scores with team-specific guidance
-```
-
-**Multi-cloud compliance monitoring:**
-
-```
-Run a compliance assessment across our AWS, Azure, and Kubernetes environments.
-Check for configuration drift and security posture changes in the last 24 hours.
-```
-
-### **DevOps & SRE Automation**
-
-**Deployment health gate analysis:**
-
-```
-Our latest deployment is showing performance degradation.
-Run deployment health gate analysis with:
-- Golden signals monitoring (Rate, Errors, Duration, Saturation)
-- SLO/SLI validation with error budget calculations
-- Generate automated rollback recommendation if needed
-```
-
-**Infrastructure as Code remediation:**
-
-```
-Generate Infrastructure as Code templates to remediate the current alert patterns.
-Include automated scaling policies and resource optimization recommendations.
-```
-
-### **Deep Transaction Analysis**
-
-**Business logic error investigation:**
-
-```
-Our payment processing is showing intermittent failures.
-Perform advanced transaction analysis:
-- Extract exception details with full stack traces
-- Correlate with deployment events and ArgoCD changes
-- Identify the exact code location causing the issue
-```
-
-**Performance correlation analysis:**
-
-```
-Analyze the performance impact across our distributed system for the slow checkout flow.
-Show me the complete trace analysis with business context and identify bottlenecks.
-```
-
-### **Traditional Use Cases (Enhanced)**
-
-**Find open vulnerabilities on production, setup alert:**
-
-```
-I have this code snippet here in my IDE, where I get a dependency vulnerability warning for my code.
-Check if I see any open vulnerability/cve on production.
-Analyze a specific production problem.
-Setup a workflow that sends Slack alerts to the #devops-alerts channel when availability problems occur.
-```
-
-**Debug intermittent 503 errors:**
-
-```
-Our load balancer is intermittently returning 503 errors during peak traffic.
-Pull all recent problems detected for our front-end services and
-run a query to correlate error rates with service instance health indicators.
-I suspect we have circuit breakers triggering, but need confirmation from the telemetry data.
-```
-
-**Correlate memory issue with logs:**
-
-```
-There's a problem with high memory usage on one of our hosts.
-Get the problem details and then fetch related logs to help understand
-what's causing the memory spike? Which file in this repo is this related to?
-```
-
-**Trace request flow analysis:**
-
-```
-Our users are experiencing slow checkout processes.
-Can you execute a DQL query to show me the full request trace for our checkout flow,
-so I can identify which service is causing the bottleneck?
-```
-
-**Analyze Kubernetes cluster events:**
-
-```
-Our application deployments seem to be failing intermittently.
-Can you fetch recent events from our "production-cluster"
-to help identify what might be causing these deployment issues?
-```
+You can start with something as simple as "Is my component monitored by Dynatrace?", and follow up with more sophisticated [examples](examples/).
 
 ## Troubleshooting
 
@@ -573,7 +399,7 @@ In most cases, authentication issues are related to missing scopes or invalid to
 **For OAuth Clients:**
 In case of OAuth-related problems, you can troubleshoot SSO/OAuth issues based on our [Dynatrace Developer Documentation](https://developer.dynatrace.com/develop/access-platform-apis-from-outside/#get-bearer-token-and-call-app-function).
 
-It is recommended to test access with the following API (which requires minimal scopes `app-engine:apps:run` and `app-engine:functions:run`):
+It is recommended to test access with the following API (which requires minimal scopes `app-engine:apps:run` and, e.g., `storage:logs:read`):
 
 1. Use OAuth Client ID and Secret to retrieve a Bearer Token (only valid for a couple of minutes):
 
@@ -583,7 +409,7 @@ curl --request POST 'https://sso.dynatrace.com/sso/oauth2/token' \
   --data-urlencode 'grant_type=client_credentials' \
   --data-urlencode 'client_id={your-client-id}' \
   --data-urlencode 'client_secret={your-client-secret}' \
-  --data-urlencode 'scope=app-engine:apps:run app-engine:functions:run'
+  --data-urlencode 'scope=app-engine:apps:run storage:logs:read'
 ```
 
 2. Use `access_token` from the response of the above call as the bearer-token in the next call:

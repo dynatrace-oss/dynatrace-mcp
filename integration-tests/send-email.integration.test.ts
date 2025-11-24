@@ -4,7 +4,7 @@
  * This test verifies the email sending functionality by making actual API calls
  * to the Dynatrace environment. These tests require valid authentication credentials
  * and the email:emails:send scope.
- * 
+ *
  * IMPORTANT: Update the TEST_EMAIL_* variables below with your own email addresses
  * be        subject: '[Integration Test] Invalid Email Test',
         body: {
@@ -25,7 +25,6 @@ const API_RATE_LIMIT_DELAY = 100; // Delay in milliseconds to avoid hitting API 
 
 const scopesBase = [
   'app-engine:apps:run', // needed for environmentInformationClient
-  'app-engine:functions:run', // needed for environmentInformationClient
 ];
 
 const scopesEmail = [
@@ -156,7 +155,7 @@ fetch logs
 This email was sent to multiple recipients to test the TO, CC, and BCC functionality:
 
 - **TO**: ${TEST_EMAIL_TO}, ${TEST_EMAIL_TO}
-- **CC**: ${TEST_EMAIL_CC}  
+- **CC**: ${TEST_EMAIL_CC}
 - **BCC**: ${TEST_EMAIL_BCC}
 
 All recipients should receive this message according to their designation.`,
@@ -322,25 +321,25 @@ All recipients should receive this message according to their designation.`,
   });
 
   describe('Error Handling', () => {
-    it('should handle authentication errors gracefully', async () => {
+    it('should handle authorization errors gracefully', async () => {
       // Create client with invalid credentials
       const dtClient = await createDtHttpClient(
         dynatraceEnv.dtEnvironment,
-        scopesBase.concat(scopesEmail),
-        'invalid-client-id',
-        'invalid-client-secret',
-        undefined,
+        scopesBase.concat([]), // no scopesEmail
+        dynatraceEnv.oauthClientId,
+        dynatraceEnv.oauthClientSecret,
+        dynatraceEnv.dtPlatformToken,
       );
 
       const emailRequest: EmailRequest = {
         toRecipients: { emailAddresses: [TEST_EMAIL_TO] },
-        subject: '[Integration Test] Authentication Error Test',
+        subject: '[Integration Test] Authorization Error Test',
         body: {
-          body: 'This should fail due to invalid credentials.',
+          body: 'This should fail due to insufficient permissions.',
         },
       };
 
-      await expect(sendEmail(dtClient, emailRequest)).rejects.toThrow();
+      await expect(sendEmail(dtClient, emailRequest)).rejects.toThrow(`Forbidden`);
     }, 30000);
 
     it('should handle invalid email addresses appropriately', async () => {

@@ -1,53 +1,78 @@
 import { HttpClient } from '@dynatrace-sdk/http-client';
 import { executeDql } from './execute-dql';
-import { DYNATRACE_ENTITY_TYPES } from '../utils/dynatrace-entity-types';
+import {
+  DYNATRACE_ENTITY_TYPES_ALL,
+  DYNATRACE_ENTITY_TYPES_BASICS,
+  getEntityTypeFromId,
+} from '../utils/dynatrace-entity-types';
 
 /**
- * Construct a DQL statement like "fetch <entityType> | search "*<entityName>*" | fieldsAdd entity.type" for each entity type,
+ * Construct a DQL statement like "fetch <entityType> | search "*<entityName1>*" OR "*<entityName2>*" | fieldsAdd entity.type" for each entity type,
  * and join them with " | append [ ... ]"
  * @param entityName
  * @returns DQL Statement for searching all entity types
  */
-export const generateDqlSearchEntityCommand = (entityName: string): string => {
-  const fetchDqlCommands = DYNATRACE_ENTITY_TYPES.map((entityType, index) => {
-    const dql = `fetch ${entityType} | search "*${entityName}*" | fieldsAdd entity.type`;
-    if (index === 0) {
-      return dql;
-    }
-    return `  | append [ ${dql} ]\n`;
-  });
+export const generateDqlSearchEntityCommand = (entityNames: string[], extendedSearch: boolean): string => {
+  if (entityNames == undefined || entityNames.length == 0) {
+    throw new Error(`No entity names supplied to search for`);
+  }
+
+  // If extendedSearch is true, use all entity types, otherwise use only basic ones
+  const fetchDqlCommands = (extendedSearch ? DYNATRACE_ENTITY_TYPES_ALL : DYNATRACE_ENTITY_TYPES_BASICS).map(
+    (entityType, index) => {
+      const dql = `fetch ${entityType} | search "*${entityNames.join('*" OR "*')}*" | fieldsAdd entity.type | expand tags`;
+      if (index === 0) {
+        return dql;
+      }
+      return `  | append [ ${dql} ]\n`;
+    },
+  );
 
   return fetchDqlCommands.join('');
 };
 
 /**
- * Find a monitored entity by name via DQL
+ * Find a monitored entity via "smartscapeNodes" by name via DQL
  * @param dtClient
- * @param entityName
- * @returns A string with the entity details like id, name and type, or an error message if no entity was found
+ * @param entityNames Array of entitiy names to search for
+ * @returns An array with the entity details like id, name and type
  */
-export const findMonitoredEntityByName = async (dtClient: HttpClient, entityName: string) => {
-  if (!entityName) {
-    return 'You need to provide an entity name to search for.';
+export const findMonitoredEntityViaSmartscapeByName = async (dtClient: HttpClient, entityNames: string[]) => {
+  const dql = `smartscapeNodes "*" | search "*${entityNames.join('*" OR "*')}*" | fields id, name, type`;
+  console.error(`Executing DQL: ${dql}`);
+
+  try {
+    const smartscapeResult = await executeDql(dtClient, { query: dql });
+
+    if (smartscapeResult && smartscapeResult.records && smartscapeResult.records.length > 0) {
+      // return smartscape results if we found something
+      return smartscapeResult;
+    }
+  } catch (error) {
+    // ignore errors here, as smartscapeNodes may not be ready for all environments/users
+    console.error('Error while querying smartscapeNodes:', error);
   }
 
+  console.error('No results from smartscapeNodes');
+  return null;
+};
+
+/**
+ * Find a monitored entity via "dt.entity.${entityType}" by name via DQL
+ * @param dtClient
+ * @param entityNames Array of entitiy names to search for
+ * @param extendedSearch If true, search over all entity types, otherwise only basic ones
+ * @returns An array with the entity details like id, name and type
+ */
+export const findMonitoredEntitiesByName = async (
+  dtClient: HttpClient,
+  entityNames: string[],
+  extendedSearch: boolean,
+) => {
   // construct a DQL statement for searching the entityName over all entity types
-  const dql = generateDqlSearchEntityCommand(entityName);
+  const dql = generateDqlSearchEntityCommand(entityNames, extendedSearch);
 
   // Get response from API
   // Note: This may be slow, as we are appending multiple entity types above
-  const dqlResponse = await executeDql(dtClient, { query: dql });
-
-  if (dqlResponse && dqlResponse.records && dqlResponse.records.length > 0) {
-    let resp = 'The following monitored entities were found:\n';
-    // iterate over dqlResponse and create a string with the entity names
-    dqlResponse.records.forEach((entity) => {
-      if (entity) {
-        resp += `- Entity '${entity['entity.name']}' of type '${entity['entity.type']} has entity id '${entity.id}'\n`;
-      }
-    });
-    return resp;
-  } else {
-    return 'No monitored entity found with the specified name.';
-  }
+  return await executeDql(dtClient, { query: dql });
 };

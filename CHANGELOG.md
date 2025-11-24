@@ -2,7 +2,161 @@
 
 ## Unreleased Changes
 
-- Added tool-annotations `readOnlyHint`, `idempotentHint`, and `openWorldHint`, to improve tool usage
+## 1.0.0
+
+**Highlights**:
+
+- 🧠 Davis Analyzers integration for advanced forecasting and anomaly detection
+- ⚡ Rate limiting and performance improvements
+- 🔧 Streamlined environment variable handling
+
+### Tools
+
+- Added `list_davis_analyzers` tool to list all available Davis Analyzers, including forecast, anomaly detection, and correlation analyzers, enabling you to discover powerful analysis capabilities
+- Added `execute_davis_analyzer` tool to execute Davis Analyzers with custom input parameters and timeframe configuration, providing advanced forecasting and anomaly detection capabilities
+- Improved `list_problems` tool to call `chat_with_davis_copilot` with context, enhancing problem analysis with AI-powered insights
+
+### Scopes
+
+- Added OAuth scopes `davis:analyzers:read` and `davis:analyzers:execute` to support Davis Analyzer operations
+
+### Other Changes
+
+- Added rate limiting to tool calls with a maximum of 5 calls per 20 seconds, ensuring stable performance and preventing API overload
+- Fixed zod version mismatch that caused errors during parameterized tool calls, improving reliability and compatibility
+- **Breaking**: Refactored environment variable handling to remove `dotenv` dependency from production code in favor of Node.js native `--env-file` flag, streamlining the setup process and reducing dependencies
+
+## 0.13.0
+
+### Tools
+
+- Added `status` parameter to `list_problems` tool, enabling you to filter problems by status (ACTIVE, CLOSED, or ALL).
+- Added `timeframe` parameter to `list_problems` tool, providing support for flexible time ranges (e.g., "12h", "24h", "7d", "30d"). Default: "24h".
+- Removed `get_ownership` tool as it no longer works with OAuth Clients.
+
+### Scopes
+
+- Removed `settings:objects:read` and `environment-api:entities:read` scopes, as they are no longer required
+
+## 0.12.0
+
+- Fixed OAuth callback URL to work in GitHub Codespaces by detecting the environment and using the forwarded URL instead of localhost
+- Breaking: Changed default HTTP server host binding from `0.0.0.0` to `127.0.0.1` for improved security
+- Removed scope `app-engine:functions:run` as it's not needed
+
+## 0.11.0
+
+- Fixed usage percentage to no longer be printed when no budget is set
+- Fixed an issue with `find_entity_by_name` tool filtering out valid entries
+- Added proxy support for corporate environments via `HTTPS_PROXY`
+
+## 0.10.0
+
+### Tools
+
+- Improved the `find_entities_by_name` tool to use the `smartscapeNode` DQL command for more efficient entity discovery, with a fallback to fetching entity types directly.
+- Added default response limiting to the `execute_dql` tool to prevent excessively large payloads. The new `recordLimit` and `recordSizeLimitMB` parameters help control the size of the data returned to the language model.
+
+### Scopes
+
+- Added the `storage:smartscape:read` OAuth scope to support the improved `find_entities_by_name` tool.
+
+### Other Changes
+
+- Fixed an issue where disabling telemetry with `DT_MCP_DISABLE_TELEMETRY=true` would show a stack trace instead of a concise message.
+
+### Proxy Support
+
+- Added support for system proxy configuration via environment variables (`https_proxy`, `HTTPS_PROXY`, `http_proxy`, `HTTP_PROXY`, `no_proxy`, `NO_PROXY`)
+- The MCP server now honors corporate proxy settings for all HTTP requests to Dynatrace environments
+
+### Other Changes
+
+- Removed unused `shouldBypassProxy` function from proxy configuration utilities
+
+## 0.9.2
+
+- Improved error handling when initializing the connection for the first time
+
+## 0.9.1
+
+- Replaced file-based token cache with an in-memory cache to avoid writing credentials to disk. Tokens now reset on server restart.
+
+## 0.9.0
+
+**Highlights**
+
+- 🔑 **Simplified Authentication**: Added OAuth authorization code flow. Users can now simply set `DT_ENVIRONMENT` and complete an interactive browser authentication flow.
+
+### Other Changes
+
+- Dependency updates
+- Added Snyk Dependency scans
+- Fixed publishing to official MCP Registry
+
+## 0.8.0
+
+### Tools
+
+- Added a `limit` argument to the `get_kubernetes_events` tool, allowing you to control the number of events returned and improving performance for large clusters
+
+### Other Changes
+
+- Fixed some typos
+- Respond with a proper JSON RPC Error message
+
+## 0.7.0
+
+**Highlights**
+
+- 🔒 Human approval for critical operations
+- 🔍 Enhanced entity discovery with automatic detection
+- 🛠️ Improved error handling and internal optimizations
+
+### Tools
+
+- Removed the `get_entity_details` tool and consolidated its functionality into the `find_entity_by_name` tool for a streamlined user experience
+- Enhanced the `find_entity_by_name` tool with automatic entity name detection for improved usability
+- Added human approval steps for critical operations in `send_email`, `send_slack_message`, `create_workflow_for_notification`, and `make_workflow_public` tools to ensure user consent and prevent unintended actions
+
+### Other Changes
+
+- Disabled Grail budget enforcement for Dynatrace-internal development and hardening stages to facilitate testing and development workflows
+- Improved error handling for environments without Davis Copilot enabled, now providing direct links to enable the feature
+
+## 0.6.1
+
+- Fixed an issue with MCP communication failing with `SyntaxError: Unexpected token 'd'` due to `dotenv`
+- Added Support for Google Gemini CLI
+
+## 0.6.0
+
+**Highlights**:
+
+- 💰 Grail budget tracking and cost control
+- 📧 Send findings via E-Mail via the Dynatrace E-Mail API
+- 🔧 Enhanced tool annotations for better LLM integration
+- 🏪 Published to official MCP Registry and GitHub MCP Registry
+
+### Scopes
+
+- Added OAuth scope `email:emails:send` to enable email functionality
+
+### Tools Added/Removed
+
+- Added `send_email` tool for sending emails via the Dynatrace Email API with support for multiple recipients (TO, CC, BCC), custom subject lines, and rich body content
+- Added tool-annotations `readOnlyHint`, `idempotentHint`, and `openWorldHint` to improve tool usage by providing better hints to LLM clients about tool behavior
+- Added next-steps guidance to `get_entity_details` tool to help users discover related metrics, problems, and logs for entities
+
+### Other Changes
+
+- Fixed an issue with the stateless HTTP server that prevented it from accepting multiple simultaneous connections
+- Added Grail budget tracking with `DT_GRAIL_QUERY_BUDGET_GB` environment variable (default: 1000 GB, setting it to `-1` disables budget tracking), providing cost control and visibility with warnings and alerts in `execute_dql` tool responses
+- Added budget enforcement that prevents further DQL query execution when the configured Grail budget has been exceeded, protecting against unexpected costs
+- Improved Davis CoPilot integration by migrating to the official `@dynatrace-sdk/client-davis-copilot` package, enhancing reliability and maintainability while reducing manual API implementation
+- Added metadata output to `execute_dql` tool which includes scanned bytes information, enabling better cost tracking for Dynatrace Grail data access
+- Added telemetry via Dynatrace OpenKit to improve the product with anonymous usage statistics and error information, enhancing product development while respecting user privacy (can be disabled via `DT_MCP_DISABLE_TELEMETRY` environment variable)
+- Added `server.json` configuration and published the MCP server to the official MCP Registry, making it easier for users to discover and install the server
 
 ## 0.6.0 (Release Candidate 2)
 
@@ -26,10 +180,11 @@
 ## 0.5.0
 
 **Highlights**:
-🚀 Davis CoPilot AI, supporting natural language to DQL
-🌐 HTTP transport support
-🔑 Platform Token authentication
-📚 Tool consolidation into `execute_dql`
+
+- 🚀 Davis CoPilot AI, supporting natural language to DQL
+- 🌐 HTTP transport support
+- 🔑 Platform Token authentication
+- 📚 Tool consolidation into `execute_dql`
 
 ### Scopes
 
