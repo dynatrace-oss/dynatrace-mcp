@@ -309,6 +309,8 @@ For fetching just error-logs, add `| filter loglevel == "ERROR"`.
 
 ## Environment Variables
 
+> **Breaking Change in v1.0.0:** The MCP server no longer automatically loads `.env` files. To use environment variables from a `.env` file, you must now explicitly pass the `--env-file` flag when starting the server (e.g., `npx -y @dynatrace-oss/dynatrace-mcp-server --env-file .env`) or configure your MCP client to load environment variables using the native `envFile` configuration option. See the [configuration examples](#configuration) below for details.
+
 - `DT_ENVIRONMENT` (**required**, string, e.g., `https://abc12345.apps.dynatrace.com`) - URL to your Dynatrace Platform (do not use Dynatrace classic URLs like `abc12345.live.dynatrace.com`)
 - `DT_PLATFORM_TOKEN` (optional, string, e.g., `dt0s16.SAMPLE.abcd1234`) - Dynatrace Platform Token
 - `OAUTH_CLIENT_ID` (optional, string, e.g., `dt0s02.SAMPLE`) - Alternative: Dynatrace OAuth Client ID (for advanced use cases)
