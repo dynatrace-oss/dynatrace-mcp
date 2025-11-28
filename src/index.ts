@@ -271,7 +271,9 @@ const main = async () => {
       }
     };
 
-    // Use type assertion to avoid deep type instantiation issues with the SDK
+    // Use type assertion to avoid TypeScript "Type instantiation is excessively deep and possibly infinite"
+    // error that occurs with the MCP SDK's complex Zod type inference. This is a known limitation when
+    // using ZodRawShape with the SDK's registerTool method. The runtime behavior is correct.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (server.registerTool as any)(name, { description, inputSchema: paramsSchema, annotations }, (args: any) =>
       wrappedCb(args),
