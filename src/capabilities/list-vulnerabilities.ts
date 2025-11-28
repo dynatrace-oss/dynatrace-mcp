@@ -1,9 +1,22 @@
 import { HttpClient } from '@dynatrace-sdk/http-client';
 import { executeDql } from './execute-dql';
 
-export const listVulnerabilities = async (dtClient: HttpClient, additionalFilter?: string, riskScore?: number) => {
-  // DQL query to fetch vulnerabilities with extended timeframe (last 30 days)
-  const dqlStatement = `fetch security.events
+/**
+ * List vulnerabilities from security.events
+ * @param dtClient Dynatrace HTTP Client
+ * @param additionalFilter Any additional DQL filter
+ * @param riskScore Minimum risk score to filter vulnerabilities (default: 8.0)
+ * @param timeframe Timeframe to query vulnerabilities (e.g., '24h', '7d', '30d'). Default: '30d'
+ * @returns Array of formatted vulnerability strings
+ */
+export const listVulnerabilities = async (
+  dtClient: HttpClient,
+  additionalFilter?: string,
+  riskScore?: number,
+  timeframe: string = '30d',
+) => {
+  // DQL query to fetch vulnerabilities with configurable timeframe
+  const dqlStatement = `fetch security.events, from: now()-${timeframe}, to: now()
     | filter dt.system.bucket=="default_securityevents_builtin"
         AND event.provider=="Dynatrace"
         AND event.type=="VULNERABILITY_STATE_REPORT_EVENT"

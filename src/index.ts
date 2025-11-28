@@ -332,8 +332,15 @@ const main = async () => {
 
   tool(
     'list_vulnerabilities',
-    'Retrieve all active (non-muted) vulnerabilities from Dynatrace for the last 30 days. An additional filter can be provided using DQL filter (filter for a specific entity type and id).',
+    'Retrieve all active (non-muted) vulnerabilities from Dynatrace. An additional filter can be provided using DQL filter (filter for a specific entity type and id).',
     {
+      timeframe: z
+        .string()
+        .optional()
+        .default('30d')
+        .describe(
+          'Timeframe to query vulnerabilities (e.g., "12h", "24h", "7d", "30d", "90d"). Default: "30d". Supports hours (h) and days (d).',
+        ),
       riskScore: z
         .number()
         .optional()
@@ -354,7 +361,7 @@ const main = async () => {
     {
       readOnlyHint: true,
     },
-    async ({ riskScore, additionalFilter, maxVulnerabilitiesToDisplay }) => {
+    async ({ timeframe, riskScore, additionalFilter, maxVulnerabilitiesToDisplay }) => {
       const dtClient = await createAuthenticatedHttpClient(
         scopesBase.concat(
           'storage:events:read',
@@ -362,11 +369,11 @@ const main = async () => {
           'storage:security.events:read', // Read Security events from Grail
         ),
       );
-      const result = await listVulnerabilities(dtClient, additionalFilter, riskScore);
+      const result = await listVulnerabilities(dtClient, additionalFilter, riskScore, timeframe);
       if (!result || result.length === 0) {
-        return 'No vulnerabilities found in the last 30 days';
+        return `No vulnerabilities found in the last ${timeframe}`;
       }
-      let resp = `Found ${result.length} vulnerabilities in the last 30 days! Displaying the top ${maxVulnerabilitiesToDisplay} vulnerabilities:\n`;
+      let resp = `Found ${result.length} vulnerabilities in the last ${timeframe}! Displaying the top ${maxVulnerabilitiesToDisplay} vulnerabilities:\n`;
       result.slice(0, maxVulnerabilitiesToDisplay).forEach((vulnerability) => {
         resp += `\n* ${vulnerability}`;
       });
@@ -374,7 +381,7 @@ const main = async () => {
       resp +=
         `\nNext Steps:` +
         `\n1. For specific vulnerabilities, first always fetch more details using the "execute_dql" tool and the following query:
-          "fetch security.events, from: now()-30d, to: now()
+          "fetch security.events, from: now()-${timeframe}, to: now()
             | filter event.provider=="Dynatrace"
                     AND event.type=="VULNERABILITY_STATE_REPORT_EVENT"
                     AND event.level=="ENTITY"
@@ -978,6 +985,13 @@ const main = async () => {
     'get_kubernetes_events',
     'Get all events from a specific Kubernetes (K8s) cluster',
     {
+      timeframe: z
+        .string()
+        .optional()
+        .default('24h')
+        .describe(
+          'Timeframe to query events (e.g., "12h", "24h", "7d", "30d"). Default: "24h". Supports hours (h) and days (d).',
+        ),
       clusterId: z
         .string()
         .optional()
@@ -1013,12 +1027,12 @@ const main = async () => {
     {
       readOnlyHint: true,
     },
-    async ({ clusterId, kubernetesEntityId, eventType, maxEventsToDisplay }) => {
+    async ({ timeframe, clusterId, kubernetesEntityId, eventType, maxEventsToDisplay }) => {
       const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('storage:events:read'));
-      const result = await getEventsForCluster(dtClient, clusterId, kubernetesEntityId, eventType);
+      const result = await getEventsForCluster(dtClient, clusterId, kubernetesEntityId, eventType, timeframe);
 
       if (result && result.records && result.records.length > 0) {
-        let resp = `Found ${result.records.length} events! Displaying the top ${maxEventsToDisplay} events:\n`;
+        let resp = `Found ${result.records.length} events in the last ${timeframe}! Displaying the top ${maxEventsToDisplay} events:\n`;
         // iterate over dqlResponse and create a string with the problem details, but only show the top maxEntitiesToDisplay problems
         result.records.slice(0, maxEventsToDisplay).forEach((event) => {
           if (event) {
@@ -1029,12 +1043,12 @@ const main = async () => {
         resp +=
           `\nNext Steps:` +
           `\n1. Consider filtering by \`eventType\` to find specific events of interest.` +
-          `\n2. Use "execute_dql" tool with the following query to get more details about a specific event: "fetch events | filter event.id == \"<event-id>\""`;
+          `\n2. Use "execute_dql" tool with the following query to get more details about a specific event: "fetch events, from: now()-${timeframe}, to: now() | filter event.id == \"<event-id>\""`;
 
         return resp;
       }
 
-      return 'No events found for the specified Kubernetes cluster. Try to leave clusterId and kubernetesEntityId empty to get events from all clusters.';
+      return `No events found for the specified Kubernetes cluster in the last ${timeframe}. Try to leave clusterId and kubernetesEntityId empty to get events from all clusters, or increase the timeframe.`;
     },
   );
 
