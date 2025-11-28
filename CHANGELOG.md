@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Updated MCP SDK to v1.23.0 which includes native zod v3/v4 compatibility, enabling removal of the restrictive zod-to-json-schema version pinning workaround
+
 ## 1.0.0
 
 **Highlights**:

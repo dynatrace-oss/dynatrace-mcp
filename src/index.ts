@@ -7,7 +7,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { Command } from 'commander';
-import { z, ZodRawShape, ZodTypeAny } from 'zod';
+import { z, ZodRawShape } from 'zod';
 
 import { getPackageJsonVersion } from './utils/version';
 import { createDtHttpClient } from './authentication/dynatrace-clients';
@@ -135,7 +135,6 @@ const main = async () => {
     {
       capabilities: {
         tools: {},
-        elicitation: {},
       },
     },
   );
@@ -200,14 +199,17 @@ const main = async () => {
   console.error(`Starting Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
   // quick abstraction/wrapper to make it easier for tools to reply text instead of JSON
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tool = (
     name: string,
     description: string,
     paramsSchema: ZodRawShape,
     annotations: ToolAnnotations,
-    cb: (args: z.objectOutputType<ZodRawShape, ZodTypeAny>) => Promise<string>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    cb: (args: any) => Promise<string>,
   ) => {
-    const wrappedCb = async (args: ZodRawShape): Promise<CallToolResult> => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wrappedCb = async (args: any): Promise<CallToolResult> => {
       // Capture starttime for telemetry and rate limiting
       const startTime = Date.now();
 
@@ -269,7 +271,11 @@ const main = async () => {
       }
     };
 
-    server.tool(name, description, paramsSchema, annotations, (args: z.ZodRawShape) => wrappedCb(args));
+    // Use type assertion to avoid deep type instantiation issues with the SDK
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (server.registerTool as any)(name, { description, inputSchema: paramsSchema, annotations }, (args: any) =>
+      wrappedCb(args),
+    );
   };
 
   /**
@@ -1043,7 +1049,7 @@ const main = async () => {
     'Reset the Grail query budget after it was exhausted, allowing new queries to be executed. This clears all tracked bytes scanned in the current session.',
     {},
     {
-      readonlyHint: false, // modifies state
+      readOnlyHint: false, // modifies state
       idempotentHint: true, // multiple resets yield the same result
     },
     async ({}) => {
