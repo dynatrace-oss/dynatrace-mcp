@@ -54,11 +54,11 @@
     "@dynatrace-sdk/client-query": "^1.18.1",
     "@dynatrace-sdk/shared-errors": "^1.0.0",
     "@dynatrace/openkit-js": "^4.1.0",
-    "@modelcontextprotocol/sdk": "^1.8.0",
+    "@modelcontextprotocol/sdk": "^1.23.0",
     "commander": "^14.0.0",
     "dt-app": "^1.3.1",
     "open": "^8.4.2",
-    "zod-to-json-schema": "~3.24.5"
+    "zod-to-json-schema": "^3.24.5"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
