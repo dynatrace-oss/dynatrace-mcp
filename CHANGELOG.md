@@ -2,6 +2,10 @@
 
 ## Unreleased Changes
 
+### Security
+
+- Fixed security vulnerabilities in transitive dependencies by overriding `jws` to version 3.2.3 and `node-forge` to version 1.3.2, addressing Improper Verification of Cryptographic Signature, Interpretation Conflict, and Uncontrolled Recursion issues
+
 ## 1.0.0
 
 **Highlights**:
