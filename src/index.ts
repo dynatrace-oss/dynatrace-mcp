@@ -207,7 +207,7 @@ const main = async () => {
     annotations: ToolAnnotations,
     cb: (args: z.objectOutputType<ZodRawShape, ZodTypeAny>) => Promise<string>,
   ) => {
-    const wrappedCb = async (args: ZodRawShape): Promise<CallToolResult> => {
+    const wrappedCb = async (args: any): Promise<CallToolResult> => {
       // Capture starttime for telemetry and rate limiting
       const startTime = Date.now();
 
@@ -269,7 +269,7 @@ const main = async () => {
       }
     };
 
-    server.tool(name, description, paramsSchema, annotations, (args: z.ZodRawShape) => wrappedCb(args));
+    server.tool(name, description, (args: any) => wrappedCb(args));
   };
 
   /**
@@ -1043,7 +1043,7 @@ const main = async () => {
     'Reset the Grail query budget after it was exhausted, allowing new queries to be executed. This clears all tracked bytes scanned in the current session.',
     {},
     {
-      readonlyHint: false, // modifies state
+      readOnlyHint: false, // modifies state
       idempotentHint: true, // multiple resets yield the same result
     },
     async ({}) => {
