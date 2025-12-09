@@ -202,10 +202,11 @@ const main = async () => {
   // quick abstraction/wrapper to make it easier for tools to reply text instead of JSON
   const tool = (
     name: string,
+    title: string,
     description: string,
     paramsSchema: ZodRawShape,
     annotations: ToolAnnotations,
-    cb: (args: z.objectOutputType<ZodRawShape, ZodTypeAny>) => Promise<string>,
+    cb: (args: any) => Promise<string>,
   ) => {
     const wrappedCb = async (args: any): Promise<CallToolResult> => {
       // Capture starttime for telemetry and rate limiting
@@ -269,7 +270,16 @@ const main = async () => {
       }
     };
 
-    server.tool(name, description, (args: any) => wrappedCb(args));
+    server.registerTool(
+      name,
+      {
+        title: title,
+        description: description,
+        inputSchema: z.object(paramsSchema),
+        annotations: annotations,
+      },
+      (args: any) => wrappedCb(args),
+    );
   };
 
   /**
@@ -310,6 +320,7 @@ const main = async () => {
 
   tool(
     'get_environment_info',
+    'Get Environment Info',
     'Get information about the connected Dynatrace Environment (Tenant) and verify the connection and authentication.',
     {},
     {
@@ -332,6 +343,7 @@ const main = async () => {
 
   tool(
     'list_vulnerabilities',
+    'List Vulnerabilities',
     'Retrieve all active (non-muted) vulnerabilities from Dynatrace for the last 30 days. An additional filter can be provided using DQL filter (filter for a specific entity type and id).',
     {
       riskScore: z
@@ -401,6 +413,7 @@ const main = async () => {
 
   tool(
     'list_problems',
+    'List Problems',
     'List all problems (based on "fetch dt.davis.problems") known on Dynatrace, sorted by their recency.',
     {
       timeframe: z
@@ -472,6 +485,7 @@ const main = async () => {
 
   tool(
     'find_entity_by_name',
+    'Find Entity By Name',
     'Find the entityId and type of a monitored entity (service, host, process-group, application, kubernetes-node, custom-app, ...) within the topology on Dynatrace, based on the name of the entity. Run this before querying data like logs, metrics, problems, events. If no entity name is known, make an educated guess with common identifiers like package.json `id`/`name`, helm chart names, kubernetes manifest names, and alike.',
     {
       entityNames: z
@@ -554,6 +568,7 @@ const main = async () => {
 
   tool(
     'send_slack_message',
+    'Send Slack Message',
     'Sends a Slack message to a dedicated Slack Channel via Slack Connector on Dynatrace',
     {
       channel: z.string(),
@@ -584,6 +599,7 @@ const main = async () => {
 
   tool(
     'verify_dql',
+    'Verify DQL',
     'Syntactically verify a Dynatrace Query Language (DQL) statement on Dynatrace GRAIL before executing it. Recommended for generated DQL statements. Skip for statements created by `generate_dql_from_natural_language` tool, as well as from documentation.',
     {
       dqlStatement: z.string(),
@@ -617,6 +633,7 @@ const main = async () => {
 
   tool(
     'execute_dql',
+    'Execute DQL',
     'Get data like Logs, Metrics, Spans, Events, or Entity Data from Dynatrace GRAIL by executing a Dynatrace Query Language (DQL) statement. ' +
       'Use the "generate_dql_from_natural_language" tool upfront to generate or refine a DQL statement based on your request. ' +
       'To learn about possible fields available for filtering, use the query "fetch dt.semantic_dictionary.models | filter data_object == \"logs\""',
@@ -729,6 +746,7 @@ const main = async () => {
 
   tool(
     'generate_dql_from_natural_language',
+    'Generate DQL from Natural Language',
     'Convert natural language queries to Dynatrace Query Language (DQL) using Davis CoPilot AI. You can ask for problem events, security issues, logs, metrics, spans, and custom data.',
     {
       text: z
@@ -780,6 +798,7 @@ const main = async () => {
 
   tool(
     'explain_dql_in_natural_language',
+    'Explain DQL in Natural Language',
     'Explain Dynatrace Query Language (DQL) statements in natural language using Davis CoPilot AI.',
     {
       dql: z.string().describe('The DQL statement to explain'),
@@ -819,6 +838,7 @@ const main = async () => {
 
   tool(
     'chat_with_davis_copilot',
+    'Chat with Davis Copilot',
     'Use this tool to ask any Dynatrace related question, in case no other more specific tool is available.',
     {
       text: z.string().describe('Your question or request for Davis CoPilot'),
@@ -899,6 +919,7 @@ const main = async () => {
 
   tool(
     'create_workflow_for_notification',
+    'Create Workflow for Notification',
     'Create a notification for a team based on a problem type within Workflows in Dynatrace',
     {
       problemType: z.string().optional(),
@@ -944,6 +965,7 @@ const main = async () => {
 
   tool(
     'make_workflow_public',
+    'Make Workflow Public',
     'Modify a workflow and make it publicly available to everyone on the Dynatrace Environment',
     {
       workflowId: z.string().optional(),
@@ -976,6 +998,7 @@ const main = async () => {
 
   tool(
     'get_kubernetes_events',
+    'Get Kubernetes Events',
     'Get all events from a specific Kubernetes (K8s) cluster',
     {
       clusterId: z
@@ -1040,6 +1063,7 @@ const main = async () => {
 
   tool(
     'reset_grail_budget',
+    'Reset Grail Budget',
     'Reset the Grail query budget after it was exhausted, allowing new queries to be executed. This clears all tracked bytes scanned in the current session.',
     {},
     {
@@ -1073,6 +1097,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
 
   tool(
     'send_email',
+    'Send Email',
     'Send an email using the Dynatrace Email API. The sender will be no-reply@apps.dynatrace.com. Maximum 10 recipients total across TO, CC, and BCC.',
     {
       toRecipients: z.array(z.string().email()).describe('Array of email addresses for TO recipients'),
@@ -1146,6 +1171,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
 
   tool(
     'list_exceptions',
+    'List Exceptions',
     'List all exceptions known on Dynatrace starting with the most recent.',
     {
       timeframe: z
@@ -1202,6 +1228,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
 
   tool(
     'list_davis_analyzers',
+    'List Davis Analyzers',
     'List all available Davis Analyzers in Dynatrace (forecast, anomaly detection, correlation analyzers, and more)',
     {},
     {
@@ -1237,12 +1264,13 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
 
   tool(
     'execute_davis_analyzer',
+    'Execute Davis Analyzer',
     'Execute a Davis Analyzer with custom input parameters. Use "list_davis_analyzers" first to see available analyzers and their names.',
     {
       analyzerName: z
         .string()
         .describe('The name of the Davis Analyzer to execute (e.g., "dt.statistics.GenericForecastAnalyzer")'),
-      input: z.record(z.any()).optional().describe('Input parameters for the analyzer as a JSON object'),
+      input: z.record(z.string(), z.any()).optional().describe('Input parameters for the analyzer as a JSON object'),
       timeframeStart: z.string().optional().default('now-1h').describe('Start time for the analysis (default: now-1h)'),
       timeframeEnd: z.string().optional().default('now').describe('End time for the analysis (default: now)'),
     },
