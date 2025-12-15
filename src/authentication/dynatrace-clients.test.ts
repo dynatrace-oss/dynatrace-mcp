@@ -1,13 +1,13 @@
 import { createDtHttpClient } from './dynatrace-clients';
 import { PlatformHttpClient } from '@dynatrace-sdk/http-client';
-import { _GetSSOUrl as getSSOUrl } from 'dt-app';
+import { getSSOUrl } from './get-sso-url';
 import { OAuthTokenResponse } from './types';
 import { performOAuthAuthorizationCodeFlow } from './dynatrace-oauth-auth-code-flow';
 import { globalTokenCache } from './token-cache';
 
 // Mock external dependencies
 jest.mock('@dynatrace-sdk/http-client');
-jest.mock('dt-app');
+jest.mock('./get-sso-url');
 jest.mock('./dynatrace-oauth-auth-code-flow');
 jest.mock('./token-cache');
 jest.mock('../../package.json', () => ({
