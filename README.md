@@ -315,6 +315,7 @@ For fetching just error-logs, add `| filter loglevel == "ERROR"`.
 - `DT_PLATFORM_TOKEN` (optional, string, e.g., `dt0s16.SAMPLE.abcd1234`) - Dynatrace Platform Token
 - `OAUTH_CLIENT_ID` (optional, string, e.g., `dt0s02.SAMPLE`) - Alternative: Dynatrace OAuth Client ID (for advanced use cases)
 - `OAUTH_CLIENT_SECRET` (optional, string, e.g., `dt0s02.SAMPLE.abcd1234`) - Alternative: Dynatrace OAuth Client Secret (for advanced use cases)
+- `DT_SSO_URL` (optional, string, e.g., `https://sso.dynatrace.com`) - Override the SSO URL for OAuth authentication. By default, the SSO URL is automatically discovered from your Dynatrace environment.
 - `DT_GRAIL_QUERY_BUDGET_GB` (optional, number, default: `1000`) - Budget limit in GB (base 1000) for Grail query bytes scanned per session. The MCP server tracks your Grail usage and warns when approaching or exceeding this limit.
 
 When just providing `DT_ENVIRONMENT`, the local MCP server will try to open a browser window to authenticate against the Dynatrace SSO.

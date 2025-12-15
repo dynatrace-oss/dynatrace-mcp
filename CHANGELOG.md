@@ -2,6 +2,9 @@
 
 ## Unreleased Changes
 
+- Removed `dt-app` dependency to reduce package size and dependency complexity, implementing a lightweight SSO URL discovery mechanism
+- Added support for `DT_SSO_URL` environment variable to allow custom SSO URL configuration for managed or special Dynatrace environments
+
 ## 1.0.1
 
 - Upgraded `@modelcontextprotocol/sdk` from `^1.8.0` to `^1.24.3` for improved compatibility and latest features

@@ -1,10 +1,10 @@
 import { HttpClient, PlatformHttpClient } from '@dynatrace-sdk/http-client';
-import { _GetSSOUrl as getSSOUrl } from 'dt-app';
 import { getUserAgent } from '../utils/user-agent';
 import { performOAuthAuthorizationCodeFlow, refreshAccessToken } from './dynatrace-oauth-auth-code-flow';
 import { globalTokenCache } from './token-cache';
 import { getRandomPort } from './utils';
 import { requestTokenForClientCredentials } from './dynatrace-oauth-client-credentials';
+import { getSSOUrl } from './get-sso-url';
 
 /**
  * Create a Dynatrace Http Client (from the http-client SDK) based on the provided authentication credentials
