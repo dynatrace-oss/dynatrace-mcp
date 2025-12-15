@@ -140,6 +140,16 @@ const main = async () => {
     },
   );
 
+  // Track client initialization when the MCP connection is fully established
+  server.server.oninitialized = () => {
+    const clientVersion = server.server.getClientVersion();
+    if (clientVersion) {
+      telemetry
+        .trackMcpClientInitialization(clientVersion.name, clientVersion.version)
+        .catch((e) => console.warn('Failed to track client initialization:', e));
+    }
+  };
+
   // Helper function to create HTTP client with current auth settings
   // This is used to provide global scopes for auth code flow
   const createAuthenticatedHttpClient = async (scopes: string[]) => {

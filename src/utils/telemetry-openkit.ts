@@ -5,13 +5,15 @@ import { getPackageJsonVersion } from './version';
 
 export interface Telemetry {
   trackMcpServerStart(): Promise<void>;
+  trackMcpClientInitialization(clientName: string, clientVersion: string): Promise<void>;
   trackMcpToolUsage(toolName: string, success: boolean, duration?: number): Promise<void>;
   trackError(error: Error, context?: string): Promise<void>;
   shutdown(): Promise<void>;
 }
 
 /**
- * Based on https://docs.dynatrace.com/docs/ingest-from/extend-dynatrace/openkit/instrument-your-application-using-dynatrace-openkit#openkit-basic-sample--javascript
+ * Based on https://github.com/Dynatrace/openkit-js/blob/main/example.md#business-events-capturing
+ * Uses BizEvents for telemetry to make data accessible via Grail
  */
 class DynatraceMcpTelemetry implements Telemetry {
   private openKit: OpenKit | null = null;
@@ -91,7 +93,21 @@ class DynatraceMcpTelemetry implements Telemetry {
   }
 
   /**
-   * Track Server Start
+   * Get common telemetry attributes for all events
+   * @returns common attributes object
+   */
+  private getCommonAttributes(): Record<string, string> {
+    return {
+      version: getPackageJsonVersion(),
+      node_version: process.version,
+      platform: process.platform,
+      os_type: os.type(),
+      os_release: os.release(),
+    };
+  }
+
+  /**
+   * Track Server Start using BizEvents
    * @returns nothing
    */
   async trackMcpServerStart(): Promise<void> {
@@ -101,19 +117,42 @@ class DynatraceMcpTelemetry implements Telemetry {
     if (!this.session) return;
 
     try {
-      const action = this.session.enterAction('mcp_server_start');
-      action.reportEvent('server_started');
-      action.reportValue('version', getPackageJsonVersion());
-      action.reportValue('node_version', process.version);
-      action.reportValue('platform', process.platform);
-      action.leaveAction();
+      this.session.sendBizEvent('com.dynatrace-oss.mcp.server-start', {
+        'event.name': 'MCP Server Started',
+        ...this.getCommonAttributes(),
+      });
     } catch (error) {
       console.warn('Failed to track server start:', error);
     }
   }
 
   /**
-   * Track Tool Usage
+   * Track MCP Client Initialization using BizEvents
+   * Note: when running in HTTP mode, there might be multiple client-initialization events from multiple clients connecting to the same MCP server
+   * @param clientName name of the MCP client (e.g., 'vscode', 'claude-desktop')
+   * @param clientVersion version of the MCP client
+   * @returns nothing
+   */
+  async trackMcpClientInitialization(clientName: string, clientVersion: string): Promise<void> {
+    if (!this.isEnabled) return;
+
+    await this.initPromise;
+    if (!this.session) return;
+
+    try {
+      this.session.sendBizEvent('com.dynatrace-oss.mcp.client-initialization', {
+        'event.name': 'MCP Client Initialized',
+        'client_name': clientName,
+        'client_version': clientVersion,
+        ...this.getCommonAttributes(),
+      });
+    } catch (error) {
+      console.warn('Failed to track client initialization:', error);
+    }
+  }
+
+  /**
+   * Track Tool Usage using BizEvents
    * @param toolName name of the tool
    * @param success whether or not the tool call was successful
    * @param duration duration of the tool call
@@ -126,23 +165,25 @@ class DynatraceMcpTelemetry implements Telemetry {
     if (!this.session) return;
 
     try {
-      const action = this.session.enterAction(`tool_${toolName}`);
-      action.reportEvent(success ? 'tool_success' : 'tool_error');
-      action.reportValue('tool_name', toolName);
-      action.reportValue('success', success ? 'true' : 'false');
+      const eventData: Record<string, string | number | boolean> = {
+        'event.name': success ? 'Tool Usage Success' : 'Tool Usage Error',
+        'tool_name': toolName,
+        'tool_status': success ? 'success' : 'error',
+        ...this.getCommonAttributes(),
+      };
 
       if (duration !== undefined) {
-        action.reportValue('duration_ms', duration);
+        eventData.tool_duration_ms = duration;
       }
 
-      action.leaveAction();
+      this.session.sendBizEvent('com.dynatrace-oss.mcp.tool-usage', eventData);
     } catch (error) {
       console.warn('Failed to track tool usage:', error);
     }
   }
 
   /**
-   * Track Errors
+   * Track Errors using BizEvents
    * @param error error message to be tracked
    * @param context
    * @returns nothing
@@ -154,19 +195,23 @@ class DynatraceMcpTelemetry implements Telemetry {
     if (!this.session) return;
 
     try {
-      const action = this.session.enterAction('error_occurred');
-      // reportError expects name and code, so we'll use error name and a generic error code
-      action.reportError(error.name || 'Error', 500);
+      const eventData: Record<string, string | number> = {
+        'event.name': 'MCP Error Occurred',
+        'error_name': error.name || 'Error',
+        'error_message': error.message,
+        'error_code': 500,
+        ...this.getCommonAttributes(),
+      };
 
       if (context) {
-        action.reportValue('error_context', context);
+        eventData.error_context = context;
       }
 
-      action.reportValue('error_message', error.message);
       if (error.stack) {
-        action.reportValue('error_stack', error.stack.substring(0, 1000)); // Limit stack trace length
+        eventData.error_stack = error.stack.substring(0, 1000); // Limit stack trace length
       }
-      action.leaveAction();
+
+      this.session.sendBizEvent('com.dynatrace-oss.mcp.error', eventData);
     } catch (trackingError) {
       console.warn('Failed to track error:', trackingError);
     }
@@ -194,6 +239,7 @@ class DynatraceMcpTelemetry implements Telemetry {
 
 class NoOpTelemetry implements Telemetry {
   async trackMcpServerStart(): Promise<void> {}
+  async trackMcpClientInitialization(): Promise<void> {}
   async trackMcpToolUsage(): Promise<void> {}
   async trackError(): Promise<void> {}
   async shutdown(): Promise<void> {}

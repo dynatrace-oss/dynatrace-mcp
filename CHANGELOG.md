@@ -4,6 +4,9 @@
 
 - Removed `dt-app` dependency to reduce package size and dependency complexity, implementing a lightweight SSO URL discovery mechanism
 - Added support for `DT_SSO_URL` environment variable to allow custom SSO URL configuration for managed or special Dynatrace environments
+- Migrated telemetry implementation from OpenKit Actions to Business Events (BizEvents) for better data accessibility via Grail, simplifying the telemetry architecture while maintaining all tracking capabilities
+- Telemetry events are now sent with structured event types: `com.dynatrace-oss.mcp.server-start`, `com.dynatrace-oss.mcp.client-initialization`, `com.dynatrace-oss.mcp.tool-usage`, and `com.dynatrace-oss.mcp.error`, making it easier to query and analyze telemetry data in Grail
+- Added client initialization tracking to capture which MCP client (e.g., VS Code, Claude Desktop, Cursor) connects to the server, enabling better understanding of client usage patterns
 
 ## 1.0.1
 

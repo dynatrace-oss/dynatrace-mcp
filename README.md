@@ -438,11 +438,20 @@ Grail has a dedicated section about permissions in the Dynatrace Docs. Please re
 
 ## Telemetry
 
-The Dynatrace MCP Server includes sending Telemetry Data via Dynatrace OpenKit to help improve the product. This includes:
+The Dynatrace MCP Server sends telemetry data using Dynatrace OpenKit BizEvents to help improve the product. This includes:
 
-- Server start events
-- Tool usage (which tools are called, success/failure, execution duration)
-- Error tracking for debugging and improvement
+- Server start events (`com.dynatrace-oss.mcp.server-start`)
+- Client initialization events (`com.dynatrace-oss.mcp.client-initialization`) - which MCP client is connecting (e.g., VS Code, Claude Desktop, Cursor)
+- Tool usage events (`com.dynatrace-oss.mcp.tool-usage`) - which tools are called, success/failure, execution duration
+- Error events (`com.dynatrace-oss.mcp.error`) - error tracking for debugging and improvement
+
+All telemetry data is sent as **Business Events** and is accessible via Grail for analysis:
+
+```dql
+fetch bizevents
+| filter startsWith(event.type, "com.dynatrace-oss.mcp")
+| sort timestamp DESC
+```
 
 **Privacy and Opt-out:**
 
