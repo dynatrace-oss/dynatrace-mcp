@@ -61,13 +61,30 @@ Once you are done, we recommend looking into [example prompts](#-example-prompts
 
 ## Capabilities
 
-- List and get [problem](https://www.dynatrace.com/hub/detail/problems/) details from your services (for example Kubernetes)
-- List and get security problems / [vulnerability](https://www.dynatrace.com/hub/detail/vulnerabilities/) details
-- Execute DQL (Dynatrace Query Language) and retrieve logs, events, spans and metrics
-- Send Slack messages (via Slack Connector)
-- Set up notification Workflow (via Dynatrace [AutomationEngine](https://docs.dynatrace.com/docs/discover-dynatrace/platform/automationengine))
-- Get more information about a monitored entity
-- Get Ownership of an entity
+### Available Tools
+
+| Tool | Description | Read-Only |
+|------|-------------|-----------|
+| `get_environment_info` | Get information about the connected Dynatrace Environment and verify connection | ✅ |
+| `list_vulnerabilities` | Retrieve active [vulnerabilities](https://www.dynatrace.com/hub/detail/vulnerabilities/) from Dynatrace for the last 30 days with optional DQL filters | ✅ |
+| `list_problems` | List all [problems](https://www.dynatrace.com/hub/detail/problems/) sorted by recency, with timeframe and status filters | ✅ |
+| `list_exceptions` | List all exceptions/errors starting with the most recent | ✅ |
+| `find_entity_by_name` | Find entityId and type of monitored entities (services, hosts, applications, etc.) | ✅ |
+| `get_kubernetes_events` | Get events from a specific Kubernetes cluster | ✅ |
+| `execute_dql` | Execute DQL to retrieve Logs, Metrics, Spans, Events, or Entity Data from Grail | ❌ |
+| `verify_dql` | Syntactically verify a DQL statement before execution | ✅ |
+| `generate_dql_from_natural_language` | Convert natural language queries to DQL using Davis CoPilot AI | ✅ |
+| `explain_dql_in_natural_language` | Explain DQL statements in plain English using Davis CoPilot AI | ✅ |
+| `chat_with_davis_copilot` | Ask any Dynatrace-related question via Davis CoPilot | ✅ |
+| `list_davis_analyzers` | List all available Davis Analyzers (forecast, anomaly detection, etc.) | ✅ |
+| `execute_davis_analyzer` | Execute a Davis Analyzer with custom parameters | ✅ |
+| `send_slack_message` | Send a Slack message via Slack Connector (requires approval) | ❌ |
+| `send_email` | Send email via Dynatrace Email API (max 10 recipients, requires approval) | ❌ |
+| `create_workflow_for_notification` | Create a notification workflow (via Dynatrace [AutomationEngine](https://docs.dynatrace.com/docs/discover-dynatrace/platform/automationengine)) for problem alerts (requires approval) | ❌ |
+| `make_workflow_public` | Make a workflow publicly available (requires approval) | ❌ |
+| `reset_grail_budget` | Reset the Grail query budget after exhaustion | ❌ |
+
+> **Note:** Tools marked with ❌ for Read-Only either modify state or require human approval before execution.
 
 ### Costs
 
