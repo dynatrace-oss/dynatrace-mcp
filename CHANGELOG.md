@@ -4,6 +4,8 @@
 
 - Added `timeframe` parameter to `list_vulnerabilities` tool, enabling flexible time ranges (e.g., "12h", "24h", "7d", "30d", "90d"). Default: "30d".
 - Added `timeframe` parameter to `get_kubernetes_events` tool, enabling flexible time ranges (e.g., "12h", "24h", "7d", "30d"). Default: "24h".
+- Added `create_notebook` tool to share findings with colleagues
+- Added document management scopes: `document:documents:read` and `document:documents:write` to support document operations
 
 ## 1.1.0
 
