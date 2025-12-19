@@ -68,6 +68,7 @@ Once you are done, we recommend looking into [example prompts](#-example-prompts
 - Set up notification Workflow (via Dynatrace [AutomationEngine](https://docs.dynatrace.com/docs/discover-dynatrace/platform/automationengine))
 - Get more information about a monitored entity
 - Get Ownership of an entity
+- Create, list, and read documents (Notebooks, Dashboards, Launchpads, and other Dynatrace documents)
 
 ### Costs
 
@@ -375,6 +376,8 @@ Depending on the features you are using, the following scopes are needed:
 - `davis:analyzers:read` - needed for listing and getting Davis analyzer definitions
 - `davis:analyzers:execute` - needed for executing Davis analyzers
 - `email:emails:send` - needed for `send_email` tool to send emails
+- `document:documents:read` - needed for `list_documents` and `read_document` tools to list and read Dynatrace documents (Notebooks, Dashboards, Launchpads, etc.)
+- `document:documents:write` - needed for `create_document` tool to create new documents
 
 **Notes**:
 

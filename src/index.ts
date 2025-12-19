@@ -38,6 +38,7 @@ import { resetGrailBudgetTracker, getGrailBudgetTracker } from './utils/grail-bu
 import { handleClientRequestError } from './utils/dynatrace-connection-utils';
 import { configureProxyFromEnvironment } from './utils/proxy-config';
 import { listExceptions } from './capabilities/list-exceptions';
+import { createDynatraceNotebook } from './capabilities/notebooks';
 
 const DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID = 'dt0s12.local-dt-mcp-server';
 
@@ -84,6 +85,10 @@ const allRequiredScopes = scopesBase.concat([
 
   // Communication scopes
   'email:emails:send', // Send emails
+
+  // Document Management scopes
+  'document:documents:read', // Read documents (Notebooks, Dashboards, Launchpads, etc.)
+  'document:documents:write', // Create and update documents
 ]);
 
 const main = async () => {
@@ -1345,6 +1350,48 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
       } catch (error: any) {
         return `Error executing Davis Analyzer: ${error.message}`;
       }
+    },
+  );
+
+  // Document Management Tools
+
+  tool(
+    'create_dynatrace_notebook',
+    'Create Dynatrace Notebook',
+    'Create a new notebook in the Dynatrace platform (NOT a Jupyter notebook) to share your analysis and findings with colleagues.',
+    {
+      name: z
+        .string()
+        .describe(
+          'The name of the notebook (e.g., "Performance Analysis for <entity-name>" or "Error Investigation Dashboard for <problem-name>")',
+        ),
+      description: z
+        .string()
+        .optional()
+        .describe(
+          'Optional description of the Dynatrace notebook (could include the purpose, scope, the original prompt, or just a summary based on the initial prompt)',
+        ),
+      content: z
+        .array(
+          z.object({
+            type: z.enum(['dql', 'markdown']),
+            text: z.string(),
+          }),
+        )
+        .describe(
+          'The Dynatrace notebook content, containing DQL statements and text (multi-line markdown is possible) relevant for the analysis. Do NOT use Jupyter notebook format.',
+        ),
+    },
+    {
+      readOnlyHint: false,
+    },
+    async ({ name, content, description }) => {
+      const dtClient = await createAuthenticatedHttpClient(allRequiredScopes);
+      const data = await createDynatraceNotebook(dtClient, name, content, description);
+
+      return data
+        ? `Document created successfully: ${dtEnvironment}/ui/apps/dynatrace.notebooks/notebook/${data.id}`
+        : 'document creation failed';
     },
   );
 
