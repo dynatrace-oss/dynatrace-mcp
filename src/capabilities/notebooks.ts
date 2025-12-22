@@ -1,12 +1,6 @@
+import { randomUUID } from 'crypto';
 import { HttpClient } from '@dynatrace-sdk/http-client';
 import { DocumentsClient } from '@dynatrace-sdk/client-document';
-
-function generateUUID() {
-  // Generate a simple UUID (version 4) for section IDs, e.g., d73d7c64-6a86-4bef-84d7-011ab65d5f89
-  return '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, (c) =>
-    (+c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))).toString(16),
-  );
-}
 
 export const createDynatraceNotebook = async (
   dtClient: HttpClient,
@@ -27,7 +21,7 @@ export const createDynatraceNotebook = async (
     if (item.type === 'dql') {
       // DQL Query
       notebooksBody.sections.push({
-        id: generateUUID(),
+        id: randomUUID(),
         type: 'dql',
         showTitle: false,
         state: {
@@ -40,7 +34,7 @@ export const createDynatraceNotebook = async (
     } else {
       // Markdown Statement
       notebooksBody.sections.push({
-        id: generateUUID(),
+        id: randomUUID(),
         type: 'markdown',
         markdown: item.text, // multi-line markdown
       });
