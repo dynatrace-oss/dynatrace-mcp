@@ -159,34 +159,71 @@ const createOAuthAuthCodeFlowHttpClient = async (
   console.error(`🚀 Auth-Code-Flow: No valid cached token found, initiating OAuth Authorization Code Flow...`);
   console.error(`Using SSO base URL ${ssoBaseURL}`);
 
-  // Randomly select a port for the OAuth redirect URL (e.g., 5344)
-  const port = getRandomPort();
+  // Try to start OAuth server with retry logic for port conflicts
+  const maxAttempts = 3;
+  let lastError: Error | null = null;
 
-  // Perform the OAuth authorization code flow with all scopes
-  const tokenResponse = await performOAuthAuthorizationCodeFlow(
-    ssoBaseURL,
-    {
-      clientId,
-      // redirectUri will be used as a redirect/callback from the authorization code flow
-      redirectUri: `http://localhost:${port}/auth/login`,
-      scopes: scopes, // Request all scopes upfront
-    },
-    port,
-  );
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    // Randomly select a port for the OAuth redirect URL (e.g., 5344)
+    const port = getRandomPort();
 
-  // Check if we got a valid token
-  if (!tokenResponse.access_token || tokenResponse.error || tokenResponse.error_description || tokenResponse.issueId) {
-    throw new Error(
-      `Failed to retrieve OAuth token via authorization code flow (IssueId: ${tokenResponse.issueId}): ${tokenResponse.error} - ${tokenResponse.error_description}`,
-    );
+    try {
+      console.error(`🔄 Attempting to start OAuth callback server on port ${port} (attempt ${attempt}/${maxAttempts})`);
+
+      // Perform the OAuth authorization code flow with all scopes
+      const tokenResponse = await performOAuthAuthorizationCodeFlow(
+        ssoBaseURL,
+        {
+          clientId,
+          // redirectUri will be used as a redirect/callback from the authorization code flow
+          redirectUri: `http://localhost:${port}/auth/login`,
+          scopes: scopes, // Request all scopes upfront
+        },
+        port,
+      );
+
+      // Check if we got a valid token
+      if (
+        !tokenResponse.access_token ||
+        tokenResponse.error ||
+        tokenResponse.error_description ||
+        tokenResponse.issueId
+      ) {
+        throw new Error(
+          `Failed to retrieve OAuth token via authorization code flow (IssueId: ${tokenResponse.issueId}): ${tokenResponse.error} - ${tokenResponse.error_description}`,
+        );
+      }
+
+      // Cache the new token with all scopes
+      globalTokenCache.setToken(scopes, tokenResponse);
+      console.error(
+        `✅ Successfully retrieved token from SSO! Token cached for future use with scopes: ${scopes.join(', ')}`,
+      );
+
+      // Success - return the client
+      return createBearerTokenHttpClient(environmentUrl, tokenResponse.access_token);
+    } catch (error: any) {
+      lastError = error;
+
+      // Check if this is a port conflict error
+      if (error.code === 'EADDRINUSE' || error.message?.includes('EADDRINUSE')) {
+        console.error(
+          `❌ Port ${port} is already in use. ${attempt < maxAttempts ? 'Retrying with a different port...' : ''}`,
+        );
+        if (attempt < maxAttempts) {
+          // Wait a bit before retrying
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          continue;
+        }
+      }
+
+      // For non-port errors, don't retry
+      break;
+    }
   }
 
-  // Cache the new token with all scopes
-  globalTokenCache.setToken(scopes, tokenResponse);
-  console.error(
-    `✅ Successfully retrieved token from SSO! Token cached for future use with scopes: ${scopes.join(', ')}`,
+  // If we get here, all attempts failed
+  throw new Error(
+    `Failed to start OAuth callback server after ${maxAttempts} attempts. Last error: ${lastError?.message}`,
   );
-
-  // now that we have the access token, we can just use a plain bearer token client
-  return createBearerTokenHttpClient(environmentUrl, tokenResponse.access_token);
 };

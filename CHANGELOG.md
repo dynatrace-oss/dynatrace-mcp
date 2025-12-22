@@ -6,6 +6,7 @@
 - Added `timeframe` parameter to `get_kubernetes_events` tool, enabling flexible time ranges (e.g., "12h", "24h", "7d", "30d"). Default: "24h".
 - Added `create_notebook` tool to share findings with colleagues
 - Added document management scopes: `document:documents:read` and `document:documents:write` to support document operations
+- Fixed: Retry logic that attempts up to 3 different ports (5344-5349 range) when EADDRINUSE errors occur for OAuth callback
 
 ## 1.1.0
 
