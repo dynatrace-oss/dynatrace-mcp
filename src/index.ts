@@ -4,12 +4,12 @@ import { isClientRequestError } from '@dynatrace-sdk/shared-errors';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { Command } from 'commander';
-import { z, ZodRawShape, ZodTypeAny } from 'zod';
+import { z } from 'zod';
 
 import { getPackageJsonVersion } from './utils/version';
+import { createToolWrapper } from './utils/tool-wrapper';
 import { createDtHttpClient } from './authentication/dynatrace-clients';
 import { listVulnerabilities } from './capabilities/list-vulnerabilities';
 import { listProblems } from './capabilities/list-problems';
@@ -42,8 +42,15 @@ import { createDynatraceNotebook } from './capabilities/notebooks';
 
 const DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID = 'dt0s12.local-dt-mcp-server';
 
-// Rate limiting state: store timestamps of tool calls
-let toolCallTimestamps: number[] = [];
+const createShutdownHandler = (...shutdownOps: Array<() => void | Promise<void>>) => {
+  return async () => {
+    console.error('Shutting down MCP server...');
+    for (const op of shutdownOps) {
+      await op();
+    }
+    process.exit(0);
+  };
+};
 
 // Base Scopes for MCP Server tools
 let scopesBase = [
@@ -119,17 +126,6 @@ const main = async () => {
   // Initialize usage tracking
   const telemetry = createTelemetry();
   await telemetry.trackMcpServerStart();
-
-  // Create a shutdown handler that takes shutdown operations as parameters
-  const shutdownHandler = (...shutdownOps: Array<() => void | Promise<void>>) => {
-    return async () => {
-      console.error('Shutting down MCP server...');
-      for (const op of shutdownOps) {
-        await op();
-      }
-      process.exit(0);
-    };
-  };
 
   // Initialize Metadata for MCP Server
   const server = new McpServer(
@@ -214,88 +210,8 @@ const main = async () => {
   // Ready to start the server
   console.error(`Starting Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
-  // quick abstraction/wrapper to make it easier for tools to reply text instead of JSON
-  const tool = (
-    name: string,
-    title: string,
-    description: string,
-    paramsSchema: ZodRawShape,
-    annotations: ToolAnnotations,
-    cb: (args: any) => Promise<string>,
-  ) => {
-    const wrappedCb = async (args: any): Promise<CallToolResult> => {
-      // Capture starttime for telemetry and rate limiting
-      const startTime = Date.now();
-
-      /**
-       * Rate Limit: Max. 5 requests per 20 seconds
-       */
-      const twentySecondsAgo = startTime - 20000;
-
-      // First, remove all tool calls older than 20s
-      toolCallTimestamps = toolCallTimestamps.filter((ts) => ts > twentySecondsAgo);
-
-      // Second, check whether we have 5 or more calls in the past 20s
-      if (toolCallTimestamps.length >= 5) {
-        return {
-          content: [
-            { type: 'text', text: 'Rate limit exceeded: Maximum 5 tool calls per 20 seconds. Please try again later.' },
-          ],
-          isError: true,
-        };
-      }
-
-      // Last but not least, record this call
-      toolCallTimestamps.push(startTime);
-      /** Rate Limit End */
-
-      // track toolcall for telemetry
-      let toolCallSuccessful = false;
-
-      try {
-        // call the tool
-        const response = await cb(args);
-        toolCallSuccessful = true;
-        return {
-          content: [{ type: 'text', text: response }],
-        };
-      } catch (error: any) {
-        // Track error
-        telemetry.trackError(error, `tool_${name}`).catch((e) => console.warn('Failed to track error:', e));
-
-        // check if it's an error originating from the Dynatrace SDK / API Gateway and provide an appropriate message to the user
-        if (isClientRequestError(error)) {
-          return {
-            content: [{ type: 'text', text: handleClientRequestError(error) }],
-            isError: true,
-          };
-        }
-        // else: We don't know what kind of error happened - best case we can log the error and provide error.message as a tool response
-        console.error(error);
-        return {
-          content: [{ type: 'text', text: `Error: ${error.message}` }],
-          isError: true,
-        };
-      } finally {
-        // Track tool usage
-        const duration = Date.now() - startTime;
-        telemetry
-          .trackMcpToolUsage(name, toolCallSuccessful, duration)
-          .catch((e) => console.warn('Failed to track tool usage:', e));
-      }
-    };
-
-    server.registerTool(
-      name,
-      {
-        title: title,
-        description: description,
-        inputSchema: z.object(paramsSchema),
-        annotations: annotations,
-      },
-      (args: any) => wrappedCb(args),
-    );
-  };
+  // Create tool registration wrapper with rate limiting, error handling, and telemetry
+  const tool = createToolWrapper(server, telemetry);
 
   /**
    * Helper function to request human approval for potentially sensitive operations
@@ -1460,7 +1376,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
     // Handle graceful shutdown for http server mode
     process.on(
       'SIGINT',
-      shutdownHandler(
+      createShutdownHandler(
         async () => await telemetry.shutdown(),
         () => new Promise<void>((resolve) => httpServer.close(() => resolve())),
       ),
@@ -1477,11 +1393,11 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
     // Handle graceful shutdown for stdio mode
     process.on(
       'SIGINT',
-      shutdownHandler(async () => await telemetry.shutdown()),
+      createShutdownHandler(async () => await telemetry.shutdown()),
     );
     process.on(
       'SIGTERM',
-      shutdownHandler(async () => await telemetry.shutdown()),
+      createShutdownHandler(async () => await telemetry.shutdown()),
     );
   }
 };
