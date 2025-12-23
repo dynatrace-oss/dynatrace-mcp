@@ -162,10 +162,12 @@ const createOAuthAuthCodeFlowHttpClient = async (
   // Try to start OAuth server with retry logic for port conflicts
   const maxAttempts = 3;
   let lastError: Error | null = null;
+  const alreadyUsedPorts = [];
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     // Randomly select a port for the OAuth redirect URL (e.g., 5344)
-    const port = getRandomPort();
+    const port = getRandomPort(undefined, undefined, alreadyUsedPorts);
+    alreadyUsedPorts.push(port);
 
     try {
       console.error(`🔄 Attempting to start OAuth callback server on port ${port} (attempt ${attempt}/${maxAttempts})`);
