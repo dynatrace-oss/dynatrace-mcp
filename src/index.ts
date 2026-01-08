@@ -140,7 +140,6 @@ const main = async () => {
     {
       capabilities: {
         tools: {},
-        elicitation: {},
       },
     },
   );
