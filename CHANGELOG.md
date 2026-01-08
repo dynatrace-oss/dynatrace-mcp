@@ -4,7 +4,7 @@
 
 ## 1.2.0
 
-**Note**: This release contains updates to vulnerable 3rd-party librarlies `@modelcontextprotocol/sdk` (CVE-2026-0621) as wel as `qs` (CVE-2025-15284). We advise to upgrade to this release as soon as possible.
+**Note**: This release contains updates to vulnerable 3rd-party libraries `@modelcontextprotocol/sdk` (CVE-2026-0621) as well as `qs` (CVE-2025-15284). We advise to upgrade to this release as soon as possible.
 
 **Highlights**
 
