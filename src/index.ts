@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { EnvironmentInformationClient } from '@dynatrace-sdk/client-platform-management-service';
+import { eventsClient } from '@dynatrace-sdk/client-classic-environment-v2';
 import { isClientRequestError } from '@dynatrace-sdk/shared-errors';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
@@ -17,6 +18,7 @@ import { getEventsForCluster } from './capabilities/get-events-for-cluster';
 import { listDavisAnalyzers, executeDavisAnalyzer } from './capabilities/davis-analyzers';
 import { sendSlackMessage } from './capabilities/send-slack-message';
 import { sendEmail } from './capabilities/send-email';
+import { sendEvent, EventIngestEventType } from './capabilities/send-event';
 import { executeDql, verifyDqlStatement } from './capabilities/execute-dql';
 import { createWorkflowForProblemNotification } from './capabilities/create-workflow-for-problem-notification';
 import { updateWorkflow } from './capabilities/update-workflow';
@@ -86,6 +88,9 @@ const allRequiredScopes = scopesBase.concat([
   // Communication scopes
   'email:emails:send', // Send emails
 
+  // Events scopes
+  'storage:events:write', // Write events to Dynatrace
+
   // Document Management scopes
   'document:documents:read', // Read documents (Notebooks, Dashboards, Launchpads, etc.)
   'document:documents:write', // Create and update documents
@@ -140,6 +145,7 @@ const main = async () => {
     {
       capabilities: {
         tools: {},
+        elicitation: {},
       },
     },
   );
@@ -1198,6 +1204,87 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
   );
 
   tool(
+    'send_event',
+    'Send Event',
+    'Send a custom event to Dynatrace using the Events API v2. Use this to ingest custom events for alerting, tracking deployments, configuration changes, or any custom business events.',
+    {
+      eventType: z
+        .enum([
+          'AVAILABILITY_EVENT',
+          'CUSTOM_ALERT',
+          'CUSTOM_ANNOTATION',
+          'CUSTOM_CONFIGURATION',
+          'CUSTOM_DEPLOYMENT',
+          'CUSTOM_INFO',
+          'ERROR_EVENT',
+          'MARKED_FOR_TERMINATION',
+          'PERFORMANCE_EVENT',
+          'RESOURCE_CONTENTION_EVENT',
+        ])
+        .describe(
+          'Type of event to send. Common types: CUSTOM_INFO for general information, CUSTOM_DEPLOYMENT for deployments, CUSTOM_ALERT for alerts, ERROR_EVENT for errors.',
+        ),
+      title: z.string().describe('Title of the event (max 500 characters). Should be descriptive and concise.'),
+      entitySelector: z
+        .string()
+        .optional()
+        .describe(
+          'Entity selector to associate the event with specific Dynatrace entities. Example: "type(HOST),entityId(HOST-1234567890ABCDEF)" or "type(SERVICE),tag(environment:production)"',
+        ),
+      properties: z
+        .record(z.string(), z.string())
+        .optional()
+        .describe(
+          'Custom properties as key-value pairs to include with the event. Example: {"version": "1.2.3", "environment": "production"}',
+        ),
+      startTime: z
+        .number()
+        .optional()
+        .describe('Start timestamp of the event in UTC milliseconds. If not set, current time is used.'),
+      endTime: z
+        .number()
+        .optional()
+        .describe('End timestamp of the event in UTC milliseconds. If not set, current time is used.'),
+    },
+    {},
+    async ({ eventType, title, entitySelector, properties, startTime, endTime }) => {
+      // Create an authenticated HTTP client and propagate its headers to the classic events client
+      // This ensures the classic events client has Authorization and User-Agent headers set.
+      const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('storage:events:write'));
+      try {
+        if ((eventsClient as any)?.httpClient && (dtClient as any)?._defaultHeaders) {
+          (eventsClient as any).httpClient._setDefaultHeaders((dtClient as any)._defaultHeaders);
+        }
+      } catch (e) {
+        console.error('Could not propagate HTTP headers to eventsClient:', e instanceof Error ? e.message : e);
+      }
+
+      const result = await sendEvent({
+        eventType: eventType as EventIngestEventType,
+        title,
+        entitySelector,
+        properties,
+        startTime,
+        endTime,
+      });
+
+      let responseMessage = `Event sent successfully!\n`;
+      responseMessage += `Report count: ${result.reportCount}\n`;
+
+      if (result.eventIngestResults && result.eventIngestResults.length > 0) {
+        responseMessage += `\nEvent results:\n`;
+        result.eventIngestResults.forEach((eventResult, index) => {
+          responseMessage += `  ${index + 1}. Correlation ID: ${eventResult.correlationId}, Status: ${eventResult.status}\n`;
+        });
+      }
+
+      responseMessage += `\nNote: Events are processed asynchronously. Use the correlation ID to track the event if needed.`;
+
+      return responseMessage;
+    },
+  );
+
+  tool(
     'list_exceptions',
     'List Exceptions',
     'List all exceptions known on Dynatrace starting with the most recent.',
@@ -1380,13 +1467,19 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
         .describe(
           'The Dynatrace notebook content, containing DQL statements and text (multi-line markdown is possible) relevant for the analysis. Do NOT use Jupyter notebook format.',
         ),
+      problemId: z
+        .string()
+        .optional()
+        .describe(
+          'Optional Dynatrace problem ID to attach the notebook to. Accepts either display ID (e.g., "P-12345678") or full event ID (e.g., "8763210598712345678_1234567890000V2"). When provided, the notebook will be pinned to the problem and appear in the troubleshooting section.',
+        ),
     },
     {
       readOnlyHint: false,
     },
-    async ({ name, content, description }) => {
+    async ({ name, content, description, problemId }) => {
       const dtClient = await createAuthenticatedHttpClient(allRequiredScopes);
-      const data = await createDynatraceNotebook(dtClient, name, content, description);
+      const data = await createDynatraceNotebook(dtClient, name, content, description, problemId);
 
       return data
         ? `Document created successfully: ${dtEnvironment}/ui/apps/dynatrace.notebooks/notebook/${data.id}`

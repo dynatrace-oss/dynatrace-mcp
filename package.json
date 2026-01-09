@@ -1,6 +1,6 @@
 {
   "name": "@dynatrace-oss/dynatrace-mcp-server",
-  "version": "1.2.0",
+  "version": "1.1.0",
   "mcpName": "io.github.dynatrace-oss/Dynatrace-mcp",
   "description": "Model Context Protocol (MCP) server for Dynatrace",
   "keywords": [
@@ -48,6 +48,7 @@
   "license": "MIT",
   "dependencies": {
     "@dynatrace-sdk/client-automation": "^5.3.0",
+    "@dynatrace-sdk/client-classic-environment-v2": "^2.0.0",
     "@dynatrace-sdk/client-davis-analyzers": "^1.9.8",
     "@dynatrace-sdk/client-davis-copilot": "^1.0.0",
     "@dynatrace-sdk/client-document": "^1.29.0",
@@ -55,7 +56,7 @@
     "@dynatrace-sdk/client-query": "^1.18.1",
     "@dynatrace-sdk/shared-errors": "^1.0.0",
     "@dynatrace/openkit-js": "^4.1.0",
-    "@modelcontextprotocol/sdk": "^1.25.2",
+    "@modelcontextprotocol/sdk": "^1.24.3",
     "commander": "^14.0.0",
     "open": "^8.4.2",
     "undici": "^6.21.0",
