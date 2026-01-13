@@ -56,7 +56,7 @@
     "@dynatrace-sdk/client-query": "^1.18.1",
     "@dynatrace-sdk/shared-errors": "^1.0.0",
     "@dynatrace/openkit-js": "^4.1.0",
-    "@modelcontextprotocol/sdk": "^1.24.3",
+    "@modelcontextprotocol/sdk": "^1.25.2",
     "commander": "^14.0.0",
     "open": "^8.4.2",
     "undici": "^6.21.0",

@@ -1,4 +1,5 @@
-import { eventsClient, EventIngest, EventIngestEventType } from '@dynatrace-sdk/client-classic-environment-v2';
+import { HttpClient } from '@dynatrace-sdk/http-client';
+import { EventsClient, EventIngest, EventIngestEventType } from '@dynatrace-sdk/client-classic-environment-v2';
 
 export interface EventRequest {
   eventType: EventIngestEventType;
@@ -20,26 +21,14 @@ export interface EventSendResult {
 
 /**
  * Send an event to Dynatrace using the Events API v2
+ * @param dtClient - Dynatrace HTTP Client with authentication
  * @param eventRequest - Event request parameters
  * @returns Structured event response with status
  */
-export const sendEvent = async (eventRequest: EventRequest): Promise<EventSendResult> => {
+export const sendEvent = async (dtClient: HttpClient, eventRequest: EventRequest): Promise<EventSendResult> => {
   try {
-    // Ensure the events client has a valid base URL. Some runtimes require the classic API base URL
-    // to be set explicitly. Prefer DT_CLASSIC_ENVIRONMENT, fallback to DT_ENVIRONMENT.
-    const classicBase = process.env.DT_CLASSIC_ENVIRONMENT || process.env.DT_ENVIRONMENT;
-    try {
-      if (
-        classicBase &&
-        (eventsClient as any)?.httpClient &&
-        typeof (eventsClient as any).httpClient._setBaseURL === 'function'
-      ) {
-        (eventsClient as any).httpClient._setBaseURL(classicBase);
-      }
-    } catch (e) {
-      // Non-fatal if we cannot set the base URL; we'll attempt the call anyway and log the issue
-      console.error('Could not set eventsClient base URL:', e instanceof Error ? e.message : e);
-    }
+    const eventsClient = new EventsClient(dtClient);
+
     const eventBody: EventIngest = {
       eventType: eventRequest.eventType,
       title: eventRequest.title,

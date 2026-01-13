@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { EnvironmentInformationClient } from '@dynatrace-sdk/client-platform-management-service';
-import { eventsClient } from '@dynatrace-sdk/client-classic-environment-v2';
 import { isClientRequestError } from '@dynatrace-sdk/shared-errors';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
@@ -1246,20 +1245,15 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
         .optional()
         .describe('End timestamp of the event in UTC milliseconds. If not set, current time is used.'),
     },
-    {},
+    {
+      readOnlyHint: false,
+      idempotentHint: false, // sending the same event multiple times creates multiple events
+      destructiveHint: true,
+    },
     async ({ eventType, title, entitySelector, properties, startTime, endTime }) => {
-      // Create an authenticated HTTP client and propagate its headers to the classic events client
-      // This ensures the classic events client has Authorization and User-Agent headers set.
       const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('storage:events:write'));
-      try {
-        if ((eventsClient as any)?.httpClient && (dtClient as any)?._defaultHeaders) {
-          (eventsClient as any).httpClient._setDefaultHeaders((dtClient as any)._defaultHeaders);
-        }
-      } catch (e) {
-        console.error('Could not propagate HTTP headers to eventsClient:', e instanceof Error ? e.message : e);
-      }
 
-      const result = await sendEvent({
+      const result = await sendEvent(dtClient, {
         eventType: eventType as EventIngestEventType,
         title,
         entitySelector,
@@ -1467,19 +1461,13 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
         .describe(
           'The Dynatrace notebook content, containing DQL statements and text (multi-line markdown is possible) relevant for the analysis. Do NOT use Jupyter notebook format.',
         ),
-      problemId: z
-        .string()
-        .optional()
-        .describe(
-          'Optional Dynatrace problem ID to attach the notebook to. Accepts either display ID (e.g., "P-12345678") or full event ID (e.g., "8763210598712345678_1234567890000V2"). When provided, the notebook will be pinned to the problem and appear in the troubleshooting section.',
-        ),
     },
     {
       readOnlyHint: false,
     },
-    async ({ name, content, description, problemId }) => {
+    async ({ name, content, description }) => {
       const dtClient = await createAuthenticatedHttpClient(allRequiredScopes);
-      const data = await createDynatraceNotebook(dtClient, name, content, description, problemId);
+      const data = await createDynatraceNotebook(dtClient, name, content, description);
 
       return data
         ? `Document created successfully: ${dtEnvironment}/ui/apps/dynatrace.notebooks/notebook/${data.id}`
