@@ -2,11 +2,32 @@
 
 ## Unreleased Changes
 
+- Added new tool `send_event` which allows sending an arbitrary event to Dynatrace
+- Added new scope `storage:events:write`
+
+## 1.2.0
+
+**Note**: This release contains updates to vulnerable 3rd-party libraries `@modelcontextprotocol/sdk` (CVE-2026-0621) as well as `qs` (CVE-2025-15284). We advise to upgrade to this release as soon as possible.
+
+**Highlights**
+
+- 📚 New Tool `create_notebook` allows to share findings with colleagues (using DQL statements and markdown tiles)
+
+### Tools
+
 - Added `timeframe` parameter to `list_vulnerabilities` tool, enabling flexible time ranges (e.g., "12h", "24h", "7d", "30d", "90d"). Default: "30d".
 - Added `timeframe` parameter to `get_kubernetes_events` tool, enabling flexible time ranges (e.g., "12h", "24h", "7d", "30d"). Default: "24h".
 - Added `create_notebook` tool to share findings with colleagues
+
+### Scopes
+
 - Added document management scopes: `document:documents:read` and `document:documents:write` to support document operations
-- Fixed: Retry logic that attempts up to 3 different ports (5344-5349 range) when EADDRINUSE errors occur for OAuth callback
+
+### Misc
+
+- Fixed retry logic that attempts up to 3 different ports (5344-5349 range) when EADDRINUSE errors occur for OAuth callback
+- Upgraded `@modelcontextprotocol/sdk` to 1.25.2
+- Upgraded `qs` to 6.14.1
 
 ## 1.1.0
 
