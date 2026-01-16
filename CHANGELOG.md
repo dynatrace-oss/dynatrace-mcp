@@ -2,8 +2,19 @@
 
 ## Unreleased Changes
 
-- Added new tool `send_event` which allows sending an arbitrary event to Dynatrace
-- Added new scope `storage:events:write`
+## 1.3.0
+
+**Highlights**
+
+- 📚 New Tool `send_event` allows to send arbitrary events to Dynatrace (like release events, problem events, security alerts)
+
+### Tools
+
+- Added `send_event` tool to send arbitrary events to Dynatrace
+
+### Scopes
+
+- Added `storage:events:write` scope for event operations
 
 ## 1.2.0
 
