@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
   "name": "io.github.dynatrace-oss/Dynatrace-mcp",
-  "description": "Model Context Protocol server for Dynatrace - access logs, events, metrics from Dynatrace via MCP.",
+  "description": "Model Context Protocol server for Dynatrace - access logs, events, metrics, problems, vulnerabilities, and more from Dynatrace via MCP. Supports Davis AI-powered assistance, DQL queries, and comprehensive observability data access.",
   "repository": {
     "url": "https://github.com/dynatrace-oss/Dynatrace-mcp",
     "source": "github"
@@ -19,10 +19,52 @@
       },
       "environmentVariables": [
         {
-          "description": "The URL of your Dynatrace environment (e.g. 'https://abc12345.apps.dynatrace.com')",
+          "description": "The URL of your Dynatrace environment (e.g. 'https://abc12345.apps.dynatrace.com'). Do not use Dynatrace classic URLs.",
           "isRequired": true,
           "format": "string",
           "name": "DT_ENVIRONMENT"
+        },
+        {
+          "description": "Dynatrace Platform Token for authentication. Alternative to OAuth authentication.",
+          "isRequired": false,
+          "format": "string",
+          "name": "DT_PLATFORM_TOKEN"
+        },
+        {
+          "description": "OAuth Client ID for advanced authentication scenarios. Use with OAUTH_CLIENT_SECRET.",
+          "isRequired": false,
+          "format": "string",
+          "name": "OAUTH_CLIENT_ID"
+        },
+        {
+          "description": "OAuth Client Secret for advanced authentication scenarios. Use with OAUTH_CLIENT_ID.",
+          "isRequired": false,
+          "format": "string",
+          "name": "OAUTH_CLIENT_SECRET"
+        },
+        {
+          "description": "Override the SSO URL for OAuth authentication. By default, the SSO URL is automatically discovered from your Dynatrace environment.",
+          "isRequired": false,
+          "format": "string",
+          "name": "DT_SSO_URL"
+        },
+        {
+          "description": "Budget limit in GB for Grail query bytes scanned per session. Default: 1000. Set to -1 to disable budget tracking.",
+          "isRequired": false,
+          "format": "number",
+          "name": "DT_GRAIL_QUERY_BUDGET_GB"
+        },
+        {
+          "description": "Connection ID of a Slack Connection for sending Slack messages via the send_slack_message tool.",
+          "isRequired": false,
+          "format": "string",
+          "name": "SLACK_CONNECTION_ID"
+        },
+        {
+          "description": "Disable telemetry collection. Set to 'true' to opt out of anonymous usage statistics. Default: false.",
+          "isRequired": false,
+          "format": "boolean",
+          "name": "DT_MCP_DISABLE_TELEMETRY"
         }
       ]
     }
