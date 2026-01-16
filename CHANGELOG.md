@@ -4,6 +4,7 @@
 
 - Added new tool `send_event` which allows sending an arbitrary event to Dynatrace
 - Added new scope `storage:events:write`
+- Added GitHub workflow to validate `server.json` against the official MCP schema, ensuring the server configuration remains compliant with the Model Context Protocol specification
 
 ## 1.2.0
 
