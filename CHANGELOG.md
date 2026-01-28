@@ -2,6 +2,10 @@
 
 ## Unreleased Changes
 
+## 1.3.1
+
+- Several dependency udpates (most notably, upgrading `hono` to 4.11.7)
+
 ## 1.3.0
 
 **Highlights**
