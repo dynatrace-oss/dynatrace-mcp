@@ -545,14 +545,14 @@ const main = async () => {
         let resp = `Found ${validSmartscapeEntities.length} monitored entities via Smartscape! Displaying the first ${Math.min(maxEntitiesToDisplay, validSmartscapeEntities.length)} valid entities:\n`;
 
         validSmartscapeEntities.slice(0, maxEntitiesToDisplay).forEach((entity) => {
-          resp += `- Entity '${entity.name}' of entity-type '${entity.type}' has entity id '${entity.id}' and tags ${entity['tags'] ? JSON.stringify(entity['tags']) : 'none'} - DQL Filter: '| filter dt.smartscape.${String(entity.type).toLowerCase()} == "${entity.id}"'\n`;
+          resp += `- Entity '${entity.name}' of entity-type '${entity.type}' has entity id '${entity.id}' and tags ${entity['tags'] ? JSON.stringify(entity['tags']) : 'none'} - DQL Filter: '| filter dt.smartscape.${String(entity.type).toLowerCase()} == toSmartscapeId("${entity.id}")'\n`;
         });
 
         resp +=
           '\n\n**Next Steps:**\n' +
           '1. Fetch more details about the entity, using the `execute_dql` tool with the following DQL Statement: "smartscapeNodes \"<entity-type>\" | filter id == <entity-id>"\n' +
           '2. Perform a sanity check that found entities are actually the ones you are looking for, by comparing name and by type (hosts vs. containers vs. apps vs. functions) and technology (Java, TypeScript, .NET) with what is available in the local source code repo.\n' +
-          '3. Find and investigate available metrics for relevant entities, by using the `execute_dql` tool with the following DQL statement: "fetch metric.series | filter dt.smartscape.<entity-type> == <entity-id> | limit 20"\n' +
+          '3. Find and investigate available metrics for relevant entities, by using the `execute_dql` tool with the following DQL statement: "fetch metric.series | filter dt.smartscape.<entity-type> == toSmartscapeId(<entity-id>) | limit 20"\n' +
           '4. Find out whether any problems exist for this entity using the `list_problems` or `list_vulnerabilities` tool, and the provided DQL-Filter\n' +
           '5. Explore dependency & relationships with: "smartscapeEdges \"*\" | filter source_id == <entity-id> or target_id == <entity-id>" to list inbound/outbound edges (depends_on, dependency_of, owned_by, part_of) for graph context\n';
 
