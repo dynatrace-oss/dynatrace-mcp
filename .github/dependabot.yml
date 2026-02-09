@@ -50,6 +50,8 @@ updates:
         update-types: ['version-update:semver-major']
       - dependency-name: 'dt-app'
         update-types: ['version-update:semver-major']
+      - dependency-name: 'open'
+        update-types: ['version-update:semver-major']
       # Node.js version policy: Only allow LTS versions and be conservative about upgrades
       # Current: Node.js 22 (LTS until October 2025)
       # Ignore non-LTS Node.js versions (odd-numbered major versions)
