@@ -25,12 +25,24 @@ updates:
           - 'minor'
           - 'patch'
           - 'major'
-      dynatrace-sdk:
+      dynatrace-patch-updates:
         patterns:
           - '@dynatrace-sdk/*'
+          - '@dynatrace/*'
+        update-types:
+          - 'patch'
+      dynatrace-minor-updates:
+        patterns:
+          - '@dynatrace-sdk/*'
+          - '@dynatrace/*'
         update-types:
           - 'minor'
-          - 'patch'
+      dynatrace-major-updates:
+        patterns:
+          - '@dynatrace-sdk/*'
+          - '@dynatrace/*'
+        update-types:
+          - 'major'
       dev-dependencies:
         dependency-type: 'development'
         update-types:
@@ -38,11 +50,15 @@ updates:
           - 'patch'
         exclude-patterns:
           - '@types/node'
+          - '@dynatrace-sdk/*'
+          - '@dynatrace/*'
       major-updates:
         update-types:
           - 'major'
         exclude-patterns:
           - '@types/node'
+          - '@dynatrace-sdk/*'
+          - '@dynatrace/*'
     # Ignore specific packages if needed
     ignore:
       # Ignore major version updates for core dependencies to avoid breaking changes
