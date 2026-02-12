@@ -43,28 +43,10 @@
           "name": "OAUTH_CLIENT_SECRET"
         },
         {
-          "description": "Override the SSO URL for OAuth authentication. By default, the SSO URL is automatically discovered from your Dynatrace environment.",
-          "isRequired": false,
-          "format": "string",
-          "name": "DT_SSO_URL"
-        },
-        {
           "description": "Budget limit in GB for Grail query bytes scanned per session. Default: 1000. Set to -1 to disable budget tracking.",
           "isRequired": false,
           "format": "number",
           "name": "DT_GRAIL_QUERY_BUDGET_GB"
-        },
-        {
-          "description": "Connection ID of a Slack Connection for sending Slack messages via the send_slack_message tool.",
-          "isRequired": false,
-          "format": "string",
-          "name": "SLACK_CONNECTION_ID"
-        },
-        {
-          "description": "Disable telemetry collection. Set to 'true' to opt out of anonymous usage statistics. Default: false.",
-          "isRequired": false,
-          "format": "boolean",
-          "name": "DT_MCP_DISABLE_TELEMETRY"
         }
       ]
     }
