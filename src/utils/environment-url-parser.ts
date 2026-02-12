@@ -13,15 +13,27 @@ export function parseEnvironmentUrl(dtEnvironmentUrl: string): { environmentId: 
     const environmentId = parts[0] || 'unknown';
 
     // Determine stage from the hostname
+    // Check specific patterns after parsing to avoid substring matching issues
     let stage = 'prod'; // Default to prod
 
-    if (hostname.includes('.sprint.apps.dynatracelabs.com') || hostname.includes('.sprint.dynatracelabs.com')) {
+    // Check for sprint stage
+    if (
+      parts.includes('sprint') &&
+      (hostname.endsWith('.apps.dynatracelabs.com') || hostname.endsWith('.dynatracelabs.com'))
+    ) {
       stage = 'sprint';
-    } else if (hostname.includes('.dev.apps.dynatracelabs.com') || hostname.includes('.dev.dynatracelabs.com')) {
+    }
+    // Check for dev stage
+    else if (
+      parts.includes('dev') &&
+      (hostname.endsWith('.apps.dynatracelabs.com') || hostname.endsWith('.dynatracelabs.com'))
+    ) {
       stage = 'dev';
-    } else if (
-      hostname.includes('.hardening.apps.dynatracelabs.com') ||
-      hostname.includes('.hardening.dynatracelabs.com')
+    }
+    // Check for hardening stage
+    else if (
+      parts.includes('hardening') &&
+      (hostname.endsWith('.apps.dynatracelabs.com') || hostname.endsWith('.dynatracelabs.com'))
     ) {
       stage = 'hardening';
     }
