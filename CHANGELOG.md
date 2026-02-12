@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Improved telemetry tracking by adding `environment_id` and `stage` fields to all BizEvents, enabling better tracking and analysis of usage across different Dynatrace environments and stages (e.g., dev, prod, sprint)
+
 ## 1.3.1
 
 - Several dependency udpates (most notably, upgrading `hono` to 4.11.7)
