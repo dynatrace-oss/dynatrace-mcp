@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.dynatrace-oss/Dynatrace-mcp",
-  "description": "Model Context Protocol server for Dynatrace - access logs, events, metrics, problems, vulnerabilities, and more from Dynatrace via MCP. Supports Davis AI-powered assistance, DQL queries, and comprehensive observability data access.",
+  "description": "Access Dynatrace observability data: logs, metrics, problems, vulnerabilities via DQL and Davis AI",
   "repository": {
     "url": "https://github.com/dynatrace-oss/Dynatrace-mcp",
     "source": "github"
