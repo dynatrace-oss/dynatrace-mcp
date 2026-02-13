@@ -777,7 +777,7 @@ const main = async () => {
       response.records.forEach((record: any) => {
         Object.keys(record).forEach((key) => columnSet.add(key));
       });
-      const columns = Array.from(columnSet);
+      const columns = Array.from(columnSet).sort();
 
       // Convert records to rows format (array of arrays)
       const rows = response.records.map((record: any) => {
