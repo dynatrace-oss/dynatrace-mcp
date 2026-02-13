@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Added MCP App support for the `execute_dql` tool, enabling visual rendering of query results in compatible MCP clients. The tool now returns structured content with columns and rows in addition to the text output, allowing clients to display data in tables or charts.
+
 ## 1.3.1
 
 - Several dependency udpates (most notably, upgrading `hono` to 4.11.7)

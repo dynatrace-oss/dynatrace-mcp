@@ -224,7 +224,7 @@ const main = async () => {
     description: string,
     paramsSchema: ZodRawShape,
     annotations: ToolAnnotations,
-    cb: (args: any) => Promise<string>,
+    cb: (args: any) => Promise<string | CallToolResult>,
   ) => {
     const wrappedCb = async (args: any): Promise<CallToolResult> => {
       // Capture starttime for telemetry and rate limiting
@@ -259,6 +259,13 @@ const main = async () => {
         // call the tool
         const response = await cb(args);
         toolCallSuccessful = true;
+
+        // If response is already a CallToolResult, return it directly
+        if (typeof response === 'object' && 'content' in response) {
+          return response;
+        }
+
+        // Otherwise, wrap string response in CallToolResult
         return {
           content: [{ type: 'text', text: response }],
         };
@@ -765,7 +772,43 @@ const main = async () => {
       result += `\n📋 **Query Results**: (${response.records?.length || 0} records):\n\n`;
       result += `\`\`\`json\n${JSON.stringify(response.records, null, 2)}\n\`\`\``;
 
-      return result;
+      // Extract column names from the records (all unique keys across all records)
+      const columnSet = new Set<string>();
+      response.records.forEach((record: any) => {
+        Object.keys(record).forEach((key) => columnSet.add(key));
+      });
+      const columns = Array.from(columnSet);
+
+      // Convert records to rows format (array of arrays)
+      const rows = response.records.map((record: any) => {
+        return columns.map((col) => {
+          const value = record[col];
+          // Handle null/undefined
+          if (value === null || value === undefined) {
+            return null;
+          }
+          // Convert objects/arrays to strings for display
+          if (typeof value === 'object') {
+            return JSON.stringify(value);
+          }
+          return value;
+        });
+      });
+
+      // Return both text content and structured content
+      return {
+        content: [{ type: 'text', text: result }],
+        structuredContent: {
+          columns: columns,
+          rows: rows,
+          recordCount: response.records.length,
+          scannedBytes: response.scannedBytes,
+          scannedRecords: response.scannedRecords,
+          executionTimeMilliseconds: response.executionTimeMilliseconds,
+          queryId: response.queryId,
+          sampled: response.sampled,
+        },
+      };
     },
   );
 
