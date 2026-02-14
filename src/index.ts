@@ -803,7 +803,7 @@ const main = async () => {
 
   // MCP App: Register the HTML resource for the execute_dql interactive UI
   registerAppResource(server, 'DQL Results Viewer', executeDqlResourceUri, {}, async () => {
-    const html = readFileSync(join(__dirname, 'ui', 'execute-dql.html'), 'utf-8');
+    const html = readFileSync(join(__dirname, 'ui', 'execute-dql', 'index.html'), 'utf-8');
     return {
       contents: [{ uri: executeDqlResourceUri, mimeType: RESOURCE_MIME_TYPE, text: html }],
     };

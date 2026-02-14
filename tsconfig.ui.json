@@ -7,7 +7,8 @@
     "strict": true,
     "module": "ESNext",
     "lib": ["ESNext", "DOM"],
-    "isolatedModules": true
+    "isolatedModules": true,
+    "jsx": "react-jsx"
   },
   "include": ["src/ui/**/*"]
 }

@@ -1,0 +1,14 @@
+/* Make the MCP App background transparent so it inherits the host window's background (e.g. VS Code / Copilot chat). */
+body,
+#root {
+  background: transparent !important;
+  margin: 0;
+  padding: 0;
+}
+
+/* Override Strato AppRoot's opaque background */
+[data-theme] {
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
