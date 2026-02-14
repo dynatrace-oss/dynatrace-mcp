@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 import { EnvironmentInformationClient } from '@dynatrace-sdk/client-platform-management-service';
 import { isClientRequestError } from '@dynatrace-sdk/shared-errors';
+// Dynamically imported below (ESM-only package)
+// import { registerAppTool, registerAppResource, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { Command } from 'commander';
 import { z, ZodRawShape, ZodTypeAny } from 'zod';
 
@@ -97,6 +101,15 @@ const allRequiredScopes = scopesBase.concat([
 ]);
 
 const main = async () => {
+  // Dynamic import: @modelcontextprotocol/ext-apps is ESM-only and can't be require()'d.
+  // We use Function constructor to prevent TypeScript from compiling import() to require().
+  const dynamicImport = new Function('specifier', 'return import(specifier)') as (
+    specifier: string,
+  ) => Promise<typeof import('@modelcontextprotocol/ext-apps/server')>;
+  const { registerAppTool, registerAppResource, RESOURCE_MIME_TYPE } = await dynamicImport(
+    '@modelcontextprotocol/ext-apps/server',
+  );
+
   console.error(`Initializing Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
   // Configure proxy from environment variables early in the startup process
@@ -221,16 +234,9 @@ const main = async () => {
   // Ready to start the server
   console.error(`Starting Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
-  // quick abstraction/wrapper to make it easier for tools to reply text instead of JSON
-  const tool = (
-    name: string,
-    title: string,
-    description: string,
-    paramsSchema: ZodRawShape,
-    annotations: ToolAnnotations,
-    cb: (args: any) => Promise<string>,
-  ) => {
-    const wrappedCb = async (args: any): Promise<CallToolResult> => {
+  // Wraps a string-returning tool callback with rate limiting, telemetry, and error handling
+  const wrapToolCallback = (name: string, cb: (args: any) => Promise<string>) => {
+    return async (args: any, _extra?: any): Promise<CallToolResult> => {
       // Capture starttime for telemetry and rate limiting
       const startTime = Date.now();
 
@@ -291,7 +297,17 @@ const main = async () => {
           .catch((e) => console.warn('Failed to track tool usage:', e));
       }
     };
+  };
 
+  // quick abstraction/wrapper to make it easier for tools to reply text instead of JSON
+  const tool = (
+    name: string,
+    title: string,
+    description: string,
+    paramsSchema: ZodRawShape,
+    annotations: ToolAnnotations,
+    cb: (args: any) => Promise<string>,
+  ) => {
     server.registerTool(
       name,
       {
@@ -300,7 +316,7 @@ const main = async () => {
         inputSchema: z.object(paramsSchema),
         annotations: annotations,
       },
-      (args: any) => wrappedCb(args),
+      (args: any) => wrapToolCallback(name, cb)(args),
     );
   };
 
@@ -660,34 +676,46 @@ const main = async () => {
     },
   );
 
-  tool(
+  // MCP App: Define the resource URI for the execute_dql interactive UI
+  // The ui:// scheme tells hosts this is an MCP App resource.
+  const executeDqlResourceUri = 'ui://execute-dql/execute-dql.html';
+
+  // Register the execute_dql tool with MCP App UI support
+  registerAppTool(
+    server,
     'execute_dql',
-    'Execute DQL',
-    'Get data like Logs, Metrics, Spans, Events, or Entity Data from Dynatrace GRAIL by executing a Dynatrace Query Language (DQL) statement. ' +
-      'Use the "generate_dql_from_natural_language" tool upfront to generate or refine a DQL statement based on your request. ' +
-      'To learn about possible fields available for filtering, use the query "fetch dt.semantic_dictionary.models | filter data_object == \"logs\""',
     {
-      dqlStatement: z
-        .string()
-        .describe(
-          'DQL Statement (Ex: "fetch [logs, spans, events, metric.series, ...], from: now()-4h, to: now() [| filter <some-filter>] [| summarize count(), by:{some-fields}]", or for metrics: "timeseries { avg(<metric-name>), value.A = avg(<metric-name>, scalar: true) }", or for entities via smartscape: "smartscapeNodes \"[*, HOST, PROCESS, ...]\" [| filter id == "<ENTITY-ID>"]"). ' +
-            'When querying data for a specific entity, call the `find_entity_by_name` tool first to get an appropriate filter like `dt.entity.service == "SERVICE-1234"` or `dt.entity.host == "HOST-1234"` to be used in the DQL statement. ',
-        ),
-      recordLimit: z.number().optional().default(100).describe('Maximum number of records to return (default: 100)'),
-      recordSizeLimitMB: z
-        .number()
-        .optional()
-        .default(1)
-        .describe('Maximum size of the returned records in MB (default: 1MB)'),
+      title: 'Execute DQL',
+      description:
+        'Get data like Logs, Metrics, Spans, Events, or Entity Data from Dynatrace GRAIL by executing a Dynatrace Query Language (DQL) statement. ' +
+        'Use the "generate_dql_from_natural_language" tool upfront to generate or refine a DQL statement based on your request. ' +
+        'To learn about possible fields available for filtering, use the query "fetch dt.semantic_dictionary.models | filter data_object == \\"logs\\""',
+      inputSchema: {
+        dqlStatement: z
+          .string()
+          .describe(
+            'DQL Statement (Ex: "fetch [logs, spans, events, metric.series, ...], from: now()-4h, to: now() [| filter <some-filter>] [| summarize count(), by:{some-fields}]", or for metrics: "timeseries { avg(<metric-name>), value.A = avg(<metric-name>, scalar: true) }", or for entities via smartscape: "smartscapeNodes \\"[*, HOST, PROCESS, ...]\\" [| filter id == \\"<ENTITY-ID>\\"]"). ' +
+              'When querying data for a specific entity, call the `find_entity_by_name` tool first to get an appropriate filter like `dt.entity.service == "SERVICE-1234"` or `dt.entity.host == "HOST-1234"` to be used in the DQL statement. ',
+          ),
+        recordLimit: z.number().optional().default(100).describe('Maximum number of records to return (default: 100)'),
+        recordSizeLimitMB: z
+          .number()
+          .optional()
+          .default(1)
+          .describe('Maximum size of the returned records in MB (default: 1MB)'),
+      },
+      annotations: {
+        // not readonly (DQL statements may modify things), not idempotent (may change over time)
+        readOnlyHint: false,
+        idempotentHint: false,
+        // while we are not strictly talking to the open world here, the response from execute DQL could interpreted as a web-search, which often is referred to open-world
+        openWorldHint: true,
+      },
+      _meta: {
+        ui: { resourceUri: executeDqlResourceUri },
+      },
     },
-    {
-      // not readonly (DQL statements may modify things), not idempotent (may change over time)
-      readOnlyHint: false,
-      idempotentHint: false,
-      // while we are not strictly talking to the open world here, the response from execute DQL could interpreted as a web-search, which often is referred to open-world
-      openWorldHint: true,
-    },
-    async ({ dqlStatement, recordLimit = 100, recordSizeLimitMB = 1 }) => {
+    wrapToolCallback('execute_dql', async ({ dqlStatement, recordLimit = 100, recordSizeLimitMB = 1 }) => {
       // Create a HTTP Client that has all storage:*:read scopes
       const dtClient = await createAuthenticatedHttpClient(
         scopesBase.concat(
@@ -770,8 +798,16 @@ const main = async () => {
       result += `\`\`\`json\n${JSON.stringify(response.records, null, 2)}\n\`\`\``;
 
       return result;
-    },
+    }),
   );
+
+  // MCP App: Register the HTML resource for the execute_dql interactive UI
+  registerAppResource(server, 'DQL Results Viewer', executeDqlResourceUri, {}, async () => {
+    const html = readFileSync(join(__dirname, 'ui', 'execute-dql.html'), 'utf-8');
+    return {
+      contents: [{ uri: executeDqlResourceUri, mimeType: RESOURCE_MIME_TYPE, text: html }],
+    };
+  });
 
   tool(
     'generate_dql_from_natural_language',
