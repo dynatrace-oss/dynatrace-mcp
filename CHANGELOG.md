@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Render results of `execute_dql` as an interactive HTML table using an MCP App
+
 ## 1.4.0
 
 - Fixed DQL statements to use `toSmartscapeId()` for Smartscape entity filters, ensuring correct type casting when querying Smartscape topology data

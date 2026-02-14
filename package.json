@@ -35,7 +35,9 @@
     "dist": "dist"
   },
   "scripts": {
-    "build": "tsc --build",
+    "build": "npm run build:ui && npm run build:server",
+    "build:server": "tsc --build",
+    "build:ui": "INPUT=src/ui/execute-dql.html vite build --config vite.config.mts",
     "prepare": "husky",
     "watch": "tsc --watch",
     "test": "jest",
@@ -56,7 +58,8 @@
     "@dynatrace-sdk/client-query": "^1.18.1",
     "@dynatrace-sdk/shared-errors": "^1.0.0",
     "@dynatrace/openkit-js": "^4.1.0",
-    "@modelcontextprotocol/sdk": "^1.25.2",
+    "@modelcontextprotocol/ext-apps": "^1.0.1",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "commander": "^14.0.0",
     "open": "^8.4.2",
     "undici": "^6.21.0",
@@ -71,7 +74,9 @@
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "vite": "^7.3.1",
+    "vite-plugin-singlefile": "^2.3.0"
   },
   "overrides": {
     "ajv": "8.18.0",
