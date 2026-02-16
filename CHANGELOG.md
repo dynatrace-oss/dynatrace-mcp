@@ -2,7 +2,7 @@
 
 ## Unreleased Changes
 
-- Improved telemetry tracking by adding `environment_id` and `stage` fields to all BizEvents, enabling better tracking and analysis of usage across different Dynatrace environments and stages (e.g., dev, prod, sprint)
+- Updated `ajv` dependency to 8.18.0 to address CVE-2025-69873 security vulnerability
 
 ## 1.3.1
 
