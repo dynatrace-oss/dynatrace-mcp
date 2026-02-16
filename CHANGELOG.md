@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Updated `ajv` dependency to 8.18.0 to address CVE-2025-69873 security vulnerability
+
 ## 1.3.1
 
 - Several dependency udpates (most notably, upgrading `hono` to 4.11.7)
