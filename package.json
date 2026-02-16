@@ -48,7 +48,7 @@
   "license": "MIT",
   "dependencies": {
     "@dynatrace-sdk/client-automation": "^5.3.0",
-    "@dynatrace-sdk/client-classic-environment-v2": "^2.0.0",
+    "@dynatrace-sdk/client-classic-environment-v2": "^5.1.0",
     "@dynatrace-sdk/client-davis-analyzers": "^1.9.8",
     "@dynatrace-sdk/client-davis-copilot": "^1.0.0",
     "@dynatrace-sdk/client-document": "^1.29.0",
