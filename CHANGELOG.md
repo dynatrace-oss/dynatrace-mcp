@@ -2,7 +2,9 @@
 
 ## Unreleased Changes
 
-- Updated `ajv` dependency to 8.18.0 to address CVE-2025-69873 security vulnerability
+## 1.4.0
+
+- Updated dependencies including `ajv` to 8.18.0 to address CVE-2025-69873 security vulnerability
 
 ## 1.3.1
 
