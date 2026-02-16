@@ -2,7 +2,7 @@
 
 ## Unreleased Changes
 
-- Render results of `execute_dql` as an interactive HTML table using an MCP App
+- Improved `execute_dql` MCP App to only render the interactive `TimeseriesChart` as well as `AreaChart` for chart-worthy results (timeseries/metric data with timeframe and numeric fields). For plain tabular results (logs, entities, etc.) the app auto-hides, keeping the UI clean.
 
 ## 1.4.0
 

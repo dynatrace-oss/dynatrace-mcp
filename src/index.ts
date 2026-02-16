@@ -22,7 +22,7 @@ import { listDavisAnalyzers, executeDavisAnalyzer } from './capabilities/davis-a
 import { sendSlackMessage } from './capabilities/send-slack-message';
 import { sendEmail } from './capabilities/send-email';
 import { sendEvent, EventIngestEventType } from './capabilities/send-event';
-import { executeDql, verifyDqlStatement } from './capabilities/execute-dql';
+import { executeDql, verifyDqlStatement, isChartWorthyResult } from './capabilities/execute-dql';
 import { createWorkflowForProblemNotification } from './capabilities/create-workflow-for-problem-notification';
 import { updateWorkflow } from './capabilities/update-workflow';
 import {
@@ -234,8 +234,11 @@ const main = async () => {
   // Ready to start the server
   console.error(`Starting Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
+  /** Return type of a tool callback that supports optional `_meta` for the result. */
+  type ToolCallbackResult = string | { text: string; _meta?: Record<string, unknown> };
+
   // Wraps a string-returning tool callback with rate limiting, telemetry, and error handling
-  const wrapToolCallback = (name: string, cb: (args: any) => Promise<string>) => {
+  const wrapToolCallback = (name: string, cb: (args: any) => Promise<ToolCallbackResult>) => {
     return async (args: any, _extra?: any): Promise<CallToolResult> => {
       // Capture starttime for telemetry and rate limiting
       const startTime = Date.now();
@@ -269,9 +272,18 @@ const main = async () => {
         // call the tool
         const response = await cb(args);
         toolCallSuccessful = true;
-        return {
-          content: [{ type: 'text', text: response }],
+
+        // Support callbacks that return either a plain string or { text, _meta }
+        const text = typeof response === 'string' ? response : response.text;
+        const _meta = typeof response === 'string' ? undefined : response._meta;
+
+        const result: CallToolResult = {
+          content: [{ type: 'text', text }],
         };
+        if (_meta) {
+          result._meta = _meta;
+        }
+        return result;
       } catch (error: any) {
         // Track error
         telemetry.trackError(error, `tool_${name}`).catch((e) => console.warn('Failed to track error:', e));
@@ -680,7 +692,9 @@ const main = async () => {
   // The ui:// scheme tells hosts this is an MCP App resource.
   const executeDqlResourceUri = 'ui://execute-dql/execute-dql.html';
 
-  // Register the execute_dql tool with MCP App UI support
+  // Register the execute_dql tool with MCP App UI support.
+  // The app is always loaded by the host, but the result includes a chartWorthy
+  // flag so the app can auto-hide itself for plain tabular results.
   registerAppTool(
     server,
     'execute_dql',
@@ -796,6 +810,24 @@ const main = async () => {
 
       result += `\n📋 **Query Results**: (${response.records?.length || 0} records):\n\n`;
       result += `\`\`\`json\n${JSON.stringify(response.records, null, 2)}\n\`\`\``;
+
+      // Include field type definitions for chart rendering in the UI
+      if (response.types && response.types.length > 0) {
+        result += `\n\n📊 **Field Types**:\n\n`;
+        result += `\`\`\`json:types\n${JSON.stringify(response.types)}\n\`\`\``;
+      }
+
+      // Signal to the MCP App whether the result is chart-worthy so it can
+      // auto-hide itself for plain tabular results.
+      const chartWorthy = isChartWorthyResult(response.types);
+      result += `\n\n\`\`\`json:chartWorthy\n${chartWorthy}\n\`\`\``;
+
+      // Include analysisTimeframe metadata for chart rendering in the UI.
+      // This is needed when timeseries results lack explicit timeframe/interval
+      // columns (e.g. timeseries queries with fieldsRemove or custom projections).
+      if (chartWorthy && response.metadata?.grail?.analysisTimeframe) {
+        result += `\n\n\`\`\`json:analysisTimeframe\n${JSON.stringify(response.metadata.grail.analysisTimeframe)}\n\`\`\``;
+      }
 
       return result;
     }),
