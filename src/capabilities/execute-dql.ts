@@ -1,7 +1,79 @@
 import { HttpClient } from '@dynatrace-sdk/http-client';
-import { QueryExecutionClient, QueryAssistanceClient, QueryResult, ExecuteRequest } from '@dynatrace-sdk/client-query';
+import {
+  QueryExecutionClient,
+  QueryAssistanceClient,
+  QueryResult,
+  ExecuteRequest,
+  RangedFieldTypes,
+} from '@dynatrace-sdk/client-query';
 import { getUserAgent } from '../utils/user-agent';
 import { getGrailBudgetTracker, GrailBudgetTracker, generateBudgetWarning } from '../utils/grail-budget-tracker';
+
+/**
+ * Determine whether a DQL result is chart-worthy (i.e. contains timeseries data
+ * that can be meaningfully visualised in a chart).
+ *
+ * The heuristic checks whether any field type mapping contains a `timeframe` or
+ * `timestamp` field alongside at least one numeric field (`double` or `long`).
+ * It recurses into nested `array` and `record` types (e.g. timeseries results
+ * where the numeric values are stored in an array column).
+ *
+ * Additionally, an array of numeric values (double/long) is considered
+ * chart-worthy on its own, because DQL `timeseries` queries with a `by` clause
+ * produce results where the time dimension is encoded as array indices rather
+ * than a separate timeframe column.
+ */
+export function isChartWorthyResult(types: RangedFieldTypes[]): boolean {
+  let hasTimeComponent = false;
+  let hasNumericComponent = false;
+  let hasNumericArray = false;
+
+  function inspect(rangedTypes: RangedFieldTypes[], depth = 0): void {
+    for (const rangedType of rangedTypes) {
+      for (const fieldType of Object.values(rangedType.mappings)) {
+        if (!fieldType) continue;
+        if (fieldType.type === 'timeframe' || fieldType.type === 'timestamp') {
+          hasTimeComponent = true;
+        }
+        if (fieldType.type === 'double' || fieldType.type === 'long') {
+          hasNumericComponent = true;
+        }
+        // An array containing numeric elements indicates timeseries data
+        // where the time dimension is encoded in the array indices.
+        if (fieldType.type === 'array' && fieldType.types && fieldType.types.length > 0) {
+          if (containsNumericElement(fieldType.types)) {
+            hasNumericArray = true;
+          }
+        }
+        // Recurse into nested array/record types
+        if (fieldType.types && fieldType.types.length > 0) {
+          inspect(fieldType.types, depth + 1);
+        }
+      }
+      // Early exit when we already know it's chart-worthy
+      if ((hasTimeComponent && hasNumericComponent) || hasNumericArray) return;
+    }
+  }
+
+  inspect(types);
+  return (hasTimeComponent && hasNumericComponent) || hasNumericArray;
+}
+
+/**
+ * Check whether an array's nested type definitions contain a numeric element
+ * (double or long), indicating the array holds numeric timeseries data.
+ */
+function containsNumericElement(nestedTypes: RangedFieldTypes[]): boolean {
+  for (const rangedType of nestedTypes) {
+    for (const fieldType of Object.values(rangedType.mappings)) {
+      if (!fieldType) continue;
+      if (fieldType.type === 'double' || fieldType.type === 'long') {
+        return true;
+      }
+    }
+  }
+  return false;
+}
 
 export const verifyDqlStatement = async (dtClient: HttpClient, dqlStatement: string) => {
   const queryAssistanceClient = new QueryAssistanceClient(dtClient);
@@ -18,6 +90,8 @@ export const verifyDqlStatement = async (dtClient: HttpClient, dqlStatement: str
 export interface DqlExecutionResult {
   records: QueryResult['records'];
   metadata: QueryResult['metadata'];
+  /** Field type definitions for the result columns */
+  types: RangedFieldTypes[];
   /** Number of Bytes scanned = Bytes Billed */
   scannedBytes?: number;
   scannedRecords?: number;
@@ -57,6 +131,7 @@ const createResultAndLog = (
   const result: DqlExecutionResult = {
     records: queryResult.records,
     metadata: queryResult.metadata,
+    types: queryResult.types ?? [],
     scannedBytes,
     scannedRecords: queryResult.metadata?.grail?.scannedRecords,
     executionTimeMilliseconds: queryResult.metadata?.grail?.executionTimeMilliseconds,
