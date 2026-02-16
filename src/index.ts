@@ -40,6 +40,7 @@ import { handleClientRequestError } from './utils/dynatrace-connection-utils';
 import { configureProxyFromEnvironment } from './utils/proxy-config';
 import { listExceptions } from './capabilities/list-exceptions';
 import { createDynatraceNotebook } from './capabilities/notebooks';
+import { parseEnvironmentUrl } from './utils/environment-url-parser';
 
 const DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID = 'dt0s12.local-dt-mcp-server';
 
@@ -120,8 +121,11 @@ const main = async () => {
     oauthClientId = DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID; // Default OAuth client ID for auth code flow
   }
 
+  // Parse environment information for telemetry
+  const environmentInfo = parseEnvironmentUrl(dtEnvironment);
+
   // Initialize usage tracking
-  const telemetry = createTelemetry();
+  const telemetry = createTelemetry(environmentInfo);
   await telemetry.trackMcpServerStart();
 
   // Create a shutdown handler that takes shutdown operations as parameters
@@ -1568,8 +1572,8 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
 main().catch(async (error) => {
   console.error('Fatal error in main():', error);
   try {
-    // report error in main
-    const telemetry = createTelemetry();
+    // report error in main - use unknown environment info since we might not have parsed it yet
+    const telemetry = createTelemetry({ environmentId: 'unknown', stage: 'unknown' });
     await telemetry.trackError(error, 'main_error');
     await telemetry.shutdown();
   } catch (e) {

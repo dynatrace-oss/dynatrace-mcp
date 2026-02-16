@@ -3,6 +3,11 @@ import * as os from 'os';
 import * as crypto from 'crypto';
 import { getPackageJsonVersion } from './version';
 
+export interface EnvironmentInfo {
+  environmentId: string;
+  stage: string;
+}
+
 export interface Telemetry {
   trackMcpServerStart(): Promise<void>;
   trackMcpClientInitialization(clientName: string, clientVersion: string): Promise<void>;
@@ -20,9 +25,11 @@ class DynatraceMcpTelemetry implements Telemetry {
   private session: Session | null = null;
   private isEnabled: boolean;
   private initPromise: Promise<boolean>;
+  private environmentInfo: EnvironmentInfo;
 
-  constructor() {
+  constructor(environmentInfo: EnvironmentInfo) {
     this.isEnabled = process.env.DT_MCP_DISABLE_TELEMETRY !== 'true';
+    this.environmentInfo = environmentInfo;
 
     if (!this.isEnabled) {
       throw new Error('Dynatrace Telemetry is disabled via DT_MCP_DISABLE_TELEMETRY=true');
@@ -103,6 +110,8 @@ class DynatraceMcpTelemetry implements Telemetry {
       platform: process.platform,
       os_type: os.type(),
       os_release: os.release(),
+      environment_id: this.environmentInfo.environmentId,
+      stage: this.environmentInfo.stage,
     };
   }
 
@@ -245,9 +254,9 @@ class NoOpTelemetry implements Telemetry {
   async shutdown(): Promise<void> {}
 }
 
-export function createTelemetry(): Telemetry {
+export function createTelemetry(environmentInfo: EnvironmentInfo): Telemetry {
   try {
-    return new DynatraceMcpTelemetry();
+    return new DynatraceMcpTelemetry(environmentInfo);
   } catch (e) {
     // Failed to initialize (unexpected). Log concise message without stack trace spam.
     console.error('Dynatrace Telemetry initialization failed:', (e as Error).message);
