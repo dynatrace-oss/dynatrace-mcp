@@ -1,12 +1,15 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { App } from '@modelcontextprotocol/ext-apps';
 import { Flex } from '@dynatrace/strato-components/layouts';
+import { Button } from '@dynatrace/strato-components/buttons';
 import { Text, Code } from '@dynatrace/strato-components/typography';
 import { DataTable, type DataTableColumnDef } from '@dynatrace/strato-components-preview/tables';
 import { DataTableIcon } from '@dynatrace/strato-icons';
 import { DatabaseIcon } from '@dynatrace/strato-icons';
 import { MoneyIcon } from '@dynatrace/strato-icons';
 import { WarningIcon } from '@dynatrace/strato-icons';
+import { RefreshIcon } from '@dynatrace/strato-icons';
+import { ExternalLinkIcon } from '@dynatrace/strato-icons';
 import { LoadingState, ErrorState } from '../components';
 
 /** Structured metadata parsed from the tool result text. */
@@ -125,6 +128,70 @@ function MetadataIcon({ icon, tooltip, warning }: { icon: React.ReactNode; toolt
   );
 }
 
+/**
+ * Create a Dynatrace Notebooks URL that opens a DQL query in the Notebooks app.
+ * @param environmentUrl - The base URL of the Dynatrace environment (e.g. "https://abc12345.apps.dynatrace.com")
+ * @param query - The DQL query string to open in Notebooks
+ * @returns The full URL to open the query in Dynatrace Notebooks
+ */
+export function createNotebooksURL(environmentUrl: string, query: string): string {
+  const params = {
+    //visualization: 'table',
+    //visualizationSettings: { autoSelectVisualization: false },
+    'visualizationSettings': { autoSelectVisualization: true },
+    'dt.query': query,
+    'hideInput': false,
+    'sourceApplication': 'dynatrace.notebooks',
+  };
+
+  const baseUrl = environmentUrl.replace(/\/$/, '');
+  return `${baseUrl}/ui/intent/dynatrace.notebooks/view-query#${encodeURIComponent(JSON.stringify(params))}`;
+}
+
+/**
+ * Process a tool result text into state. Extracted for reuse between
+ * the initial ontoolresult notification and the refresh callServerTool response.
+ */
+function processToolResultText(text: string | undefined): ToolResultState {
+  if (!text) {
+    return {
+      status: 'error',
+      errorMessage: 'No result data received.',
+      metadata: { warnings: [] },
+      records: [],
+      columns: [],
+    };
+  }
+
+  const { metadata, records } = parseToolResult(text);
+
+  if (!records || records.length === 0) {
+    return {
+      status: 'error',
+      errorMessage: text || 'No records returned from DQL query.',
+      metadata: { warnings: [] },
+      records: [],
+      columns: [],
+    };
+  }
+
+  const columnSet = new Set<string>();
+  for (const record of records) {
+    if (record && typeof record === 'object') {
+      for (const key of Object.keys(record)) {
+        columnSet.add(key);
+      }
+    }
+  }
+
+  return {
+    status: 'success',
+    metadata,
+    records,
+    columns: Array.from(columnSet),
+  };
+}
+
 export function ExecuteDqlApp() {
   const [state, setState] = useState<ToolResultState>({
     status: 'loading',
@@ -133,54 +200,86 @@ export function ExecuteDqlApp() {
     columns: [],
   });
 
+  const appRef = useRef<App | null>(null);
+  const [toolArguments, setToolArguments] = useState<Record<string, unknown> | null>(null);
+  const [environmentUrl, setEnvironmentUrl] = useState<string | null>(null);
+
   useEffect(() => {
     const app = new App({ name: 'DQL Results Viewer', version: '1.0.0' });
+    appRef.current = app;
     app.connect();
+
+    app.ontoolinput = (params) => {
+      setToolArguments(params.arguments ?? null);
+    };
 
     app.ontoolresult = (result) => {
       const text = result.content?.find((c: { type: string }) => c.type === 'text')?.text;
-      if (!text) {
-        setState({
-          status: 'error',
-          errorMessage: 'No result data received.',
-          metadata: { warnings: [] },
-          records: [],
-          columns: [],
-        });
-        return;
-      }
-
-      const { metadata, records } = parseToolResult(text);
-
-      if (!records || records.length === 0) {
-        setState({
-          status: 'error',
-          errorMessage: text || 'No records returned from DQL query.',
-          metadata: { warnings: [] },
-          records: [],
-          columns: [],
-        });
-        return;
-      }
-
-      // Get all unique column keys from records
-      const columnSet = new Set<string>();
-      for (const record of records) {
-        if (record && typeof record === 'object') {
-          for (const key of Object.keys(record)) {
-            columnSet.add(key);
-          }
-        }
-      }
-
-      setState({
-        status: 'success',
-        metadata,
-        records,
-        columns: Array.from(columnSet),
-      });
+      setState(processToolResultText(text));
     };
   }, []);
+
+  const handleRefresh = useCallback(async () => {
+    if (!appRef.current || !toolArguments) return;
+
+    setState({
+      status: 'loading',
+      metadata: { warnings: [] },
+      records: [],
+      columns: [],
+    });
+
+    try {
+      const result = await appRef.current.callServerTool({
+        name: 'execute_dql',
+        arguments: toolArguments,
+      });
+
+      const text = result.content?.find((c) => c.type === 'text')?.text as string | undefined;
+      setState(processToolResultText(text));
+    } catch (error) {
+      setState({
+        status: 'error',
+        errorMessage: error instanceof Error ? error.message : 'Refresh failed.',
+        metadata: { warnings: [] },
+        records: [],
+        columns: [],
+      });
+    }
+  }, [toolArguments]);
+
+  const handleOpenInNotebooks = useCallback(async () => {
+    if (!appRef.current) return;
+
+    const query = toolArguments?.dqlStatement as string | undefined;
+    if (!query) return;
+
+    let envUrl = environmentUrl;
+    if (!envUrl) {
+      try {
+        const result = await appRef.current.callServerTool({
+          name: 'get_environment_info',
+          arguments: {},
+        });
+        const text = result.content?.find((c) => c.type === 'text')?.text as string | undefined;
+        if (text) {
+          const match = text.match(/You can reach it via (.+)/);
+          if (match) {
+            envUrl = match[1].trim();
+            setEnvironmentUrl(envUrl);
+          }
+        }
+      } catch {
+        // If we can't get the environment URL, we can't open the link
+        return;
+      }
+    }
+
+    if (!envUrl) return;
+
+    const notebooksUrl = createNotebooksURL(envUrl, query);
+    await appRef.current.openLink({ url: notebooksUrl });
+  }, [toolArguments, environmentUrl]);
 
   const tableColumns = useMemo(() => buildColumns(state.columns), [state.columns]);
   const tableData = useMemo(() => state.records, [state.records]);
@@ -214,6 +313,20 @@ export function ExecuteDqlApp() {
         <Text textStyle='small' style={{ opacity: 0.5 }}>
           {state.records.length} records
         </Text>
+        <Flex flexDirection='row' gap={4} alignItems='center' style={{ marginLeft: 'auto' }}>
+          <Button variant='default' size='condensed' onClick={handleOpenInNotebooks}>
+            <Button.Prefix>
+              <ExternalLinkIcon />
+            </Button.Prefix>
+            Open in Notebooks
+          </Button>
+          <Button variant='default' size='condensed' onClick={handleRefresh}>
+            <Button.Prefix>
+              <RefreshIcon />
+            </Button.Prefix>
+            Refresh
+          </Button>
+        </Flex>
       </Flex>
 
       <DataTable data={tableData} columns={tableColumns} sortable resizable fullWidth>
