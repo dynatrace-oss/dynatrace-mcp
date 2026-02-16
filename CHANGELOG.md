@@ -2,7 +2,10 @@
 
 ## Unreleased Changes
 
-- Updated `ajv` dependency to 8.18.0 to address CVE-2025-69873 security vulnerability
+## 1.4.0
+
+- Fixed DQL statements to use `toSmartscapeId()` for Smartscape entity filters, ensuring correct type casting when querying Smartscape topology data
+- Updated dependencies including `@modelcontextprotocol/sdk` (1.25.2 → 1.26.0), `@dynatrace-sdk/client-automation` (5.14.0 → 5.20.0), `@dynatrace-sdk/client-document` (1.29.0 → 1.30.0), `commander` (14.0.2 → 14.0.3), `qs` (6.14.1 → 6.14.2), and `ajv` (8.18.0) to address CVE-2025-69873 security vulnerability
 
 ## 1.3.1
 
