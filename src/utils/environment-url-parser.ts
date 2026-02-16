@@ -8,24 +8,23 @@ export function parseEnvironmentUrl(dtEnvironmentUrl: string): { environmentId: 
   try {
     const url = new URL(dtEnvironmentUrl);
     const hostname = url.hostname;
+    const parts = hostname.split('.');
 
     // Extract environment ID (first part of the hostname)
-    const parts = hostname.split('.');
     const environmentId = parts[0] || 'unknown';
 
-    // Determine stage from the hostname
-    // Check specific patterns after parsing to avoid substring matching issues
+    // Determine stage based on URL pattern:
+    // - ${environmentId}.${stage}.apps.dynatracelabs.com (stage given in URL)
+    // - ${environmentId}.apps.dynatrace.com (stage inferred as 'prod')
     let stage: Stage = 'prod'; // Default to prod
 
-    // Check for sprint stage
-    if (parts.includes('sprint') && hostname.endsWith('.apps.dynatracelabs.com')) {
-      stage = 'sprint';
+    if (hostname.endsWith('.apps.dynatracelabs.com') && parts.length >= 4) {
+      // Second part is the stage for dynatracelabs URLs
+      const stagePart = parts[1];
+      if (stagePart === 'sprint' || stagePart === 'dev') {
+        stage = stagePart;
+      }
     }
-    // Check for dev stage
-    else if (parts.includes('dev') && hostname.endsWith('.apps.dynatracelabs.com')) {
-      stage = 'dev';
-    }
-    // If none of the above, it's production (apps.dynatrace.com)
 
     return { environmentId, stage };
   } catch (error) {
