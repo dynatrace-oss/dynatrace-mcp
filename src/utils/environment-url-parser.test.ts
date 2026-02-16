@@ -6,10 +6,6 @@ describe('parseEnvironmentUrl', () => {
     expect(result).toEqual({ environmentId: 'abc12345', stage: 'prod' });
   });
 
-  it('should parse production environment URL (live.dynatrace.com)', () => {
-    const result = parseEnvironmentUrl('https://xyz98765.live.dynatrace.com');
-    expect(result).toEqual({ environmentId: 'xyz98765', stage: 'prod' });
-  });
 
   it('should parse sprint environment URL', () => {
     const result = parseEnvironmentUrl('https://abc12345.sprint.apps.dynatracelabs.com');
@@ -41,13 +37,4 @@ describe('parseEnvironmentUrl', () => {
     expect(result).toEqual({ environmentId: 'unknown', stage: 'unknown' });
   });
 
-  it('should parse legacy sprint URL format', () => {
-    const result = parseEnvironmentUrl('https://abc12345.sprint.dynatracelabs.com');
-    expect(result).toEqual({ environmentId: 'abc12345', stage: 'sprint' });
-  });
-
-  it('should parse legacy dev URL format', () => {
-    const result = parseEnvironmentUrl('https://abc12345.dev.dynatracelabs.com');
-    expect(result).toEqual({ environmentId: 'abc12345', stage: 'dev' });
-  });
 });

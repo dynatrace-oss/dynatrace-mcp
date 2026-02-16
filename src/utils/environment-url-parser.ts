@@ -3,7 +3,8 @@
  * @param dtEnvironmentUrl The Dynatrace environment URL (e.g., https://abc12345.apps.dynatrace.com)
  * @returns Object containing environmentId and stage
  */
-export function parseEnvironmentUrl(dtEnvironmentUrl: string): { environmentId: string; stage: string } {
+type Stage = 'sprint' | 'dev' | 'prod' | 'hardening' | 'unknown';
+export function parseEnvironmentUrl(dtEnvironmentUrl: string): { environmentId: string; stage: Stage } {
   try {
     const url = new URL(dtEnvironmentUrl);
     const hostname = url.hostname;
