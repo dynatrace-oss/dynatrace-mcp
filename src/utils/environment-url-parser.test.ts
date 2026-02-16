@@ -6,7 +6,6 @@ describe('parseEnvironmentUrl', () => {
     expect(result).toEqual({ environmentId: 'abc12345', stage: 'prod' });
   });
 
-
   it('should parse sprint environment URL', () => {
     const result = parseEnvironmentUrl('https://abc12345.sprint.apps.dynatracelabs.com');
     expect(result).toEqual({ environmentId: 'abc12345', stage: 'sprint' });
@@ -15,11 +14,6 @@ describe('parseEnvironmentUrl', () => {
   it('should parse dev environment URL', () => {
     const result = parseEnvironmentUrl('https://def67890.dev.apps.dynatracelabs.com');
     expect(result).toEqual({ environmentId: 'def67890', stage: 'dev' });
-  });
-
-  it('should parse hardening environment URL', () => {
-    const result = parseEnvironmentUrl('https://test123.hardening.apps.dynatracelabs.com');
-    expect(result).toEqual({ environmentId: 'test123', stage: 'hardening' });
   });
 
   it('should handle URL with trailing slash', () => {
@@ -36,5 +30,4 @@ describe('parseEnvironmentUrl', () => {
     const result = parseEnvironmentUrl('');
     expect(result).toEqual({ environmentId: 'unknown', stage: 'unknown' });
   });
-
 });

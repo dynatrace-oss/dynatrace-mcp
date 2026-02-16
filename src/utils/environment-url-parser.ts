@@ -3,7 +3,7 @@
  * @param dtEnvironmentUrl The Dynatrace environment URL (e.g., https://abc12345.apps.dynatrace.com)
  * @returns Object containing environmentId and stage
  */
-type Stage = 'sprint' | 'dev' | 'prod' | 'hardening' | 'unknown';
+type Stage = 'sprint' | 'dev' | 'prod' | 'unknown';
 export function parseEnvironmentUrl(dtEnvironmentUrl: string): { environmentId: string; stage: Stage } {
   try {
     const url = new URL(dtEnvironmentUrl);
@@ -15,30 +15,17 @@ export function parseEnvironmentUrl(dtEnvironmentUrl: string): { environmentId: 
 
     // Determine stage from the hostname
     // Check specific patterns after parsing to avoid substring matching issues
-    let stage = 'prod'; // Default to prod
+    let stage: Stage = 'prod'; // Default to prod
 
     // Check for sprint stage
-    if (
-      parts.includes('sprint') &&
-      (hostname.endsWith('.apps.dynatracelabs.com') || hostname.endsWith('.dynatracelabs.com'))
-    ) {
+    if (parts.includes('sprint') && hostname.endsWith('.apps.dynatracelabs.com')) {
       stage = 'sprint';
     }
     // Check for dev stage
-    else if (
-      parts.includes('dev') &&
-      (hostname.endsWith('.apps.dynatracelabs.com') || hostname.endsWith('.dynatracelabs.com'))
-    ) {
+    else if (parts.includes('dev') && hostname.endsWith('.apps.dynatracelabs.com')) {
       stage = 'dev';
     }
-    // Check for hardening stage
-    else if (
-      parts.includes('hardening') &&
-      (hostname.endsWith('.apps.dynatracelabs.com') || hostname.endsWith('.dynatracelabs.com'))
-    ) {
-      stage = 'hardening';
-    }
-    // If none of the above, it's production (apps.dynatrace.com or live.dynatrace.com)
+    // If none of the above, it's production (apps.dynatrace.com)
 
     return { environmentId, stage };
   } catch (error) {
