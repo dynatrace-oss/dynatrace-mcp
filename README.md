@@ -219,10 +219,11 @@ Using `gemini` CLI directly (recommended):
 ```bash
 gemini extensions install https://github.com/dynatrace-oss/dynatrace-mcp
 export DT_PLATFORM_TOKEN=... # optional
-export DT_ENVIRONMENT=https://...
 ```
 
-and verify that the server is running via
+The command will ask for the value Dynatrace Environment. 
+
+Verify that the server is running via
 
 ```bash
 gemini mcp list

@@ -4,7 +4,17 @@
   "mcpServers": {
     "dynatrace": {
       "command": "npx",
-      "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"]
+      "args": [
+        "-y",
+        "@dynatrace-oss/dynatrace-mcp-server@latest"
+      ]
     }
-  }
+  },
+  "settings": [
+    {
+      "name": "Dynatrace Environment",
+      "description": "URL to your Dynatrace Platform; for example, https://abc12345.apps.dynatrace.com",
+      "envVar": "DT_ENVIRONMENT"
+    }
+  ]
 }
