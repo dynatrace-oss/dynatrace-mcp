@@ -812,7 +812,7 @@ const main = async () => {
       // Include field type definitions for chart rendering in the UI
       if (response.types && response.types.length > 0) {
         result += `\n\n📊 **Field Types**:\n\n`;
-        result += `\`\`\`json:types\n${JSON.stringify(response.types)}\n\`\`\``;
+        result += `\`\`\`json:types\n${JSON.stringify(response.types, null, 2)}\n\`\`\``;
       }
 
       // Include analysisTimeframe metadata for chart rendering in the UI.
