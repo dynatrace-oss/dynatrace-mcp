@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "moduleResolution": "bundler",
+    "strict": true,
+    "module": "ESNext",
+    "lib": ["ESNext", "DOM"],
+    "isolatedModules": true,
+    "jsx": "react-jsx"
+  },
+  "include": ["src/ui/**/*"]
+}

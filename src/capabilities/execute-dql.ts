@@ -1,5 +1,11 @@
 import { HttpClient } from '@dynatrace-sdk/http-client';
-import { QueryExecutionClient, QueryAssistanceClient, QueryResult, ExecuteRequest } from '@dynatrace-sdk/client-query';
+import {
+  QueryExecutionClient,
+  QueryAssistanceClient,
+  QueryResult,
+  ExecuteRequest,
+  RangedFieldTypes,
+} from '@dynatrace-sdk/client-query';
 import { getUserAgent } from '../utils/user-agent';
 import { getGrailBudgetTracker, GrailBudgetTracker, generateBudgetWarning } from '../utils/grail-budget-tracker';
 
@@ -18,6 +24,8 @@ export const verifyDqlStatement = async (dtClient: HttpClient, dqlStatement: str
 export interface DqlExecutionResult {
   records: QueryResult['records'];
   metadata: QueryResult['metadata'];
+  /** Field type definitions for the result columns */
+  types: RangedFieldTypes[];
   /** Number of Bytes scanned = Bytes Billed */
   scannedBytes?: number;
   scannedRecords?: number;
@@ -57,6 +65,7 @@ const createResultAndLog = (
   const result: DqlExecutionResult = {
     records: queryResult.records,
     metadata: queryResult.metadata,
+    types: queryResult.types ?? [],
     scannedBytes,
     scannedRecords: queryResult.metadata?.grail?.scannedRecords,
     executionTimeMilliseconds: queryResult.metadata?.grail?.executionTimeMilliseconds,

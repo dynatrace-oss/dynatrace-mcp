@@ -8,8 +8,14 @@
     "strict": true,
     "module": "CommonJS",
     "outDir": "./dist",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@modelcontextprotocol/ext-apps/server": [
+        "./node_modules/@modelcontextprotocol/ext-apps/dist/src/server/index.d.ts"
+      ]
+    }
   },
   "include": ["src/**/*", "package.json"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "src/ui"]
 }

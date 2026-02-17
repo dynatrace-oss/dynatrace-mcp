@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 import { EnvironmentInformationClient } from '@dynatrace-sdk/client-platform-management-service';
 import { isClientRequestError } from '@dynatrace-sdk/shared-errors';
+// Dynamically imported below (ESM-only package)
+// import { registerAppTool, registerAppResource, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { Command } from 'commander';
 import { z, ZodRawShape, ZodTypeAny } from 'zod';
 
@@ -97,6 +101,14 @@ const allRequiredScopes = scopesBase.concat([
 ]);
 
 const main = async () => {
+  // Dynamic import: @modelcontextprotocol/ext-apps is ESM-only and can't be require()'d.
+  const dynamicImport = new Function('specifier', 'return import(specifier)') as (
+    specifier: string,
+  ) => Promise<typeof import('@modelcontextprotocol/ext-apps/server')>;
+  const { registerAppTool, registerAppResource, RESOURCE_MIME_TYPE } = await dynamicImport(
+    '@modelcontextprotocol/ext-apps/server',
+  );
+
   console.error(`Initializing Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
   // Configure proxy from environment variables early in the startup process
@@ -221,16 +233,12 @@ const main = async () => {
   // Ready to start the server
   console.error(`Starting Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
-  // quick abstraction/wrapper to make it easier for tools to reply text instead of JSON
-  const tool = (
-    name: string,
-    title: string,
-    description: string,
-    paramsSchema: ZodRawShape,
-    annotations: ToolAnnotations,
-    cb: (args: any) => Promise<string>,
-  ) => {
-    const wrappedCb = async (args: any): Promise<CallToolResult> => {
+  /** Return type of a tool callback that supports optional `_meta` for the result. */
+  type ToolCallbackResult = string | { text: string; _meta?: Record<string, unknown> };
+
+  // Wraps a string-returning tool callback with rate limiting, telemetry, and error handling
+  const wrapToolCallback = (name: string, cb: (args: any) => Promise<ToolCallbackResult>) => {
+    return async (args: any, _extra?: any): Promise<CallToolResult> => {
       // Capture starttime for telemetry and rate limiting
       const startTime = Date.now();
 
@@ -263,9 +271,18 @@ const main = async () => {
         // call the tool
         const response = await cb(args);
         toolCallSuccessful = true;
-        return {
-          content: [{ type: 'text', text: response }],
+
+        // Support callbacks that return either a plain string or { text, _meta }
+        const text = typeof response === 'string' ? response : response.text;
+        const _meta = typeof response === 'string' ? undefined : response._meta;
+
+        const result: CallToolResult = {
+          content: [{ type: 'text', text }],
         };
+        if (_meta) {
+          result._meta = _meta;
+        }
+        return result;
       } catch (error: any) {
         // Track error
         telemetry.trackError(error, `tool_${name}`).catch((e) => console.warn('Failed to track error:', e));
@@ -291,7 +308,17 @@ const main = async () => {
           .catch((e) => console.warn('Failed to track tool usage:', e));
       }
     };
+  };
 
+  // quick abstraction/wrapper to make it easier for tools to reply text instead of JSON
+  const tool = (
+    name: string,
+    title: string,
+    description: string,
+    paramsSchema: ZodRawShape,
+    annotations: ToolAnnotations,
+    cb: (args: any) => Promise<string>,
+  ) => {
     server.registerTool(
       name,
       {
@@ -300,7 +327,7 @@ const main = async () => {
         inputSchema: z.object(paramsSchema),
         annotations: annotations,
       },
-      (args: any) => wrappedCb(args),
+      (args: any) => wrapToolCallback(name, cb)(args),
     );
   };
 
@@ -660,34 +687,47 @@ const main = async () => {
     },
   );
 
-  tool(
+  // MCP App: Define the resource URI for the execute_dql interactive UI
+  // The ui:// scheme tells hosts this is an MCP App resource.
+  const executeDqlResourceUri = 'ui://execute-dql/execute-dql.html';
+
+  // Register the execute_dql tool with MCP App UI support.
+  registerAppTool(
+    server,
     'execute_dql',
-    'Execute DQL',
-    'Get data like Logs, Metrics, Spans, Events, or Entity Data from Dynatrace GRAIL by executing a Dynatrace Query Language (DQL) statement. ' +
-      'Use the "generate_dql_from_natural_language" tool upfront to generate or refine a DQL statement based on your request. ' +
-      'To learn about possible fields available for filtering, use the query "fetch dt.semantic_dictionary.models | filter data_object == \"logs\""',
     {
-      dqlStatement: z
-        .string()
-        .describe(
-          'DQL Statement (Ex: "fetch [logs, spans, events, metric.series, ...], from: now()-4h, to: now() [| filter <some-filter>] [| summarize count(), by:{some-fields}]", or for metrics: "timeseries { avg(<metric-name>), value.A = avg(<metric-name>, scalar: true) }", or for entities via smartscape: "smartscapeNodes \"[*, HOST, PROCESS, ...]\" [| filter id == "<ENTITY-ID>"]"). ' +
-            'When querying data for a specific entity, call the `find_entity_by_name` tool first to get an appropriate filter like `dt.entity.service == "SERVICE-1234"` or `dt.entity.host == "HOST-1234"` to be used in the DQL statement. ',
-        ),
-      recordLimit: z.number().optional().default(100).describe('Maximum number of records to return (default: 100)'),
-      recordSizeLimitMB: z
-        .number()
-        .optional()
-        .default(1)
-        .describe('Maximum size of the returned records in MB (default: 1MB)'),
+      title: 'Execute DQL',
+      description:
+        'Get data like Logs, Metrics, Spans, Events, or Entity Data from Dynatrace GRAIL by executing a Dynatrace Query Language (DQL) statement. ' +
+        'Use the "generate_dql_from_natural_language" tool upfront to generate or refine a DQL statement based on your request. ' +
+        'To learn about possible fields available for filtering, use the query "fetch dt.semantic_dictionary.models | filter data_object == \\"logs\\""',
+      inputSchema: {
+        dqlStatement: z
+          .string()
+          .describe(
+            'DQL Statement (Ex: "fetch [logs, spans, events, metric.series, ...], from: now()-4h, to: now() [| filter <some-filter>] [| summarize count(), by:{some-fields}]", or for metrics: "timeseries { avg(<metric-name>), value.A = avg(<metric-name>, scalar: true) }", or for entities via smartscape: "smartscapeNodes \\"[*, HOST, PROCESS, ...]\\" [| filter id == \\"<ENTITY-ID>\\"]"). ' +
+              'When querying data for a specific entity, call the `find_entity_by_name` tool first to get an appropriate filter like `dt.entity.service == "SERVICE-1234"` or `dt.entity.host == "HOST-1234"` to be used in the DQL statement. ',
+          ),
+        recordLimit: z.number().optional().default(100).describe('Maximum number of records to return (default: 100)'),
+        recordSizeLimitMB: z
+          .number()
+          .optional()
+          .default(1)
+          .describe('Maximum size of the returned records in MB (default: 1MB)'),
+      },
+      annotations: {
+        // not readonly (DQL statements may modify things), not idempotent (may change over time)
+        readOnlyHint: false,
+        idempotentHint: false,
+        // while we are not strictly talking to the open world here, the response from execute DQL could interpreted as a web-search, which often is referred to open-world
+        openWorldHint: true,
+      },
+      _meta: {
+        // MCP App
+        ui: { resourceUri: executeDqlResourceUri },
+      },
     },
-    {
-      // not readonly (DQL statements may modify things), not idempotent (may change over time)
-      readOnlyHint: false,
-      idempotentHint: false,
-      // while we are not strictly talking to the open world here, the response from execute DQL could interpreted as a web-search, which often is referred to open-world
-      openWorldHint: true,
-    },
-    async ({ dqlStatement, recordLimit = 100, recordSizeLimitMB = 1 }) => {
+    wrapToolCallback('execute_dql', async ({ dqlStatement, recordLimit = 100, recordSizeLimitMB = 1 }) => {
       // Create a HTTP Client that has all storage:*:read scopes
       const dtClient = await createAuthenticatedHttpClient(
         scopesBase.concat(
@@ -715,12 +755,15 @@ const main = async () => {
         return 'DQL execution failed or returned no result.';
       }
 
-      let result = `📊 **DQL Query Results**\n\n`;
+      // Build warnings array for structured metadata
+      const warnings: string[] = [];
 
-      // Budget warning comes first if present
       if (response.budgetWarning) {
-        result += `${response.budgetWarning}\n\n`;
+        warnings.push(response.budgetWarning);
       }
+
+      // Build human-readable text result
+      let result = `📊 **DQL Query Results**\n\n`;
 
       // Cost and Performance Information
       if (response.scannedRecords !== undefined) {
@@ -728,7 +771,8 @@ const main = async () => {
       }
 
       if (response.scannedBytes !== undefined) {
-        const scannedGB = response.scannedBytes / (1000 * 1000 * 1000);
+        // calculate scanned gigabytes for better readability in warnings and result text
+        const scannedGB = response.scannedBytes !== undefined ? response.scannedBytes / (1000 * 1000 * 1000) : 0;
         result += `- **Scanned Bytes:** ${scannedGB.toFixed(2)} GB`;
 
         // Show budget status if available
@@ -748,30 +792,70 @@ const main = async () => {
         result += '\n';
 
         if (scannedGB > 500) {
-          result += `    ⚠️ **Very High Data Usage Warning:** This query scanned ${scannedGB.toFixed(1)} GB of data, which may impact your Dynatrace consumption. Please take measures to optimize your query, like limiting the timeframe or selecting a bucket.\n`;
+          warnings.push(
+            `Very High Data Usage: This query scanned ${scannedGB.toFixed(1)} GB of data, which may impact your Dynatrace consumption. Please take measures to optimize your query, like limiting the timeframe or selecting a bucket.`,
+          );
         } else if (scannedGB > 50) {
-          result += `    ⚠️ **High Data Usage Warning:** This query scanned ${scannedGB.toFixed(2)} GB of data, which may impact your Dynatrace consumption.\n`;
-        } else if (scannedGB > 5) {
+          warnings.push(
+            `High Data Usage: This query scanned ${scannedGB.toFixed(2)} GB of data, which may impact your Dynatrace consumption.`,
+          );
+        }
+        // Add informational messages (not warnings) about data usage
+        else if (scannedGB > 5 && scannedGB <= 50) {
           result += `    💡 **Moderate Data Usage:** This query scanned ${scannedGB.toFixed(2)} GB of data.\n`;
         } else if (response.scannedBytes === 0) {
           result += `    💡 **No Data consumed:** This query did not consume any data.\n`;
         }
+
+        if (response.sampled) {
+          warnings.push('Sampling Used: Results may be approximate');
+        }
+
+        if (response.records.length === recordLimit) {
+          warnings.push(
+            `Record Limit Reached: The result set was limited to ${recordLimit} records. Consider changing your query with a smaller timeframe, an aggregation or a more concise filter. Alternatively, increase the recordLimit if you expect more results.`,
+          );
+        }
       }
 
-      if (response.sampled !== undefined && response.sampled) {
-        result += `- **⚠️ Sampling Used:** Yes (results may be approximate)\n`;
-      }
-
-      if (response.records.length === recordLimit) {
-        result += `- **⚠️ Record Limit Reached:** The result set was limited to ${recordLimit} records. Consider changing your query with a smaller timeframe, an aggregation or a more concise filter. Alternatively, increase the recordLimit if you expect more results.\n`;
+      // Add all warnings to result
+      if (warnings.length > 0) {
+        result += '\n';
+        warnings.forEach((warning) => {
+          result += `- **⚠️ ${warning}**\n`;
+        });
       }
 
       result += `\n📋 **Query Results**: (${response.records?.length || 0} records):\n\n`;
       result += `\`\`\`json\n${JSON.stringify(response.records, null, 2)}\n\`\`\``;
 
-      return result;
-    },
+      // Return structured data in _meta for MCP App UI instead of embedding in text
+      return {
+        text: result,
+        _meta: {
+          records: response.records,
+          types: response.types,
+          analysisTimeframe: response.metadata?.grail?.analysisTimeframe,
+          scannedRecords: response.scannedRecords,
+          scannedBytes: response.scannedBytes,
+          sampled: response.sampled,
+          environmentUrl: dtEnvironment,
+          budgetState: response.budgetState,
+          warnings,
+          recordLimit,
+          recordLimitReached: response.records.length === recordLimit,
+        },
+      };
+    }),
   );
+
+  // MCP App: Register the HTML resource for the execute_dql interactive UI (MCP App)
+  registerAppResource(server, 'DQL Results Viewer', executeDqlResourceUri, {}, async () => {
+    const html = readFileSync(join(__dirname, 'ui', 'execute-dql', 'index.html'), 'utf-8');
+    return {
+      contents: [{ uri: executeDqlResourceUri, mimeType: RESOURCE_MIME_TYPE, text: html }],
+    };
+  });
 
   tool(
     'generate_dql_from_natural_language',
