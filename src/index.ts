@@ -102,8 +102,12 @@ const allRequiredScopes = scopesBase.concat([
 
 const main = async () => {
   // Dynamic import: @modelcontextprotocol/ext-apps is ESM-only and can't be require()'d.
-  const { registerAppTool, registerAppResource, RESOURCE_MIME_TYPE } =
-    await import('@modelcontextprotocol/ext-apps/server');
+  const dynamicImport = new Function('specifier', 'return import(specifier)') as (
+    specifier: string,
+  ) => Promise<typeof import('@modelcontextprotocol/ext-apps/server')>;
+  const { registerAppTool, registerAppResource, RESOURCE_MIME_TYPE } = await dynamicImport(
+    '@modelcontextprotocol/ext-apps/server',
+  );
 
   console.error(`Initializing Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
