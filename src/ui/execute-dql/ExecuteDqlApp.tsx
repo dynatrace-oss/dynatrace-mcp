@@ -23,12 +23,34 @@ const RECORD_COUNT_TEXT_OPACITY = 0.5;
 const EMPTY_STATE_TEXT_OPACITY = 0.6;
 const DEFAULT_PAGE_SIZE = 10;
 
-/** Structured metadata parsed from the tool result text. */
+/** Structured metadata from the tool result _meta. */
 interface ParsedMetadata {
-  scannedRecords?: string;
-  scannedBytes?: string;
-  budgetInfo?: string;
+  scannedRecords?: number;
+  scannedBytes?: number;
+  sampled?: boolean;
   warnings: string[];
+}
+
+/** Budget state information from Grail query */
+interface BudgetState {
+  totalBytesScanned: number;
+  budgetLimitBytes: number;
+  budgetLimitGB: number;
+}
+
+/** Metadata structure returned by execute_dql tool in _meta */
+interface ExecuteDqlMeta {
+  records?: Record<string, unknown>[];
+  types?: RangedFieldTypes[];
+  analysisTimeframe?: { start?: string; end?: string };
+  scannedRecords?: number;
+  scannedBytes?: number;
+  sampled?: boolean;
+  environmentUrl?: string;
+  budgetState?: BudgetState;
+  warnings?: string[];
+  recordLimit?: number;
+  recordLimitReached?: boolean;
 }
 
 /** Type guard for text content in tool results */
@@ -40,90 +62,6 @@ function isTextContent(content: unknown): content is { type: 'text'; text: strin
     (content as { type: string }).type === 'text' &&
     'text' in content
   );
-}
-
-/**
- * Parse the tool result text (structured as markdown from execute_dql) and extract
- * structured metadata + JSON records block + field types.
- */
-function parseToolResult(text: string): {
-  metadata: ParsedMetadata;
-  records: Record<string, unknown>[];
-  fieldTypes: RangedFieldTypes[];
-  analysisTimeframe?: { start?: string; end?: string };
-} {
-  let records: Record<string, unknown>[] = [];
-  let fieldTypes: RangedFieldTypes[] = [];
-  let analysisTimeframe: { start?: string; end?: string } | undefined;
-  const metadata: ParsedMetadata = { warnings: [] };
-
-  // Extract main JSON block (records) from the text
-  const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/);
-  if (jsonMatch) {
-    try {
-      records = JSON.parse(jsonMatch[1]);
-    } catch {
-      // If JSON parse fails, records stays empty
-    }
-  }
-
-  // Extract field types JSON block (tagged as json:types)
-  const typesMatch = text.match(/```json:types\n([\s\S]*?)\n```/);
-  if (typesMatch) {
-    try {
-      fieldTypes = JSON.parse(typesMatch[1]);
-    } catch {
-      // If JSON parse fails, fieldTypes stays empty
-    }
-  }
-
-  // Extract analysisTimeframe metadata (tagged as json:analysisTimeframe)
-  const timeframeMatch = text.match(/```json:analysisTimeframe\n([\s\S]*?)\n```/);
-  if (timeframeMatch) {
-    try {
-      analysisTimeframe = JSON.parse(timeframeMatch[1]);
-    } catch {
-      // If JSON parse fails, analysisTimeframe stays undefined
-    }
-  }
-
-  const lines = text.split('\n');
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    // Parse scanned records
-    const recordsMatch = trimmed.match(/Scanned Records:\*?\*?\s*(.+)/);
-    if (recordsMatch) {
-      metadata.scannedRecords = recordsMatch[1].trim();
-      continue;
-    }
-
-    // Parse scanned bytes (including session budget info)
-    const bytesMatch = trimmed.match(/Scanned Bytes:\*?\*?\s*(.+)/);
-    if (bytesMatch) {
-      const bytesValue = bytesMatch[1].trim();
-      const budgetMatch = bytesValue.match(/^([\d.]+\s*GB)\s*\((.+)\)$/);
-      if (budgetMatch) {
-        metadata.scannedBytes = budgetMatch[1];
-        metadata.budgetInfo = budgetMatch[2];
-      } else {
-        metadata.scannedBytes = bytesValue;
-      }
-      continue;
-    }
-
-    // Collect warnings (⚠️ lines) but skip "No Data consumed" / info-only lines
-    if (trimmed.includes('⚠️')) {
-      const cleanWarning = trimmed
-        .replace(/^-\s*/, '')
-        .replace(/\*\*/g, '')
-        .replace(/^⚠️\s*/, '');
-      metadata.warnings.push(cleanWarning);
-    }
-    // Skip 💡 lines entirely (e.g. "No Data consumed")
-  }
-
-  return { metadata, records, fieldTypes, analysisTimeframe };
 }
 
 /**
@@ -162,6 +100,8 @@ export interface ToolResultState {
   analysisTimeframe?: { start?: string; end?: string };
   /** Timestamp when the query results were received. */
   executedAt?: Date;
+  /** Dynatrace environment URL. */
+  environmentUrl?: string;
 }
 
 /**
@@ -283,10 +223,10 @@ export function createNotebooksURL(environmentUrl: string, query: string): strin
 }
 
 /**
- * Process a tool result text into state. Extracted for reuse between
- * the initial ontoolresult notification and the refresh callServerTool response.
+ * Process a tool result into state. Uses _meta for structured data and text for warnings.
+ * Extracted for reuse between the initial ontoolresult notification and the refresh callServerTool response.
  */
-export function processToolResultText(text: string | undefined): ToolResultState {
+export function processToolResult(text: string | undefined, meta: ExecuteDqlMeta | undefined): ToolResultState {
   if (!text) {
     return {
       status: 'error',
@@ -296,11 +236,24 @@ export function processToolResultText(text: string | undefined): ToolResultState
       columns: [],
       fieldTypes: [],
       analysisTimeframe: undefined,
+      environmentUrl: undefined,
     };
   }
 
-  const { metadata, records, fieldTypes, analysisTimeframe } = parseToolResult(text);
+  // Extract structured data from _meta (preferred) or fallback to empty arrays
+  const records = meta?.records ?? [];
+  const fieldTypes = meta?.types ?? [];
+  const analysisTimeframe = meta?.analysisTimeframe;
 
+  // Build metadata object from structured _meta data
+  const metadata: ParsedMetadata = {
+    scannedRecords: meta?.scannedRecords,
+    scannedBytes: meta?.scannedBytes,
+    sampled: meta?.sampled,
+    warnings: meta?.warnings ?? [],
+  };
+
+  // Build column list from records
   const columnSet = new Set<string>();
   for (const record of records) {
     if (record && typeof record === 'object') {
@@ -318,6 +271,7 @@ export function processToolResultText(text: string | undefined): ToolResultState
     fieldTypes,
     analysisTimeframe,
     executedAt: new Date(),
+    environmentUrl: meta?.environmentUrl,
   };
 }
 
@@ -329,6 +283,7 @@ export function ExecuteDqlApp() {
     columns: [],
     fieldTypes: [],
     analysisTimeframe: undefined,
+    environmentUrl: undefined,
   });
   /** Combined toggle value: 'table' | 'line' | 'area' */
   type ToggleValue = 'table' | ChartVariant;
@@ -339,7 +294,6 @@ export function ExecuteDqlApp() {
 
   const appRef = useRef<App | null>(null);
   const [toolArguments, setToolArguments] = useState<Record<string, unknown> | null>(null);
-  const [environmentUrl, setEnvironmentUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const app = new App({ name: 'DQL Results Viewer', version: '1.0.0' });
@@ -352,7 +306,8 @@ export function ExecuteDqlApp() {
 
     app.ontoolresult = (result) => {
       const textContent = result.content?.find(isTextContent);
-      setState(processToolResultText(textContent?.text));
+      const meta = result._meta as ExecuteDqlMeta | undefined;
+      setState(processToolResult(textContent?.text, meta));
     };
 
     return () => {
@@ -373,6 +328,7 @@ export function ExecuteDqlApp() {
       columns: [],
       fieldTypes: [],
       analysisTimeframe: undefined,
+      environmentUrl: undefined,
     });
 
     try {
@@ -382,7 +338,8 @@ export function ExecuteDqlApp() {
       });
 
       const textContent = result.content?.find(isTextContent);
-      setState(processToolResultText(textContent?.text));
+      const meta = result._meta as ExecuteDqlMeta | undefined;
+      setState(processToolResult(textContent?.text, meta));
     } catch (error) {
       setState({
         status: 'error',
@@ -392,6 +349,7 @@ export function ExecuteDqlApp() {
         columns: [],
         fieldTypes: [],
         analysisTimeframe: undefined,
+        environmentUrl: undefined,
       });
     }
   }, [toolArguments]);
@@ -400,34 +358,16 @@ export function ExecuteDqlApp() {
     if (!appRef.current) return;
 
     const query = toolArguments?.dqlStatement as string | undefined;
-    if (!query) return;
+    const envUrl = state.environmentUrl;
 
-    let envUrl = environmentUrl;
-    if (!envUrl) {
-      try {
-        const result = await appRef.current.callServerTool({
-          name: 'get_environment_info',
-          arguments: {},
-        });
-        const textContent = result.content?.find(isTextContent);
-        if (textContent?.text) {
-          const match = textContent.text.match(/You can reach it via (.+)/);
-          if (match) {
-            envUrl = match[1].trim();
-            setEnvironmentUrl(envUrl);
-          }
-        }
-      } catch (error) {
-        console.warn('Failed to get environment URL:', error);
-        return;
-      }
+    if (!query || !envUrl) {
+      console.warn('Missing query or environment URL');
+      return;
     }
-
-    if (!envUrl) return;
 
     const notebooksUrl = createNotebooksURL(envUrl, query);
     await appRef.current.openLink({ url: notebooksUrl });
-  }, [toolArguments, environmentUrl]);
+  }, [toolArguments, state.environmentUrl]);
 
   const tableColumns = useMemo(() => buildColumns(state.columns), [state.columns]);
   const tableData = useMemo(() => state.records, [state.records]);
@@ -442,11 +382,18 @@ export function ExecuteDqlApp() {
     if (state.executedAt) {
       parts.push(`Executed at: ${state.executedAt.toLocaleString()}`);
     }
-    if (state.metadata.scannedBytes) {
-      parts.push(`Scanned bytes: ${state.metadata.scannedBytes}`);
+    if (state.metadata.scannedBytes !== undefined) {
+      const scannedGB = (state.metadata.scannedBytes / (1000 * 1000 * 1000)).toFixed(2);
+      parts.push(`Scanned: ${scannedGB} GB`);
+    }
+    if (state.metadata.scannedRecords !== undefined) {
+      parts.push(`${state.metadata.scannedRecords.toLocaleString()} records scanned`);
+    }
+    if (state.metadata.sampled) {
+      parts.push('Sampled');
     }
     return parts.length > 0 ? parts.join(', ') : '';
-  }, [state.executedAt, state.metadata.scannedBytes]);
+  }, [state.executedAt, state.metadata.scannedBytes, state.metadata.scannedRecords, state.metadata.sampled]);
 
   // Auto-select chart view when timeseries data is available
   useEffect(() => {

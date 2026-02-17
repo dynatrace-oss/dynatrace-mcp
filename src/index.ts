@@ -755,12 +755,15 @@ const main = async () => {
         return 'DQL execution failed or returned no result.';
       }
 
-      let result = `📊 **DQL Query Results**\n\n`;
+      // Build warnings array for structured metadata
+      const warnings: string[] = [];
 
-      // Budget warning comes first if present
       if (response.budgetWarning) {
-        result += `${response.budgetWarning}\n\n`;
+        warnings.push(response.budgetWarning);
       }
+
+      // Build human-readable text result
+      let result = `📊 **DQL Query Results**\n\n`;
 
       // Cost and Performance Information
       if (response.scannedRecords !== undefined) {
@@ -768,7 +771,8 @@ const main = async () => {
       }
 
       if (response.scannedBytes !== undefined) {
-        const scannedGB = response.scannedBytes / (1000 * 1000 * 1000);
+        // calculate scanned gigabytes for better readability in warnings and result text
+        const scannedGB = response.scannedBytes !== undefined ? response.scannedBytes / (1000 * 1000 * 1000) : 0;
         result += `- **Scanned Bytes:** ${scannedGB.toFixed(2)} GB`;
 
         // Show budget status if available
@@ -788,41 +792,60 @@ const main = async () => {
         result += '\n';
 
         if (scannedGB > 500) {
-          result += `    ⚠️ **Very High Data Usage Warning:** This query scanned ${scannedGB.toFixed(1)} GB of data, which may impact your Dynatrace consumption. Please take measures to optimize your query, like limiting the timeframe or selecting a bucket.\n`;
+          warnings.push(
+            `Very High Data Usage: This query scanned ${scannedGB.toFixed(1)} GB of data, which may impact your Dynatrace consumption. Please take measures to optimize your query, like limiting the timeframe or selecting a bucket.`,
+          );
         } else if (scannedGB > 50) {
-          result += `    ⚠️ **High Data Usage Warning:** This query scanned ${scannedGB.toFixed(2)} GB of data, which may impact your Dynatrace consumption.\n`;
-        } else if (scannedGB > 5) {
+          warnings.push(
+            `High Data Usage: This query scanned ${scannedGB.toFixed(2)} GB of data, which may impact your Dynatrace consumption.`,
+          );
+        }
+        // Add informational messages (not warnings) about data usage
+        else if (scannedGB > 5 && scannedGB <= 50) {
           result += `    💡 **Moderate Data Usage:** This query scanned ${scannedGB.toFixed(2)} GB of data.\n`;
         } else if (response.scannedBytes === 0) {
           result += `    💡 **No Data consumed:** This query did not consume any data.\n`;
         }
+
+        if (response.sampled) {
+          warnings.push('Sampling Used: Results may be approximate');
+        }
+
+        if (response.records.length === recordLimit) {
+          warnings.push(
+            `Record Limit Reached: The result set was limited to ${recordLimit} records. Consider changing your query with a smaller timeframe, an aggregation or a more concise filter. Alternatively, increase the recordLimit if you expect more results.`,
+          );
+        }
       }
 
-      if (response.sampled !== undefined && response.sampled) {
-        result += `- **⚠️ Sampling Used:** Yes (results may be approximate)\n`;
-      }
-
-      if (response.records.length === recordLimit) {
-        result += `- **⚠️ Record Limit Reached:** The result set was limited to ${recordLimit} records. Consider changing your query with a smaller timeframe, an aggregation or a more concise filter. Alternatively, increase the recordLimit if you expect more results.\n`;
+      // Add all warnings to result
+      if (warnings.length > 0) {
+        result += '\n';
+        warnings.forEach((warning) => {
+          result += `- **⚠️ ${warning}**\n`;
+        });
       }
 
       result += `\n📋 **Query Results**: (${response.records?.length || 0} records):\n\n`;
       result += `\`\`\`json\n${JSON.stringify(response.records, null, 2)}\n\`\`\``;
 
-      // Include field type definitions for chart rendering in the UI
-      if (response.types && response.types.length > 0) {
-        result += `\n\n📊 **Field Types**:\n\n`;
-        result += `\`\`\`json:types\n${JSON.stringify(response.types, null, 2)}\n\`\`\``;
-      }
-
-      // Include analysisTimeframe metadata for chart rendering in the UI.
-      // This is needed when timeseries results lack explicit timeframe/interval
-      // columns (e.g. timeseries queries with fieldsRemove or custom projections).
-      if (response.metadata?.grail?.analysisTimeframe) {
-        result += `\n\n\`\`\`json:analysisTimeframe\n${JSON.stringify(response.metadata.grail.analysisTimeframe)}\n\`\`\``;
-      }
-
-      return result;
+      // Return structured data in _meta for MCP App UI instead of embedding in text
+      return {
+        text: result,
+        _meta: {
+          records: response.records,
+          types: response.types,
+          analysisTimeframe: response.metadata?.grail?.analysisTimeframe,
+          scannedRecords: response.scannedRecords,
+          scannedBytes: response.scannedBytes,
+          sampled: response.sampled,
+          environmentUrl: dtEnvironment,
+          budgetState: response.budgetState,
+          warnings,
+          recordLimit,
+          recordLimitReached: response.records.length === recordLimit,
+        },
+      };
     }),
   );
 
