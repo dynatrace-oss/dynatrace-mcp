@@ -22,7 +22,7 @@ import { listDavisAnalyzers, executeDavisAnalyzer } from './capabilities/davis-a
 import { sendSlackMessage } from './capabilities/send-slack-message';
 import { sendEmail } from './capabilities/send-email';
 import { sendEvent, EventIngestEventType } from './capabilities/send-event';
-import { executeDql, verifyDqlStatement, isChartWorthyResult } from './capabilities/execute-dql';
+import { executeDql, verifyDqlStatement } from './capabilities/execute-dql';
 import { createWorkflowForProblemNotification } from './capabilities/create-workflow-for-problem-notification';
 import { updateWorkflow } from './capabilities/update-workflow';
 import {
@@ -692,8 +692,6 @@ const main = async () => {
   const executeDqlResourceUri = 'ui://execute-dql/execute-dql.html';
 
   // Register the execute_dql tool with MCP App UI support.
-  // The app is always loaded by the host, but the result includes a chartWorthy
-  // flag so the app can auto-hide itself for plain tabular results.
   registerAppTool(
     server,
     'execute_dql',
@@ -817,17 +815,10 @@ const main = async () => {
         result += `\`\`\`json:types\n${JSON.stringify(response.types)}\n\`\`\``;
       }
 
-      // Determine if results are suitable for visualization (timeseries/metrics).
-      // The MCP App UI uses this flag to automatically show charts for timeseries data
-      // while hiding itself for plain tabular results (entity lists, logs, etc.),
-      // improving UX by avoiding empty/meaningless chart displays.
-      const chartWorthy = isChartWorthyResult(response.types);
-      result += `\n\n\`\`\`json:chartWorthy\n${chartWorthy}\n\`\`\``;
-
       // Include analysisTimeframe metadata for chart rendering in the UI.
       // This is needed when timeseries results lack explicit timeframe/interval
       // columns (e.g. timeseries queries with fieldsRemove or custom projections).
-      if (chartWorthy && response.metadata?.grail?.analysisTimeframe) {
+      if (response.metadata?.grail?.analysisTimeframe) {
         result += `\n\n\`\`\`json:analysisTimeframe\n${JSON.stringify(response.metadata.grail.analysisTimeframe)}\n\`\`\``;
       }
 

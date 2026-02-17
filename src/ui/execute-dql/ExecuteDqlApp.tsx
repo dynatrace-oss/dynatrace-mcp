@@ -6,23 +6,22 @@ import { Button } from '@dynatrace/strato-components/buttons';
 import { Text, Code } from '@dynatrace/strato-components/typography';
 import { DataTable, type DataTableColumnDef } from '@dynatrace/strato-components-preview/tables';
 import { TimeseriesChart, convertToTimeseries, type Timeseries } from '@dynatrace/strato-components-preview/charts';
+import { ToggleButtonGroup } from '@dynatrace/strato-components-preview/forms';
 import {
   DataTableIcon,
-  DatabaseIcon,
   DocumentStackIcon,
   LineChartIcon,
-  MoneyIcon,
   RefreshIcon,
   StackedAreaChartIcon,
   WarningIcon,
 } from '@dynatrace/strato-icons';
-import { LoadingState, ErrorState, ChartButton, MetadataIcon, type ViewMode, type ChartVariant } from '../components';
+import { LoadingState, ErrorState, MetadataIcon, type ViewMode, type ChartVariant } from '../components';
 
 // Constants
 const DEFAULT_TIMEFRAME_MS = 2 * 60 * 60 * 1000; // 2 hours
 const RECORD_COUNT_TEXT_OPACITY = 0.5;
 const EMPTY_STATE_TEXT_OPACITY = 0.6;
-const DEFAULT_PAGE_SIZE = 50;
+const DEFAULT_PAGE_SIZE = 10;
 
 /** Structured metadata parsed from the tool result text. */
 interface ParsedMetadata {
@@ -51,12 +50,10 @@ function parseToolResult(text: string): {
   metadata: ParsedMetadata;
   records: Record<string, unknown>[];
   fieldTypes: RangedFieldTypes[];
-  chartWorthy: boolean;
   analysisTimeframe?: { start?: string; end?: string };
 } {
   let records: Record<string, unknown>[] = [];
   let fieldTypes: RangedFieldTypes[] = [];
-  let chartWorthy = false;
   let analysisTimeframe: { start?: string; end?: string } | undefined;
   const metadata: ParsedMetadata = { warnings: [] };
 
@@ -78,12 +75,6 @@ function parseToolResult(text: string): {
     } catch {
       // If JSON parse fails, fieldTypes stays empty
     }
-  }
-
-  // Extract chartWorthy flag (tagged as json:chartWorthy)
-  const chartWorthyMatch = text.match(/```json:chartWorthy\n([\s\S]*?)\n```/);
-  if (chartWorthyMatch) {
-    chartWorthy = chartWorthyMatch[1].trim() === 'true';
   }
 
   // Extract analysisTimeframe metadata (tagged as json:analysisTimeframe)
@@ -132,7 +123,7 @@ function parseToolResult(text: string): {
     // Skip 💡 lines entirely (e.g. "No Data consumed")
   }
 
-  return { metadata, records, fieldTypes, chartWorthy, analysisTimeframe };
+  return { metadata, records, fieldTypes, analysisTimeframe };
 }
 
 /**
@@ -142,7 +133,7 @@ function buildColumns(columns: string[]): DataTableColumnDef<Record<string, unkn
   return columns.map((col) => ({
     id: col,
     header: col,
-    accessor: col,
+    accessor: (row: Record<string, unknown>) => row[col],
     width: 'auto' as const,
     cell: ({ value }: { value: unknown }) => {
       if (value === null || value === undefined) {
@@ -167,10 +158,10 @@ export interface ToolResultState {
   records: Record<string, unknown>[];
   columns: string[];
   fieldTypes: RangedFieldTypes[];
-  /** Whether the server determined this result is chart-worthy (timeseries/metric data). */
-  chartWorthy: boolean;
   /** Analysis timeframe from query metadata, used for fallback chart rendering. */
   analysisTimeframe?: { start?: string; end?: string };
+  /** Timestamp when the query results were received. */
+  executedAt?: Date;
 }
 
 /**
@@ -304,12 +295,11 @@ export function processToolResultText(text: string | undefined): ToolResultState
       records: [],
       columns: [],
       fieldTypes: [],
-      chartWorthy: false,
       analysisTimeframe: undefined,
     };
   }
 
-  const { metadata, records, fieldTypes, chartWorthy, analysisTimeframe } = parseToolResult(text);
+  const { metadata, records, fieldTypes, analysisTimeframe } = parseToolResult(text);
 
   const columnSet = new Set<string>();
   for (const record of records) {
@@ -326,8 +316,8 @@ export function processToolResultText(text: string | undefined): ToolResultState
     records,
     columns: Array.from(columnSet),
     fieldTypes,
-    chartWorthy,
     analysisTimeframe,
+    executedAt: new Date(),
   };
 }
 
@@ -338,11 +328,14 @@ export function ExecuteDqlApp() {
     records: [],
     columns: [],
     fieldTypes: [],
-    chartWorthy: false,
     analysisTimeframe: undefined,
   });
-  const [viewMode, setViewMode] = useState<ViewMode>('table');
-  const [chartVariant, setChartVariant] = useState<ChartVariant>('line');
+  /** Combined toggle value: 'table' | 'line' | 'area' */
+  type ToggleValue = 'table' | ChartVariant;
+  const [toggleValue, setToggleValue] = useState<ToggleValue>('table');
+
+  const viewMode: ViewMode = toggleValue === 'table' ? 'table' : 'chart';
+  const chartVariant: ChartVariant = toggleValue === 'area' ? 'area' : 'line';
 
   const appRef = useRef<App | null>(null);
   const [toolArguments, setToolArguments] = useState<Record<string, unknown> | null>(null);
@@ -372,7 +365,6 @@ export function ExecuteDqlApp() {
       records: [],
       columns: [],
       fieldTypes: [],
-      chartWorthy: false,
       analysisTimeframe: undefined,
     });
 
@@ -392,7 +384,6 @@ export function ExecuteDqlApp() {
         records: [],
         columns: [],
         fieldTypes: [],
-        chartWorthy: false,
         analysisTimeframe: undefined,
       });
     }
@@ -439,12 +430,23 @@ export function ExecuteDqlApp() {
   );
   const canChart = timeseriesData.length > 0;
 
+  const metadataText = useMemo(() => {
+    const parts: string[] = [];
+    if (state.executedAt) {
+      parts.push(`Executed at: ${state.executedAt.toLocaleString()}`);
+    }
+    if (state.metadata.scannedBytes) {
+      parts.push(`Scanned bytes: ${state.metadata.scannedBytes}`);
+    }
+    return parts.length > 0 ? parts.join(', ') : '';
+  }, [state.executedAt, state.metadata.scannedBytes]);
+
   // Auto-select chart view when timeseries data is available
   useEffect(() => {
     if (canChart) {
-      setViewMode('chart');
+      setToggleValue('line');
     } else {
-      setViewMode('table');
+      setToggleValue('table');
     }
   }, [canChart]);
 
@@ -456,70 +458,39 @@ export function ExecuteDqlApp() {
     return <ErrorState message={state.errorMessage ?? 'An unknown error occurred.'} />;
   }
 
-  // For non-chart-worthy results (plain tabular data like logs, entities, etc.)
-  // render nothing so the host can collapse the app panel. The text content in
-  // the tool result is sufficient for the LLM and the user.
-  if (!state.chartWorthy) {
-    return null;
-  }
-
   const { metadata } = state;
 
   return (
     <Flex flexDirection='column' gap={4}>
       {/* Compact metadata toolbar */}
       <Flex flexDirection='row' gap={12} alignItems='center' padding={4} style={{ paddingLeft: 8 }}>
-        <Flex flexDirection='row' gap={8} alignItems='center'>
-          {metadata.scannedRecords && (
-            <MetadataIcon icon={<DataTableIcon />} tooltip={`Scanned Records: ${metadata.scannedRecords}`} />
-          )}
-          {metadata.scannedBytes && (
-            <MetadataIcon icon={<DatabaseIcon />} tooltip={`Scanned Bytes: ${metadata.scannedBytes}`} />
-          )}
-          {metadata.budgetInfo && <MetadataIcon icon={<MoneyIcon />} tooltip={`Budget: ${metadata.budgetInfo}`} />}
-          {metadata.warnings.map((warning, i) => (
-            <MetadataIcon key={`${warning}-${i}`} icon={<WarningIcon />} tooltip={warning} warning />
-          ))}
-        </Flex>
-        <Text textStyle='small' style={{ opacity: RECORD_COUNT_TEXT_OPACITY }}>
-          {state.records.length} records
+        <Text textStyle='small'>
+          {state.records.length} {state.records.length === 1 ? 'record' : 'records'}
         </Text>
+        {metadataText && (
+          <Text textStyle='small' style={{ opacity: RECORD_COUNT_TEXT_OPACITY }}>
+            {metadataText}
+          </Text>
+        )}
+        {metadata.warnings.length > 0 && (
+          <Flex flexDirection='row' gap={8} alignItems='center'>
+            {metadata.warnings.map((warning, i) => (
+              <MetadataIcon key={`${warning}-${i}`} icon={<WarningIcon />} tooltip={warning} warning />
+            ))}
+          </Flex>
+        )}
         <Flex flexDirection='row' gap={4} alignItems='center' style={{ marginLeft: 'auto' }}>
-          <Button
-            variant={viewMode === 'table' ? 'accent' : 'default'}
-            size='condensed'
-            onClick={() => setViewMode('table')}
-            aria-label='Switch to table view'
-          >
-            <Button.Prefix>
+          <ToggleButtonGroup value={toggleValue} onChange={(val) => setToggleValue(val as ToggleValue)}>
+            <ToggleButtonGroup.Item value='table' aria-label='Switch to table view'>
               <DataTableIcon />
-            </Button.Prefix>
-            Table
-          </Button>
-          <ChartButton
-            mode='line'
-            icon={<LineChartIcon />}
-            label='Line'
-            disabled={!canChart}
-            currentViewMode={viewMode}
-            currentChartVariant={chartVariant}
-            onClick={(mode) => {
-              setViewMode('chart');
-              setChartVariant(mode);
-            }}
-          />
-          <ChartButton
-            mode='area'
-            icon={<StackedAreaChartIcon />}
-            label='Area'
-            disabled={!canChart}
-            currentViewMode={viewMode}
-            currentChartVariant={chartVariant}
-            onClick={(mode) => {
-              setViewMode('chart');
-              setChartVariant(mode);
-            }}
-          />
+            </ToggleButtonGroup.Item>
+            <ToggleButtonGroup.Item value='line' disabled={!canChart} aria-label='Switch to line chart view'>
+              <LineChartIcon />
+            </ToggleButtonGroup.Item>
+            <ToggleButtonGroup.Item value='area' disabled={!canChart} aria-label='Switch to area chart view'>
+              <StackedAreaChartIcon />
+            </ToggleButtonGroup.Item>
+          </ToggleButtonGroup>
           <Button
             variant='default'
             size='condensed'

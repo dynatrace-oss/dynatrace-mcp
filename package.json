@@ -38,7 +38,6 @@
     "build": "npm run build:ui && npm run build:server",
     "build:server": "tsc --build",
     "build:ui": "INPUT=src/ui/execute-dql/index.html vite build --config vite.config.mts",
-    "dev:ui": "INPUT=src/ui/execute-dql/index.html vite --config vite.config.mts",
     "prepare": "husky",
     "watch": "tsc --watch",
     "test": "jest",
