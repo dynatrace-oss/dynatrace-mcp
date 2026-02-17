@@ -66,7 +66,16 @@ function isTextContent(content: unknown): content is { type: 'text'; text: strin
 }
 
 /**
- * Build DataTable column definitions from the record keys.
+ * Build Strato DataTable column definitions from the record keys.
+ * @param columns - Array of column names to create definitions for
+ * @returns Array of Strato DataTable column definitions
+ * @example
+ * buildColumns(['timestamp', 'event.type', 'status'])
+ * // Returns array of column definitions where each column:
+ * // - has id and header set to the column name
+ * // - includes an accessor to retrieve the value from row data
+ * // - renders null values as italic "null" text
+ * // - renders objects as formatted JSON strings
  */
 function buildColumns(columns: string[]): DataTableColumnDef<Record<string, unknown>>[] {
   return columns.map((col) => ({
@@ -315,6 +324,7 @@ export function ExecuteDqlApp() {
     });
 
     try {
+      // call execute_dql tool and refresh the result
       const result = await appRef.current.callServerTool({
         name: 'execute_dql',
         arguments: toolArguments,
