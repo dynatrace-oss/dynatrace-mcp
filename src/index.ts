@@ -721,6 +721,7 @@ const main = async () => {
         openWorldHint: true,
       },
       _meta: {
+        // MCP App
         ui: { resourceUri: executeDqlResourceUri },
       },
     },
@@ -812,8 +813,10 @@ const main = async () => {
         result += `\`\`\`json:types\n${JSON.stringify(response.types)}\n\`\`\``;
       }
 
-      // Signal to the MCP App whether the result is chart-worthy so it can
-      // auto-hide itself for plain tabular results.
+      // Determine if results are suitable for visualization (timeseries/metrics).
+      // The MCP App UI uses this flag to automatically show charts for timeseries data
+      // while hiding itself for plain tabular results (entity lists, logs, etc.),
+      // improving UX by avoiding empty/meaningless chart displays.
       const chartWorthy = isChartWorthyResult(response.types);
       result += `\n\n\`\`\`json:chartWorthy\n${chartWorthy}\n\`\`\``;
 
@@ -828,7 +831,7 @@ const main = async () => {
     }),
   );
 
-  // MCP App: Register the HTML resource for the execute_dql interactive UI
+  // MCP App: Register the HTML resource for the execute_dql interactive UI (MCP App)
   registerAppResource(server, 'DQL Results Viewer', executeDqlResourceUri, {}, async () => {
     const html = readFileSync(join(__dirname, 'ui', 'execute-dql', 'index.html'), 'utf-8');
     return {

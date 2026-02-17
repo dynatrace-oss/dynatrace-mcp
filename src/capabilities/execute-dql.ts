@@ -10,18 +10,16 @@ import { getUserAgent } from '../utils/user-agent';
 import { getGrailBudgetTracker, GrailBudgetTracker, generateBudgetWarning } from '../utils/grail-budget-tracker';
 
 /**
- * Determine whether a DQL result is chart-worthy (i.e. contains timeseries data
- * that can be meaningfully visualised in a chart).
+ * Determine whether DQL query results are suitable for chart visualization.
  *
- * The heuristic checks whether any field type mapping contains a `timeframe` or
- * `timestamp` field alongside at least one numeric field (`double` or `long`).
- * It recurses into nested `array` and `record` types (e.g. timeseries results
- * where the numeric values are stored in an array column).
+ * Chart-worthy results must have EITHER:
+ * - A time component (timeframe/timestamp) AND numeric values (double/long), OR
+ * - An array of numeric values (indicates timeseries with implicit time dimension)
  *
- * Additionally, an array of numeric values (double/long) is considered
- * chart-worthy on its own, because DQL `timeseries` queries with a `by` clause
- * produce results where the time dimension is encoded as array indices rather
- * than a separate timeframe column.
+ * The function recursively checks nested structures (arrays, records) to detect
+ * chart-worthy data even in complex result schemas. This handles DQL `timeseries`
+ * queries with `by` clauses where the time dimension is encoded in array indices
+ * rather than a separate timeframe column.
  */
 export function isChartWorthyResult(types: RangedFieldTypes[]): boolean {
   let hasTimeComponent = false;
@@ -38,14 +36,13 @@ export function isChartWorthyResult(types: RangedFieldTypes[]): boolean {
         if (fieldType.type === 'double' || fieldType.type === 'long') {
           hasNumericComponent = true;
         }
-        // An array containing numeric elements indicates timeseries data
-        // where the time dimension is encoded in the array indices.
+        // Check for numeric arrays (timeseries with implicit time dimension)
         if (fieldType.type === 'array' && fieldType.types && fieldType.types.length > 0) {
           if (containsNumericElement(fieldType.types)) {
             hasNumericArray = true;
           }
         }
-        // Recurse into nested array/record types
+        // Recurse into nested structures
         if (fieldType.types && fieldType.types.length > 0) {
           inspect(fieldType.types, depth + 1);
         }
