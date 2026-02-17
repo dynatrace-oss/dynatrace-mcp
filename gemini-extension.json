@@ -4,10 +4,7 @@
   "mcpServers": {
     "dynatrace": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@dynatrace-oss/dynatrace-mcp-server@latest"
-      ]
+      "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"]
     }
   },
   "settings": [

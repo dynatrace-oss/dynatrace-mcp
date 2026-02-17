@@ -221,7 +221,7 @@ gemini extensions install https://github.com/dynatrace-oss/dynatrace-mcp
 export DT_PLATFORM_TOKEN=... # optional
 ```
 
-The command will ask for the value Dynatrace Environment. 
+The command will ask for the value Dynatrace Environment.
 
 Verify that the server is running via
 
