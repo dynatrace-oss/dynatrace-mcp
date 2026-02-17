@@ -9,8 +9,19 @@ jest.mock('../utils/user-agent', () => ({
   getUserAgent: () => 'test-user-agent',
 }));
 
+/**
+ * Tests for isChartWorthyResult:
+ *
+ * This function determines whether DQL query results are suitable for chart visualization.
+ * Chart-worthy results must have EITHER:
+ * - A time component (timeframe/timestamp) AND numeric values (double/long), OR
+ * - An array of numeric values (indicates timeseries with implicit time dimension)
+ *
+ * The function recursively checks nested structures (arrays, records) to detect
+ * chart-worthy data even in complex result schemas.
+ */
 describe('isChartWorthyResult', () => {
-  it('should return true for timeseries data with timeframe + double fields', () => {
+  it('should return true for timeseries with timeframe and numeric fields', () => {
     const types: RangedFieldTypes[] = [
       {
         mappings: {
@@ -22,7 +33,7 @@ describe('isChartWorthyResult', () => {
     expect(isChartWorthyResult(types)).toBe(true);
   });
 
-  it('should return true for data with timestamp + long fields', () => {
+  it('should return true for timeseries with timestamp and numeric fields', () => {
     const types: RangedFieldTypes[] = [
       {
         mappings: {
@@ -34,7 +45,7 @@ describe('isChartWorthyResult', () => {
     expect(isChartWorthyResult(types)).toBe(true);
   });
 
-  it('should return false for purely tabular string data', () => {
+  it('should return false for string-only tabular data', () => {
     const types: RangedFieldTypes[] = [
       {
         mappings: {
@@ -47,7 +58,7 @@ describe('isChartWorthyResult', () => {
     expect(isChartWorthyResult(types)).toBe(false);
   });
 
-  it('should return false for data with timestamp but no numeric fields', () => {
+  it('should return false for timestamp without numeric values', () => {
     const types: RangedFieldTypes[] = [
       {
         mappings: {
@@ -59,7 +70,7 @@ describe('isChartWorthyResult', () => {
     expect(isChartWorthyResult(types)).toBe(false);
   });
 
-  it('should return false for data with numeric fields but no time component', () => {
+  it('should return false for numeric values without time component', () => {
     const types: RangedFieldTypes[] = [
       {
         mappings: {
@@ -76,7 +87,7 @@ describe('isChartWorthyResult', () => {
     expect(isChartWorthyResult([])).toBe(false);
   });
 
-  it('should detect chart-worthy data across multiple RangedFieldTypes entries', () => {
+  it('should return true when time and numeric fields are in separate type entries', () => {
     const types: RangedFieldTypes[] = [
       {
         mappings: {
@@ -93,9 +104,8 @@ describe('isChartWorthyResult', () => {
     expect(isChartWorthyResult(types)).toBe(true);
   });
 
-  it('should return true for timeseries data with numeric values nested in an array', () => {
-    // This matches the real DQL response shape for:
-    //   timeseries avg_response = avg(dt.service.request.response_time)
+  it('should return true for timeseries with numeric array (implicit time dimension)', () => {
+    // Matches DQL shape: timeseries avg_response = avg(dt.service.request.response_time)
     const types: RangedFieldTypes[] = [
       {
         indexRange: [0, 0],
@@ -112,7 +122,7 @@ describe('isChartWorthyResult', () => {
     expect(isChartWorthyResult(types)).toBe(true);
   });
 
-  it('should return true for nested record types with numeric fields', () => {
+  it('should return true for timestamp with nested numeric record fields', () => {
     const types: RangedFieldTypes[] = [
       {
         mappings: {
@@ -127,10 +137,9 @@ describe('isChartWorthyResult', () => {
     expect(isChartWorthyResult(types)).toBe(true);
   });
 
-  it('should return true for timeseries grouped by a string field (no explicit timeframe column)', () => {
-    // This matches the real DQL response shape for:
-    //   timeseries avg_cpu = avg(dt.process.cpu.usage), by: { dt.entity.process_group_instance }
-    // where the time dimension is encoded in the array indices.
+  it('should return true for grouped timeseries without explicit timeframe column', () => {
+    // Matches DQL shape: timeseries avg_cpu = avg(dt.process.cpu.usage), by: { dt.entity.pgi }
+    // Time dimension is encoded in array indices instead of a separate column
     const types: RangedFieldTypes[] = [
       {
         indexRange: [0, 99],
@@ -146,7 +155,7 @@ describe('isChartWorthyResult', () => {
     expect(isChartWorthyResult(types)).toBe(true);
   });
 
-  it('should return false for an array of strings (not numeric)', () => {
+  it('should return false for string arrays without numeric values', () => {
     const types: RangedFieldTypes[] = [
       {
         mappings: {
