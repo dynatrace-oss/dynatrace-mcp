@@ -15,9 +15,9 @@ if (!input) {
 const inputPath = path.resolve(__dirname, input);
 const appName = path.basename(path.dirname(inputPath));
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   root: path.dirname(inputPath),
-  plugins: [react(), viteSingleFile()],
+  plugins: [react(), ...(command === 'build' ? [viteSingleFile()] : [])],
   build: {
     outDir: path.resolve(__dirname, 'dist/ui', appName),
     emptyOutDir: true,
@@ -25,4 +25,9 @@ export default defineConfig({
       input: inputPath,
     },
   },
-});
+  server: {
+    port: 5173,
+    open: true,
+  },
+  publicDir: false,
+}));

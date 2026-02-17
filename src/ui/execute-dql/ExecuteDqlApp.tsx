@@ -9,17 +9,20 @@ import { TimeseriesChart, convertToTimeseries, type Timeseries } from '@dynatrac
 import {
   DataTableIcon,
   DatabaseIcon,
-  ExternalLinkIcon,
+  DocumentStackIcon,
   LineChartIcon,
   MoneyIcon,
   RefreshIcon,
   StackedAreaChartIcon,
   WarningIcon,
 } from '@dynatrace/strato-icons';
-import { LoadingState, ErrorState } from '../components';
+import { LoadingState, ErrorState, ChartButton, MetadataIcon, type ViewMode, type ChartVariant } from '../components';
 
-type ViewMode = 'table' | 'chart';
-type ChartVariant = 'line' | 'area';
+// Constants
+const DEFAULT_TIMEFRAME_MS = 2 * 60 * 60 * 1000; // 2 hours
+const RECORD_COUNT_TEXT_OPACITY = 0.5;
+const EMPTY_STATE_TEXT_OPACITY = 0.6;
+const DEFAULT_PAGE_SIZE = 50;
 
 /** Structured metadata parsed from the tool result text. */
 interface ParsedMetadata {
@@ -27,6 +30,17 @@ interface ParsedMetadata {
   scannedBytes?: string;
   budgetInfo?: string;
   warnings: string[];
+}
+
+/** Type guard for text content in tool results */
+function isTextContent(content: unknown): content is { type: 'text'; text: string } {
+  return (
+    typeof content === 'object' &&
+    content !== null &&
+    'type' in content &&
+    (content as { type: string }).type === 'text' &&
+    'text' in content
+  );
 }
 
 /**
@@ -146,7 +160,7 @@ function buildColumns(columns: string[]): DataTableColumnDef<Record<string, unkn
   }));
 }
 
-interface ToolResultState {
+export interface ToolResultState {
   status: 'loading' | 'error' | 'success';
   errorMessage?: string;
   metadata: ParsedMetadata;
@@ -172,10 +186,12 @@ function safeConvertToTimeseries(
 ): Timeseries[] {
   if (records.length === 0 || fieldTypes.length === 0) return [];
   try {
+    // @ts-expect-error - Record<string, unknown> is compatible with ResultRecord at runtime
     const result = convertToTimeseries(records, fieldTypes);
     if (result.length > 0) return result;
-  } catch {
-    // convertToTimeseries throws if data is malformed or not timeseries-shaped
+  } catch (error) {
+    console.warn('Failed to convert to timeseries using standard conversion:', error);
+    // Fall back to manual conversion
   }
 
   // Fallback: build timeseries manually from numeric array columns.
@@ -217,7 +233,7 @@ function fallbackConvertArrayTimeseries(
 
   // Determine time range from metadata or default to 2h
   const now = new Date();
-  const defaultStart = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+  const defaultStart = new Date(now.getTime() - DEFAULT_TIMEFRAME_MS);
   const rangeStart = analysisTimeframe?.start ? new Date(analysisTimeframe.start) : defaultStart;
   const rangeEnd = analysisTimeframe?.end ? new Date(analysisTimeframe.end) : now;
 
@@ -257,24 +273,6 @@ function fallbackConvertArrayTimeseries(
   return result;
 }
 
-/** Small icon button with a hover tooltip. */
-function MetadataIcon({ icon, tooltip, warning }: { icon: React.ReactNode; tooltip: string; warning?: boolean }) {
-  return (
-    <span
-      title={tooltip}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        cursor: 'default',
-        opacity: 0.7,
-        color: warning ? 'var(--dt-colors-text-warning-default, #e5be01)' : 'inherit',
-      }}
-    >
-      {icon}
-    </span>
-  );
-}
-
 /**
  * Create a Dynatrace Notebooks URL that opens a DQL query in the Notebooks app.
  * @param environmentUrl - The base URL of the Dynatrace environment (e.g. "https://abc12345.apps.dynatrace.com")
@@ -297,7 +295,7 @@ export function createNotebooksURL(environmentUrl: string, query: string): strin
  * Process a tool result text into state. Extracted for reuse between
  * the initial ontoolresult notification and the refresh callServerTool response.
  */
-function processToolResultText(text: string | undefined): ToolResultState {
+export function processToolResultText(text: string | undefined): ToolResultState {
   if (!text) {
     return {
       status: 'error',
@@ -360,8 +358,8 @@ export function ExecuteDqlApp() {
     };
 
     app.ontoolresult = (result) => {
-      const text = result.content?.find((c: { type: string }) => c.type === 'text')?.text;
-      setState(processToolResultText(text));
+      const textContent = result.content?.find(isTextContent);
+      setState(processToolResultText(textContent?.text));
     };
   }, []);
 
@@ -384,8 +382,8 @@ export function ExecuteDqlApp() {
         arguments: toolArguments,
       });
 
-      const text = result.content?.find((c) => c.type === 'text')?.text as string | undefined;
-      setState(processToolResultText(text));
+      const textContent = result.content?.find(isTextContent);
+      setState(processToolResultText(textContent?.text));
     } catch (error) {
       setState({
         status: 'error',
@@ -413,16 +411,16 @@ export function ExecuteDqlApp() {
           name: 'get_environment_info',
           arguments: {},
         });
-        const text = result.content?.find((c) => c.type === 'text')?.text as string | undefined;
-        if (text) {
-          const match = text.match(/You can reach it via (.+)/);
+        const textContent = result.content?.find(isTextContent);
+        if (textContent?.text) {
+          const match = textContent.text.match(/You can reach it via (.+)/);
           if (match) {
             envUrl = match[1].trim();
             setEnvironmentUrl(envUrl);
           }
         }
-      } catch {
-        // If we can't get the environment URL, we can't open the link
+      } catch (error) {
+        console.warn('Failed to get environment URL:', error);
         return;
       }
     }
@@ -483,7 +481,7 @@ export function ExecuteDqlApp() {
             <MetadataIcon key={`${warning}-${i}`} icon={<WarningIcon />} tooltip={warning} warning />
           ))}
         </Flex>
-        <Text textStyle='small' style={{ opacity: 0.5 }}>
+        <Text textStyle='small' style={{ opacity: RECORD_COUNT_TEXT_OPACITY }}>
           {state.records.length} records
         </Text>
         <Flex flexDirection='row' gap={4} alignItems='center' style={{ marginLeft: 'auto' }}>
@@ -491,53 +489,52 @@ export function ExecuteDqlApp() {
             variant={viewMode === 'table' ? 'accent' : 'default'}
             size='condensed'
             onClick={() => setViewMode('table')}
+            aria-label='Switch to table view'
           >
             <Button.Prefix>
               <DataTableIcon />
             </Button.Prefix>
             Table
           </Button>
-          <Button
-            variant={viewMode === 'chart' && chartVariant === 'line' ? 'accent' : 'default'}
-            size='condensed'
-            onClick={() => {
-              setViewMode('chart');
-              setChartVariant('line');
-            }}
+          <ChartButton
+            mode='line'
+            icon={<LineChartIcon />}
+            label='Line'
             disabled={!canChart}
-            title={canChart ? 'Switch to line chart view' : 'No numeric columns available for charting'}
+            currentViewMode={viewMode}
+            currentChartVariant={chartVariant}
+            onClick={(mode) => {
+              setViewMode('chart');
+              setChartVariant(mode);
+            }}
+          />
+          <ChartButton
+            mode='area'
+            icon={<StackedAreaChartIcon />}
+            label='Area'
+            disabled={!canChart}
+            currentViewMode={viewMode}
+            currentChartVariant={chartVariant}
+            onClick={(mode) => {
+              setViewMode('chart');
+              setChartVariant(mode);
+            }}
+          />
+          <Button
+            variant='default'
+            size='condensed'
+            onClick={handleOpenInNotebooks}
+            aria-label='Open query in Dynatrace Notebooks'
           >
             <Button.Prefix>
-              <LineChartIcon />
-            </Button.Prefix>
-            Line
-          </Button>
-          <Button
-            variant={viewMode === 'chart' && chartVariant === 'area' ? 'accent' : 'default'}
-            size='condensed'
-            onClick={() => {
-              setViewMode('chart');
-              setChartVariant('area');
-            }}
-            disabled={!canChart}
-            title={canChart ? 'Switch to area chart view' : 'No numeric columns available for charting'}
-          >
-            <Button.Prefix>
-              <StackedAreaChartIcon />
-            </Button.Prefix>
-            Area
-          </Button>
-          <Button variant='default' size='condensed' onClick={handleOpenInNotebooks}>
-            <Button.Prefix>
-              <ExternalLinkIcon />
+              <DocumentStackIcon />
             </Button.Prefix>
             Open in Notebooks
           </Button>
-          <Button variant='default' size='condensed' onClick={handleRefresh}>
+          <Button variant='default' size='condensed' onClick={handleRefresh} aria-label='Refresh query results'>
             <Button.Prefix>
               <RefreshIcon />
             </Button.Prefix>
-            Refresh
           </Button>
         </Flex>
       </Flex>
@@ -545,13 +542,13 @@ export function ExecuteDqlApp() {
       {state.records.length === 0 ? (
         <Flex flexDirection='column' alignItems='center' justifyContent='center' padding={32}>
           <Text textStyle='base-emphasized'>No records returned</Text>
-          <Text textStyle='small' style={{ opacity: 0.6 }}>
+          <Text textStyle='small' style={{ opacity: EMPTY_STATE_TEXT_OPACITY }}>
             The query executed successfully but returned no data. Try adjusting your query or timeframe.
           </Text>
         </Flex>
       ) : viewMode === 'table' ? (
         <DataTable data={tableData} columns={tableColumns} sortable resizable fullWidth>
-          <DataTable.Pagination defaultPageSize={50} />
+          <DataTable.Pagination defaultPageSize={DEFAULT_PAGE_SIZE} />
         </DataTable>
       ) : (
         <TimeseriesChart data={timeseriesData} variant={chartVariant}>
