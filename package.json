@@ -60,6 +60,7 @@
     "@dynatrace/openkit-js": "^4.1.0",
     "@dynatrace/strato-components": "^1.16.0",
     "@dynatrace/strato-components-preview": "^2.14.1",
+    "@dynatrace/strato-icons": "^1.16.0",
     "@modelcontextprotocol/ext-apps": "^1.0.1",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "commander": "^14.0.0",
