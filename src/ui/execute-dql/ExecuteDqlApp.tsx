@@ -16,6 +16,7 @@ import {
   WarningIcon,
 } from '@dynatrace/strato-icons';
 import { LoadingState, ErrorState, MetadataIcon, type ViewMode, type ChartVariant } from '../components';
+import { createNotebooksURL } from '../../utils/environment-url-parser';
 
 // Constants
 const DEFAULT_TIMEFRAME_MS = 2 * 60 * 60 * 1000; // 2 hours
@@ -202,24 +203,6 @@ function fallbackConvertArrayTimeseries(
   }
 
   return result;
-}
-
-/**
- * Create a Dynatrace Notebooks URL that opens a DQL query in the Notebooks app.
- * @param environmentUrl - The base URL of the Dynatrace environment (e.g. "https://abc12345.apps.dynatrace.com")
- * @param query - The DQL query string to open in Notebooks
- * @returns The full URL to open the query in Dynatrace Notebooks
- */
-export function createNotebooksURL(environmentUrl: string, query: string): string {
-  const params = {
-    'visualizationSettings': { autoSelectVisualization: true },
-    'dt.query': query,
-    'hideInput': false,
-    'sourceApplication': 'dynatrace.notebooks',
-  };
-
-  const baseUrl = environmentUrl.replace(/\/$/, '');
-  return `${baseUrl}/ui/intent/dynatrace.notebooks/view-query#${encodeURIComponent(JSON.stringify(params))}`;
 }
 
 /**
