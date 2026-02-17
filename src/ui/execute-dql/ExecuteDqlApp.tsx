@@ -354,6 +354,13 @@ export function ExecuteDqlApp() {
       const textContent = result.content?.find(isTextContent);
       setState(processToolResultText(textContent?.text));
     };
+
+    return () => {
+      app.ontoolinput = undefined;
+      app.ontoolresult = undefined;
+      app.close();
+      appRef.current = null;
+    };
   }, []);
 
   const handleRefresh = useCallback(async () => {
