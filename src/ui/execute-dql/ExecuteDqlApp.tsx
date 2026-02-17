@@ -480,7 +480,7 @@ export function ExecuteDqlApp() {
           )}
           {metadata.budgetInfo && <MetadataIcon icon={<MoneyIcon />} tooltip={`Budget: ${metadata.budgetInfo}`} />}
           {metadata.warnings.map((warning, i) => (
-            <MetadataIcon key={i} icon={<WarningIcon />} tooltip={warning} warning />
+            <MetadataIcon key={`${warning}-${i}`} icon={<WarningIcon />} tooltip={warning} warning />
           ))}
         </Flex>
         <Text textStyle='small' style={{ opacity: 0.5 }}>
