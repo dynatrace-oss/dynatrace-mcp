@@ -41,7 +41,8 @@ The following dependencies are allowed:
 - Core MCP SDK (`@modelcontextprotocol/sdk`),
 - ZOD schema validation (`zod-to-json-schema`),
 - the Dynatrace app framework (`dt-app`),
-- and `@dynatrace-sdk` packages.
+- `vite` / `vite-plugin-singlefile` and `react` for the UI part of the project,
+- and `@dynatrace` aswell as `@dynatrace-sdk` packages.
 
 Please do not install any other dependencies.
 
