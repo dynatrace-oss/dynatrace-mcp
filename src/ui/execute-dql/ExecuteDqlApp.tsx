@@ -283,8 +283,6 @@ function MetadataIcon({ icon, tooltip, warning }: { icon: React.ReactNode; toolt
  */
 export function createNotebooksURL(environmentUrl: string, query: string): string {
   const params = {
-    //visualization: 'table',
-    //visualizationSettings: { autoSelectVisualization: false },
     'visualizationSettings': { autoSelectVisualization: true },
     'dt.query': query,
     'hideInput': false,
