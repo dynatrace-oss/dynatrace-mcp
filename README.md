@@ -43,7 +43,25 @@ Furthermore, you need to configure the URL to a Dynatrace environment:
 
 - `DT_ENVIRONMENT` (string, e.g., `https://abc12345.apps.dynatrace.com`) - URL to your Dynatrace Platform (do not use Dynatrace classic URLs like `abc12345.live.dynatrace.com`)
 
+Authentication will be handled via Authorization Code Flow in your browser, you don't need to define a Platform Token nor an OAuth Client to get started.
+
 Once you are done, we recommend looking into [example prompts](#-example-prompts-), like `Get all details of the entity 'my-service'` or `Show me error logs`. Please mind that these prompts lead to executing DQL statements which may incur [costs](#costs) in accordance to your licence.
+
+**VSCode**
+
+```json
+{
+  "servers": {
+    "npx-dynatrace-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
+      "env": {
+        "DT_ENVIRONMENT": "https://abc12345.apps.dynatrace.com"
+      }
+    }
+  }
+}
+```
 
 ## Architecture
 
@@ -129,25 +147,9 @@ We recommend to always set it up for your current workspace instead of using it 
   "servers": {
     "npx-dynatrace-mcp-server": {
       "command": "npx",
-      "cwd": "${workspaceFolder}",
-      "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
-      "envFile": "${workspaceFolder}/.env"
-    }
-  }
-}
-```
-
-Please note: In this config, [the `${workspaceFolder}` variable](https://code.visualstudio.com/docs/reference/variables-reference#_predefined-variables) is used.
-This only works if the config is stored in the current workspaces, e.g., `<your-repo>/.vscode/mcp.json`. Alternatively, this can also be stored in user-settings, and you can define `env` as follows:
-
-```json
-{
-  "servers": {
-    "npx-dynatrace-mcp-server": {
-      "command": "npx",
       "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
-        "DT_ENVIRONMENT": ""
+        "DT_ENVIRONMENT": "https://abc12345.apps.dynatrace.com"
       }
     }
   }
@@ -163,7 +165,7 @@ This only works if the config is stored in the current workspaces, e.g., `<your-
       "command": "npx",
       "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
-        "DT_ENVIRONMENT": ""
+        "DT_ENVIRONMENT": "https://abc12345.apps.dynatrace.com"
       }
     }
   }
@@ -181,7 +183,7 @@ The [Amazon Q Developer CLI](https://docs.aws.amazon.com/amazonq/latest/qdevelop
       "command": "npx",
       "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
-        "DT_ENVIRONMENT": ""
+        "DT_ENVIRONMENT": "https://abc12345.apps.dynatrace.com"
       }
     }
   }
@@ -201,7 +203,7 @@ The [Amazon Kiro](https://kiro.dev/) is an agentic IDE that helps you do your be
       "command": "npx",
       "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
-        "DT_ENVIRONMENT": ""
+        "DT_ENVIRONMENT": "https://abc12345.apps.dynatrace.com"
       }
     }
   }
@@ -238,7 +240,7 @@ Or manually in your `~/.gemini/settings.json` or `.gemini/settings.json`:
       "command": "npx",
       "args": ["@dynatrace-oss/dynatrace-mcp-server@latest"],
       "env": {
-        "DT_ENVIRONMENT": ""
+        "DT_ENVIRONMENT": "https://abc12345.apps.dynatrace.com"
       },
       "timeout": 30000,
       "trust": false
@@ -326,7 +328,7 @@ When just providing `DT_ENVIRONMENT`, the local MCP server will try to open a br
 
 For more information about the other authentication methods, please have a look at the documentation about
 [creating a Platform Token in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens), as well as
-[creating an OAuth Client in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/oauth-clients) for advanced scenarios.
+[creating an OAuth Client in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/oauth-clients) for advanced scenarios (service-users, backend-to-backend communciation).
 
 In addition, depending on the features you use, the following variables can be configured:
 
@@ -339,6 +341,7 @@ The MCP server honors system proxy settings for corporate environments:
 - `https_proxy` or `HTTPS_PROXY` (optional, string, e.g., `http://proxy.example.com:8080`) - Proxy server URL for HTTPS requests
 - `http_proxy` or `HTTP_PROXY` (optional, string, e.g., `http://proxy.example.com:8080`) - Proxy server URL for HTTP requests
 - `no_proxy` or `NO_PROXY` (optional, string, e.g., `localhost,127.0.0.1,.local`) - Comma-separated list of hostnames or domains that should bypass the proxy
+- `NODE_EXTRA_CA_CERTS` (optional, string, e.g., `C:\some-path\certificate.pem`) - When set, the well known "root" CAs (like VeriSign) will be extended with the extra certificates
 
 **Note:** The `no_proxy` environment variable is currently logged for informational purposes but not fully enforced by the underlying HTTP client. If you need to bypass the proxy for specific hosts, consider configuring your proxy server to handle these exclusions.
 
