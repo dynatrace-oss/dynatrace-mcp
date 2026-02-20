@@ -25,25 +25,25 @@
           "name": "DT_ENVIRONMENT"
         },
         {
-          "description": "Dynatrace Platform Token for authentication. Alternative to OAuth authentication.",
+          "description": "[OPTIONAL] Dynatrace Platform Token for authentication. Alternative to OAuth authentication.",
           "isRequired": false,
           "format": "string",
           "name": "DT_PLATFORM_TOKEN"
         },
         {
-          "description": "OAuth Client ID for advanced authentication scenarios. Use with OAUTH_CLIENT_SECRET.",
+          "description": "[OPTIONAL] OAuth Client ID for advanced authentication scenarios. Use with OAUTH_CLIENT_SECRET.",
           "isRequired": false,
           "format": "string",
           "name": "OAUTH_CLIENT_ID"
         },
         {
-          "description": "OAuth Client Secret for advanced authentication scenarios. Use with OAUTH_CLIENT_ID.",
+          "description": "[OPTIONAL] OAuth Client Secret for advanced authentication scenarios. Use with OAUTH_CLIENT_ID.",
           "isRequired": false,
           "format": "string",
           "name": "OAUTH_CLIENT_SECRET"
         },
         {
-          "description": "Budget limit in GB for Grail query bytes scanned per session. Default: 1000. Set to -1 to disable budget tracking.",
+          "description": "[OPTIONAL] Budget limit in GB for Grail query bytes scanned per session. Default: 1000. Set to -1 to disable budget tracking.",
           "isRequired": false,
           "format": "number",
           "name": "DT_GRAIL_QUERY_BUDGET_GB"
