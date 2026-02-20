@@ -328,7 +328,7 @@ When just providing `DT_ENVIRONMENT`, the local MCP server will try to open a br
 
 For more information about the other authentication methods, please have a look at the documentation about
 [creating a Platform Token in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens), as well as
-[creating an OAuth Client in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/oauth-clients) for advanced scenarios (service-users, backend-to-backend communciation).
+[creating an OAuth Client in Dynatrace](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/oauth-clients) for advanced scenarios (service-users, backend-to-backend communication).
 
 In addition, depending on the features you use, the following variables can be configured:
 
