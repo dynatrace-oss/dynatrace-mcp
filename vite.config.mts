@@ -1,28 +1,27 @@
+import react from '@vitejs/plugin-react';
+import { existsSync, readdirSync } from 'node:fs';
+import path from 'node:path';
 import { defineConfig } from 'vite';
 import { viteSingleFile } from 'vite-plugin-singlefile';
-import react from '@vitejs/plugin-react';
-import path from 'node:path';
 
-const input = process.env.INPUT;
-if (!input) {
-  throw new Error(
-    'INPUT environment variable must be set to the HTML entry file (e.g. INPUT=src/ui/execute-dql/index.html)',
-  );
+const uiRoot = path.resolve(__dirname, 'src/ui');
+const buildInputs = readdirSync(uiRoot, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => path.resolve(uiRoot, entry.name, 'index.html'))
+  .filter((indexPath) => existsSync(indexPath));
+
+if (buildInputs.length === 0) {
+  throw new Error(`No UI entry files discovered. Expected at least one file like: ${uiRoot}/<app>/index.html`);
 }
 
-// Derive the app name from the parent directory of the HTML entry file.
-// e.g. src/ui/execute-dql/index.html -> "execute-dql"
-const inputPath = path.resolve(__dirname, input);
-const appName = path.basename(path.dirname(inputPath));
-
 export default defineConfig(({ command }) => ({
-  root: path.dirname(inputPath),
+  root: uiRoot,
   plugins: [react(), ...(command === 'build' ? [viteSingleFile()] : [])],
   build: {
-    outDir: path.resolve(__dirname, 'dist/ui', appName),
+    outDir: path.resolve(__dirname, 'dist/ui'),
     emptyOutDir: true,
     rollupOptions: {
-      input: inputPath,
+      input: buildInputs,
     },
   },
   server: {

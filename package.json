@@ -1,6 +1,6 @@
 {
   "name": "@dynatrace-oss/dynatrace-mcp-server",
-  "version": "1.5.0-beta.1",
+  "version": "1.5.0-beta.2",
   "mcpName": "io.github.dynatrace-oss/Dynatrace-mcp",
   "description": "Model Context Protocol (MCP) server for Dynatrace",
   "keywords": [
@@ -37,7 +37,7 @@
   "scripts": {
     "build": "npm run build:ui && npm run build:server",
     "build:server": "tsc --build",
-    "build:ui": "INPUT=src/ui/execute-dql/index.html vite build --config vite.config.mts",
+    "build:ui": "vite build --config vite.config.mts",
     "prepare": "husky",
     "watch": "tsc --watch",
     "test": "jest",
