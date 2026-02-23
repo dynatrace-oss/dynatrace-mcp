@@ -100,6 +100,9 @@ function buildColumns(columns: string[]): DataTableColumnDef<ResultRecord>[] {
   }));
 }
 
+/** Combined toggle value for our chart: 'table' | 'line' | 'area' */
+type CombinedChartVariantToggleValue = 'table' | ChartVariant;
+
 export interface ToolResultState {
   status: 'loading' | 'error' | 'success';
   errorMessage?: string;
@@ -277,9 +280,7 @@ export function ExecuteDqlApp() {
     analysisTimeframe: undefined,
     environmentUrl: undefined,
   });
-  /** Combined toggle value: 'table' | 'line' | 'area' */
-  type ToggleValue = 'table' | ChartVariant;
-  const [toggleValue, setToggleValue] = useState<ToggleValue>('table');
+  const [toggleValue, setToggleValue] = useState<CombinedChartVariantToggleValue>('table');
 
   const viewMode: ViewMode = toggleValue === 'table' ? 'table' : 'chart';
   const chartVariant: ChartVariant = toggleValue === 'area' ? 'area' : 'line';
@@ -443,7 +444,10 @@ export function ExecuteDqlApp() {
           style={{ marginLeft: 'auto' }}
           className='execute-dql-toolbar-actions'
         >
-          <ToggleButtonGroup value={toggleValue} onChange={(val) => setToggleValue(val as ToggleValue)}>
+          <ToggleButtonGroup
+            value={toggleValue}
+            onChange={(val) => setToggleValue(val as CombinedChartVariantToggleValue)}
+          >
             <Tooltip text='Table'>
               <ToggleButtonGroup.Item value='table' aria-label='Switch to table view'>
                 <DataTableIcon />
