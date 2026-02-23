@@ -1,5 +1,11 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## Unreleased Changes
+
+## 1.5.0-beta.3
+
+- Updated dependencies including `@dynatrace-sdk/client-classic-environment-v2`
+
 ## 1.5.0-beta.2
 
 - Small incremental improvements to the MCP App for `execute_dql`
@@ -7,6 +13,7 @@
 ## 1.5.0-beta.1
 
 - Added UI (MCP App) for `execute_dql` to render an interactive `TimeseriesChart` as well as `AreaChart` for chart-worthy results (timeseries/metric data with timeframe and numeric fields). For plain tabular results (logs, entities, etc.) the app auto-hides, keeping the UI clean.
+- Fixed DT_ENVIRONMENT setting in gemini-extension
 
 ## 1.4.0
 
