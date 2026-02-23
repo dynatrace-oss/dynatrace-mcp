@@ -42,7 +42,7 @@ The following dependencies are allowed:
 - ZOD schema validation (`zod-to-json-schema`),
 - the Dynatrace app framework (`dt-app`),
 - `vite` / `vite-plugin-singlefile` and `react` for the UI part of the project,
-- and `@dynatrace` aswell as `@dynatrace-sdk` packages.
+- and `@dynatrace` as well as `@dynatrace-sdk` packages.
 
 Please do not install any other dependencies.
 
