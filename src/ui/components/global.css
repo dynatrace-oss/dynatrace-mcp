@@ -12,3 +12,38 @@ body,
   padding: 0 !important;
   margin: 0 !important;
 }
+
+.execute-dql-toolbar {
+  flex-wrap: wrap;
+}
+
+.execute-dql-record-count,
+.execute-dql-metadata-text {
+  overflow-wrap: anywhere;
+}
+
+.execute-dql-toolbar-actions {
+  flex-wrap: wrap;
+}
+
+.execute-dql-primary-actions {
+  margin-left: auto;
+}
+
+@media (max-width: 760px) {
+  .execute-dql-toolbar-actions {
+    margin-left: 0 !important;
+    width: 100%;
+  }
+
+  .execute-dql-primary-actions {
+    margin-left: auto;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 620px) {
+  .execute-dql-open-button-label {
+    display: none;
+  }
+}

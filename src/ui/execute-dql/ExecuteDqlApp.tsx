@@ -7,6 +7,7 @@ import { Text, Code } from '@dynatrace/strato-components/typography';
 import { DataTable, type DataTableColumnDef } from '@dynatrace/strato-components-preview/tables';
 import { TimeseriesChart, convertToTimeseries, type Timeseries } from '@dynatrace/strato-components-preview/charts';
 import { ToggleButtonGroup } from '@dynatrace/strato-components-preview/forms';
+import { Tooltip } from '@dynatrace/strato-components-preview/overlays';
 import {
   DataTableIcon,
   DocumentStackIcon,
@@ -411,52 +412,79 @@ export function ExecuteDqlApp() {
   const { metadata } = state;
 
   return (
-    <Flex flexDirection='column' gap={4}>
+    <Flex flexDirection='column' gap={4} className='execute-dql-app'>
       {/* Compact metadata toolbar */}
-      <Flex flexDirection='row' gap={12} alignItems='center' padding={4} style={{ paddingLeft: 8 }}>
-        <Text textStyle='small'>
+      <Flex
+        flexDirection='row'
+        gap={12}
+        alignItems='center'
+        padding={4}
+        style={{ paddingLeft: 8 }}
+        className='execute-dql-toolbar'
+      >
+        <Text textStyle='small' className='execute-dql-record-count'>
           {state.records.length} {state.records.length === 1 ? 'record' : 'records'}
         </Text>
         {metadataText && (
-          <Text textStyle='small' style={{ opacity: RECORD_COUNT_TEXT_OPACITY }}>
+          <Text textStyle='small' style={{ opacity: RECORD_COUNT_TEXT_OPACITY }} className='execute-dql-metadata-text'>
             {metadataText}
           </Text>
         )}
         {metadata.warnings.length > 0 && (
-          <Flex flexDirection='row' gap={8} alignItems='center'>
+          <Flex flexDirection='row' gap={8} alignItems='center' className='execute-dql-warnings'>
             {metadata.warnings.map((warning, i) => (
               <MetadataIcon key={`${warning}-${i}`} icon={<WarningIcon />} tooltip={warning} warning />
             ))}
           </Flex>
         )}
-        <Flex flexDirection='row' gap={4} alignItems='center' style={{ marginLeft: 'auto' }}>
+        <Flex
+          flexDirection='row'
+          gap={4}
+          alignItems='center'
+          style={{ marginLeft: 'auto' }}
+          className='execute-dql-toolbar-actions'
+        >
           <ToggleButtonGroup value={toggleValue} onChange={(val) => setToggleValue(val as ToggleValue)}>
-            <ToggleButtonGroup.Item value='table' aria-label='Switch to table view'>
-              <DataTableIcon />
-            </ToggleButtonGroup.Item>
-            <ToggleButtonGroup.Item value='line' disabled={!canChart} aria-label='Switch to line chart view'>
-              <LineChartIcon />
-            </ToggleButtonGroup.Item>
-            <ToggleButtonGroup.Item value='area' disabled={!canChart} aria-label='Switch to area chart view'>
-              <StackedAreaChartIcon />
-            </ToggleButtonGroup.Item>
+            <Tooltip text='Table'>
+              <ToggleButtonGroup.Item value='table' aria-label='Switch to table view'>
+                <DataTableIcon />
+              </ToggleButtonGroup.Item>
+            </Tooltip>
+            <Tooltip text='Line'>
+              <ToggleButtonGroup.Item value='line' disabled={!canChart} aria-label='Switch to line chart view'>
+                <LineChartIcon />
+              </ToggleButtonGroup.Item>
+            </Tooltip>
+            <Tooltip text='Area'>
+              <ToggleButtonGroup.Item value='area' disabled={!canChart} aria-label='Switch to area chart view'>
+                <StackedAreaChartIcon />
+              </ToggleButtonGroup.Item>
+            </Tooltip>
           </ToggleButtonGroup>
-          <Button
-            variant='default'
-            size='condensed'
-            onClick={handleOpenInNotebooks}
-            aria-label='Open query in Dynatrace Notebooks'
-          >
-            <Button.Prefix>
-              <DocumentStackIcon />
-            </Button.Prefix>
-            Open in Notebooks
-          </Button>
-          <Button variant='default' size='condensed' onClick={handleRefresh} aria-label='Refresh query results'>
-            <Button.Prefix>
-              <RefreshIcon />
-            </Button.Prefix>
-          </Button>
+
+          <Flex flexDirection='row' gap={4} alignItems='center' className='execute-dql-primary-actions'>
+            <Tooltip text='Open in Notebooks'>
+              <Button
+                variant='default'
+                size='condensed'
+                onClick={handleOpenInNotebooks}
+                aria-label='Open query in Dynatrace Notebooks'
+                className='execute-dql-open-button'
+              >
+                <Button.Prefix>
+                  <DocumentStackIcon />
+                </Button.Prefix>
+                <span className='execute-dql-open-button-label'>Open in Notebooks</span>
+              </Button>
+            </Tooltip>
+            <Tooltip text='Refresh'>
+              <Button variant='default' size='condensed' onClick={handleRefresh} aria-label='Refresh query results'>
+                <Button.Prefix>
+                  <RefreshIcon />
+                </Button.Prefix>
+              </Button>
+            </Tooltip>
+          </Flex>
         </Flex>
       </Flex>
 
