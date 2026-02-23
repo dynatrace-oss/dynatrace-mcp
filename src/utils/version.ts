@@ -2,7 +2,7 @@ import { version as packageVersion } from '../../package.json';
 
 /**
  * Gets the current version of the Dynatrace MCP Server from package.json
- * Note: we have package.json listed in exports, such that we can ensure it's always part of the bundle
+ * Note: package.json is listed in exports to allow external access via require('pkg/package.json')
  * @returns The version string from package.json
  */
 export function getPackageJsonVersion(): string {

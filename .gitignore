@@ -16,3 +16,4 @@ tsconfig.tsbuildinfo
 
 # Jest coverage output
 coverage/
+*.tgz

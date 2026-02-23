@@ -2,6 +2,9 @@
 
 ## Unreleased Changes
 
+- Fixed broken `exports` field in `package.json` that pointed to non-existent files (`./index.js`, `./index.d.ts`), causing `sh: 1: mcp-server-dynatrace: not found` when running via `npx`
+- Fixed `bin` entry path to use normalized form (`dist/index.js`) to prevent npm publish warnings
+
 ## 1.5.0-beta.3
 
 - Updated dependencies including `@dynatrace-sdk/client-classic-environment-v2`
