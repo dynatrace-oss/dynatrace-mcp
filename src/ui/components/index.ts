@@ -4,4 +4,4 @@ export { ErrorState } from './ErrorState';
 export { MetadataIcon } from './MetadataIcon';
 
 export type ChartVariant = 'line' | 'area';
-export type ViewMode = 'table' | 'chart';
+export type ViewMode = 'table' | 'chart' | 'relationships';

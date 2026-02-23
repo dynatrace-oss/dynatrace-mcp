@@ -84,6 +84,8 @@ Once you are done, we recommend looking into [example prompts](#-example-prompts
 - List and get [problem](https://www.dynatrace.com/hub/detail/problems/) details from your services (for example Kubernetes)
 - List and get security problems / [vulnerability](https://www.dynatrace.com/hub/detail/vulnerabilities/) details
 - Execute DQL (Dynatrace Query Language) and retrieve logs, events, spans and metrics
+- Render Smartscape relationships from `smartscapeNodes` and `smartscapeEdges` results in the `execute_dql` MCP App
+- Investigate entity relationships via a dedicated Smartscape MCP App using `investigate_smartscape_relationships`
 - Send Slack messages (via Slack Connector)
 - Set up notification Workflow (via Dynatrace [AutomationEngine](https://docs.dynatrace.com/docs/discover-dynatrace/platform/automationengine))
 - Get more information about a monitored entity

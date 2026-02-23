@@ -37,7 +37,7 @@
   "scripts": {
     "build": "npm run build:ui && npm run build:server",
     "build:server": "tsc --build",
-    "build:ui": "INPUT=src/ui/execute-dql/index.html vite build --config vite.config.mts",
+    "build:ui": "INPUT=src/ui/execute-dql/index.html vite build --config vite.config.mts && INPUT=src/ui/smartscape-relationships/index.html vite build --config vite.config.mts",
     "prepare": "husky",
     "watch": "tsc --watch",
     "test": "jest",

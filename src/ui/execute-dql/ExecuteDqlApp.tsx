@@ -55,6 +55,23 @@ interface ExecuteDqlMeta {
   recordLimitReached?: boolean;
 }
 
+interface SmartscapeNode {
+  id: string;
+  name: string;
+  type?: string;
+}
+
+interface SmartscapeEdge {
+  sourceId: string;
+  targetId: string;
+  relationship: string;
+}
+
+interface SmartscapeGraphData {
+  nodes: SmartscapeNode[];
+  edges: SmartscapeEdge[];
+}
+
 /** Type guard for text content in tool results */
 function isTextContent(content: unknown): content is { type: 'text'; text: string } {
   return (
@@ -98,6 +115,67 @@ function buildColumns(columns: string[]): DataTableColumnDef<Record<string, unkn
       return <Text textStyle='small'>{String(value)}</Text>;
     },
   }));
+}
+
+function getStringValue(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function extractSmartscapeGraph(records: Record<string, unknown>[]): SmartscapeGraphData {
+  const nodes = new Map<string, SmartscapeNode>();
+  const edges: SmartscapeEdge[] = [];
+
+  for (const record of records) {
+    const sourceId = getStringValue(record.source_id) ?? getStringValue(record.sourceId);
+    const targetId = getStringValue(record.target_id) ?? getStringValue(record.targetId);
+
+    if (sourceId && targetId) {
+      const relationship =
+        getStringValue(record.relationship) ??
+        getStringValue(record.edge_type) ??
+        getStringValue(record.type) ??
+        'related_to';
+
+      edges.push({ sourceId, targetId, relationship });
+      continue;
+    }
+
+    const nodeId = getStringValue(record.id) ?? getStringValue(record.node_id) ?? getStringValue(record.entityId);
+    const nodeName =
+      getStringValue(record.name) ??
+      getStringValue(record.display_name) ??
+      getStringValue(record.entity_name) ??
+      getStringValue(record.title);
+    const nodeType = getStringValue(record.entity_type) ?? getStringValue(record.type);
+
+    if (!nodeId || (!nodeName && !nodeType)) {
+      continue;
+    }
+
+    nodes.set(nodeId, {
+      id: nodeId,
+      name: nodeName ?? nodeId,
+      type: nodeType,
+    });
+  }
+
+  for (const edge of edges) {
+    if (!nodes.has(edge.sourceId)) {
+      nodes.set(edge.sourceId, { id: edge.sourceId, name: edge.sourceId });
+    }
+    if (!nodes.has(edge.targetId)) {
+      nodes.set(edge.targetId, { id: edge.targetId, name: edge.targetId });
+    }
+  }
+
+  return {
+    nodes: Array.from(nodes.values()).sort((a, b) => a.name.localeCompare(b.name)),
+    edges,
+  };
 }
 
 export interface ToolResultState {
@@ -278,11 +356,12 @@ export function ExecuteDqlApp() {
     analysisTimeframe: undefined,
     environmentUrl: undefined,
   });
-  /** Combined toggle value: 'table' | 'line' | 'area' */
-  type ToggleValue = 'table' | ChartVariant;
+  /** Combined toggle value: 'table' | 'line' | 'area' | 'relationships' */
+  type ToggleValue = 'table' | ChartVariant | 'relationships';
   const [toggleValue, setToggleValue] = useState<ToggleValue>('table');
 
-  const viewMode: ViewMode = toggleValue === 'table' ? 'table' : 'chart';
+  const viewMode: ViewMode =
+    toggleValue === 'table' ? 'table' : toggleValue === 'relationships' ? 'relationships' : 'chart';
   const chartVariant: ChartVariant = toggleValue === 'area' ? 'area' : 'line';
 
   const appRef = useRef<App | null>(null);
@@ -329,7 +408,9 @@ export function ExecuteDqlApp() {
       // call execute_dql tool and refresh the result
       const result = await appRef.current.callServerTool({
         name: 'execute_dql',
-        arguments: toolArguments,
+        arguments: {
+          dql: 'fetch logs',
+        },
       });
 
       const textContent = result.content?.find(isTextContent);
@@ -371,6 +452,71 @@ export function ExecuteDqlApp() {
     [state.records, state.fieldTypes, state.analysisTimeframe],
   );
   const canChart = timeseriesData.length > 0;
+  const smartscapeGraph = useMemo(() => extractSmartscapeGraph(state.records), [state.records]);
+  const canRenderRelationships = smartscapeGraph.edges.length > 0;
+
+  const relationshipRows = useMemo(
+    () =>
+      smartscapeGraph.edges.map((edge, index) => ({
+        id: `${edge.sourceId}-${edge.targetId}-${edge.relationship}-${index}`,
+        source: smartscapeGraph.nodes.find((node) => node.id === edge.sourceId)?.name ?? edge.sourceId,
+        relationship: edge.relationship,
+        target: smartscapeGraph.nodes.find((node) => node.id === edge.targetId)?.name ?? edge.targetId,
+      })),
+    [smartscapeGraph.edges, smartscapeGraph.nodes],
+  );
+
+  const relationshipColumns = useMemo<DataTableColumnDef<(typeof relationshipRows)[number]>[]>(
+    () => [
+      {
+        id: 'source',
+        header: 'Source',
+        accessor: (row) => row.source,
+      },
+      {
+        id: 'relationship',
+        header: 'Relationship',
+        accessor: (row) => row.relationship,
+      },
+      {
+        id: 'target',
+        header: 'Target',
+        accessor: (row) => row.target,
+      },
+    ],
+    [relationshipRows],
+  );
+
+  const entityRows = useMemo(
+    () =>
+      smartscapeGraph.nodes.map((node) => ({
+        id: node.id,
+        name: node.name,
+        type: node.type ?? 'Unknown',
+      })),
+    [smartscapeGraph.nodes],
+  );
+
+  const entityColumns = useMemo<DataTableColumnDef<(typeof entityRows)[number]>[]>(
+    () => [
+      {
+        id: 'name',
+        header: 'Entity',
+        accessor: (row) => row.name,
+      },
+      {
+        id: 'type',
+        header: 'Type',
+        accessor: (row) => row.type,
+      },
+      {
+        id: 'id',
+        header: 'ID',
+        accessor: (row) => row.id,
+      },
+    ],
+    [entityRows],
+  );
 
   const metadataText = useMemo(() => {
     const parts: string[] = [];
@@ -397,9 +543,13 @@ export function ExecuteDqlApp() {
       return;
     }
 
-    setToggleValue(canChart ? 'line' : 'table');
+    if (canRenderRelationships) {
+      setToggleValue('relationships');
+    } else {
+      setToggleValue(canChart ? 'line' : 'table');
+    }
     hasInitializedViewModeRef.current = true;
-  }, [canChart, state.status]);
+  }, [canChart, canRenderRelationships, state.status]);
 
   if (state.status === 'loading') {
     return <LoadingState message='Loading query results...' />;
@@ -448,6 +598,15 @@ export function ExecuteDqlApp() {
             <Tooltip text='Table'>
               <ToggleButtonGroup.Item value='table' aria-label='Switch to table view'>
                 <DataTableIcon />
+              </ToggleButtonGroup.Item>
+            </Tooltip>
+            <Tooltip text='Relationships'>
+              <ToggleButtonGroup.Item
+                value='relationships'
+                disabled={!canRenderRelationships}
+                aria-label='Switch to relationships view'
+              >
+                Rel
               </ToggleButtonGroup.Item>
             </Tooltip>
             <Tooltip text='Line'>
@@ -499,6 +658,26 @@ export function ExecuteDqlApp() {
         <DataTable data={tableData} columns={tableColumns} sortable resizable fullWidth>
           <DataTable.Pagination defaultPageSize={DEFAULT_PAGE_SIZE} />
         </DataTable>
+      ) : viewMode === 'relationships' ? (
+        <Flex flexDirection='column' gap={12}>
+          <Text textStyle='small'>
+            {smartscapeGraph.nodes.length} entities and {smartscapeGraph.edges.length} relationships detected.
+          </Text>
+
+          <Flex flexDirection='column' gap={4}>
+            <Text textStyle='base-emphasized'>Relationships</Text>
+            <DataTable data={relationshipRows} columns={relationshipColumns} sortable resizable fullWidth>
+              <DataTable.Pagination defaultPageSize={DEFAULT_PAGE_SIZE} />
+            </DataTable>
+          </Flex>
+
+          <Flex flexDirection='column' gap={4}>
+            <Text textStyle='base-emphasized'>Entities</Text>
+            <DataTable data={entityRows} columns={entityColumns} sortable resizable fullWidth>
+              <DataTable.Pagination defaultPageSize={DEFAULT_PAGE_SIZE} />
+            </DataTable>
+          </Flex>
+        </Flex>
       ) : (
         <TimeseriesChart data={timeseriesData} variant={chartVariant}>
           <TimeseriesChart.Legend />

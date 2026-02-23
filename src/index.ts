@@ -690,6 +690,7 @@ const main = async () => {
   // MCP App: Define the resource URI for the execute_dql interactive UI
   // The ui:// scheme tells hosts this is an MCP App resource.
   const executeDqlResourceUri = 'ui://execute-dql/execute-dql.html';
+  const smartscapeRelationshipsResourceUri = 'ui://smartscape-relationships/smartscape-relationships.html';
 
   // Register the execute_dql tool with MCP App UI support.
   registerAppTool(
@@ -854,6 +855,204 @@ const main = async () => {
     const html = readFileSync(join(__dirname, 'ui', 'execute-dql', 'index.html'), 'utf-8');
     return {
       contents: [{ uri: executeDqlResourceUri, mimeType: RESOURCE_MIME_TYPE, text: html }],
+    };
+  });
+
+  registerAppTool(
+    server,
+    'investigate_smartscape_relationships',
+    {
+      title: 'Investigate Smartscape Relationships',
+      description:
+        'Investigate inbound and outbound relationships for a monitored entity using Smartscape topology data. This tool queries `smartscapeEdges` and enriches with `smartscapeNodes` for a relationship-focused MCP App.',
+      inputSchema: {
+        entityId: z
+          .string()
+          .optional()
+          .describe('Dynatrace entity ID (for example SERVICE-1234). Preferred when known.'),
+        entityName: z
+          .string()
+          .optional()
+          .describe('Entity name to resolve via Smartscape if entityId is not provided.'),
+        relationshipLimit: z
+          .number()
+          .optional()
+          .default(200)
+          .describe('Maximum number of relationships (edges) to query (default: 200).'),
+      },
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: false,
+      },
+      _meta: {
+        ui: { resourceUri: smartscapeRelationshipsResourceUri },
+      },
+    },
+    wrapToolCallback(
+      'investigate_smartscape_relationships',
+      async ({ entityId, entityName, relationshipLimit = 200 }) => {
+        if (!entityId && !entityName) {
+          return 'Please provide either `entityId` or `entityName`.';
+        }
+
+        const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('storage:smartscape:read'));
+
+        const escapeDqlString = (value: string) => value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        const asString = (value: unknown): string | undefined => {
+          if (typeof value !== 'string') {
+            return undefined;
+          }
+          const trimmed = value.trim();
+          return trimmed.length > 0 ? trimmed : undefined;
+        };
+
+        let resolvedEntityId = entityId as string | undefined;
+        let resolvedEntityName = entityName as string | undefined;
+
+        if (!resolvedEntityId && entityName) {
+          const foundEntity = await findMonitoredEntityViaSmartscapeByName(dtClient, [entityName]);
+          const first = foundEntity?.records?.[0] as Record<string, unknown> | undefined;
+
+          resolvedEntityId = asString(first?.id);
+          resolvedEntityName = asString(first?.name) || entityName;
+
+          if (!resolvedEntityId) {
+            return `No entity found in Smartscape for name: "${entityName}".`;
+          }
+        }
+
+        const escapedEntityId = escapeDqlString(resolvedEntityId!);
+        const safeRelationshipLimit = Math.max(1, Math.min(relationshipLimit, 1000));
+
+        const edgesDql =
+          `smartscapeEdges "*" ` +
+          `| filter source_id == "${escapedEntityId}" or target_id == "${escapedEntityId}" ` +
+          `| fields source_id, target_id, type ` +
+          `| limit ${safeRelationshipLimit}`;
+
+        const edgeResult = await executeDql(
+          dtClient,
+          {
+            query: edgesDql,
+            maxResultRecords: safeRelationshipLimit,
+            maxResultBytes: 2 * 1024 * 1024,
+          },
+          grailBudgetGB,
+        );
+
+        if (!edgeResult || edgeResult.records.length === 0) {
+          return {
+            text: `No Smartscape relationships found for entity ${resolvedEntityId}.`,
+            _meta: {
+              centralEntityId: resolvedEntityId,
+              centralEntityName: resolvedEntityName,
+              edges: [],
+              nodes: [],
+              environmentUrl: dtEnvironment,
+              edgeQuery: edgesDql,
+            },
+          };
+        }
+
+        const edges = edgeResult.records
+          .map((record) => {
+            if (!record || typeof record !== 'object') {
+              return null;
+            }
+
+            const sourceId = asString((record as Record<string, unknown>).source_id);
+            const targetId = asString((record as Record<string, unknown>).target_id);
+            const relationship =
+              asString((record as Record<string, unknown>).relationship) ||
+              asString((record as Record<string, unknown>).edge_type) ||
+              asString((record as Record<string, unknown>).type) ||
+              'related_to';
+
+            if (!sourceId || !targetId) {
+              return null;
+            }
+
+            return {
+              sourceId,
+              targetId,
+              relationship,
+            };
+          })
+          .filter((edge): edge is { sourceId: string; targetId: string; relationship: string } => edge !== null);
+
+        const relatedIds = new Set<string>([resolvedEntityId!]);
+        for (const edge of edges) {
+          relatedIds.add(edge.sourceId);
+          relatedIds.add(edge.targetId);
+        }
+
+        const limitedNodeIds = Array.from(relatedIds).slice(0, 1000);
+        const nodeFilter = limitedNodeIds.map((id) => `id == "${escapeDqlString(id)}"`).join(' or ');
+        const nodesDql = `smartscapeNodes "*" | filter ${nodeFilter} | fields id, name, type`;
+
+        const nodeResult = await executeDql(
+          dtClient,
+          {
+            query: nodesDql,
+            maxResultRecords: 1000,
+            maxResultBytes: 2 * 1024 * 1024,
+          },
+          grailBudgetGB,
+        );
+
+        const nodes = (nodeResult?.records || [])
+          .map((record) => {
+            if (!record || typeof record !== 'object') {
+              return null;
+            }
+
+            const id = asString((record as Record<string, unknown>).id);
+            const name = asString((record as Record<string, unknown>).name);
+            const type = asString((record as Record<string, unknown>).type);
+            if (!id) {
+              return null;
+            }
+
+            return {
+              id,
+              name: name || id,
+              type,
+            };
+          })
+          .filter((node): node is { id: string; name: string; type: string | undefined } => node !== null);
+
+        const inbound = edges.filter((edge) => edge.targetId === resolvedEntityId).length;
+        const outbound = edges.filter((edge) => edge.sourceId === resolvedEntityId).length;
+
+        const text =
+          `🔗 Smartscape Relationship Analysis\n\n` +
+          `- Entity: ${resolvedEntityName || resolvedEntityId}\n` +
+          `- Entity ID: ${resolvedEntityId}\n` +
+          `- Relationships: ${edges.length} (${inbound} inbound, ${outbound} outbound)\n` +
+          `- Related entities: ${new Set(nodes.map((node) => node.id)).size}`;
+
+        return {
+          text,
+          _meta: {
+            centralEntityId: resolvedEntityId,
+            centralEntityName: resolvedEntityName,
+            edges,
+            nodes,
+            inbound,
+            outbound,
+            environmentUrl: dtEnvironment,
+            edgeQuery: edgesDql,
+            nodeQuery: nodesDql,
+          },
+        };
+      },
+    ),
+  );
+
+  registerAppResource(server, 'Smartscape Relationships Viewer', smartscapeRelationshipsResourceUri, {}, async () => {
+    const html = readFileSync(join(__dirname, 'ui', 'smartscape-relationships', 'index.html'), 'utf-8');
+    return {
+      contents: [{ uri: smartscapeRelationshipsResourceUri, mimeType: RESOURCE_MIME_TYPE, text: html }],
     };
   });
 
