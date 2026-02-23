@@ -698,7 +698,7 @@ const main = async () => {
     {
       title: 'Execute DQL',
       description:
-        'Get data like Logs, Metrics, Spans, Events, or Entity Data from Dynatrace GRAIL by executing a Dynatrace Query Language (DQL) statement. ' +
+        'Get data like Logs, Metrics, Spans, Events, or Entity Data from Dynatrace Grail by executing a Dynatrace Query Language (DQL) statement. ' +
         'Use the "generate_dql_from_natural_language" tool upfront to generate or refine a DQL statement based on your request. ' +
         'To learn about possible fields available for filtering, use the query "fetch dt.semantic_dictionary.models | filter data_object == \\"logs\\""',
       inputSchema: {

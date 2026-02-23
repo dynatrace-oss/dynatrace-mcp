@@ -363,7 +363,7 @@ export function ExecuteDqlApp() {
   }, [toolArguments, state.environmentUrl]);
 
   const tableColumns = useMemo(() => buildColumns(state.columns), [state.columns]);
-  const tableData = useMemo(() => state.records, [state.records]);
+  const tableData = state.records;
   const timeseriesData = useMemo(
     () => safeConvertToTimeseries(state.records, state.fieldTypes, state.analysisTimeframe),
     [state.records, state.fieldTypes, state.analysisTimeframe],
