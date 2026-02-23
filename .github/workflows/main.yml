@@ -33,3 +33,6 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Test npm pack
+        run: ./scripts/test-npm-pack.sh
