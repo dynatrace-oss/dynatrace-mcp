@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { App } from '@modelcontextprotocol/ext-apps';
-import type { RangedFieldTypes } from '@dynatrace-sdk/client-query';
+import type { RangedFieldTypes, ResultRecord } from '@dynatrace-sdk/client-query';
 import { Flex } from '@dynatrace/strato-components/layouts';
 import { Button } from '@dynatrace/strato-components/buttons';
 import { Text, Code } from '@dynatrace/strato-components/typography';
@@ -42,7 +42,7 @@ interface BudgetState {
 
 /** Metadata structure returned by execute_dql tool in _meta */
 interface ExecuteDqlMeta {
-  records?: Record<string, unknown>[];
+  records?: ResultRecord[];
   types?: RangedFieldTypes[];
   analysisTimeframe?: { start?: string; end?: string };
   scannedRecords?: number;
@@ -78,11 +78,11 @@ function isTextContent(content: unknown): content is { type: 'text'; text: strin
  * // - renders null values as italic "null" text
  * // - renders objects as formatted JSON strings
  */
-function buildColumns(columns: string[]): DataTableColumnDef<Record<string, unknown>>[] {
+function buildColumns(columns: string[]): DataTableColumnDef<ResultRecord>[] {
   return columns.map((col) => ({
     id: col,
     header: col,
-    accessor: (row: Record<string, unknown>) => row[col],
+    accessor: (row: ResultRecord) => row[col],
     width: 'auto' as const,
     cell: ({ value }: { value: unknown }) => {
       if (value === null || value === undefined) {
@@ -104,7 +104,7 @@ export interface ToolResultState {
   status: 'loading' | 'error' | 'success';
   errorMessage?: string;
   metadata: ParsedMetadata;
-  records: Record<string, unknown>[];
+  records: ResultRecord[];
   columns: string[];
   fieldTypes: RangedFieldTypes[];
   /** Analysis timeframe from query metadata, used for fallback chart rendering. */
@@ -122,13 +122,12 @@ export interface ToolResultState {
  * dimension where the user projected away the time columns).
  */
 function safeConvertToTimeseries(
-  records: Record<string, unknown>[],
+  records: ResultRecord[],
   fieldTypes: RangedFieldTypes[],
   analysisTimeframe?: { start?: string; end?: string },
 ): Timeseries[] {
   if (records.length === 0 || fieldTypes.length === 0) return [];
   try {
-    // @ts-expect-error - Record<string, unknown> is compatible with ResultRecord at runtime
     const result = convertToTimeseries(records, fieldTypes);
     if (result.length > 0) return result;
   } catch (error) {
@@ -147,7 +146,7 @@ function safeConvertToTimeseries(
  * analysisTimeframe from query metadata (or a default 2h range).
  */
 function fallbackConvertArrayTimeseries(
-  records: Record<string, unknown>[],
+  records: ResultRecord[],
   fieldTypes: RangedFieldTypes[],
   analysisTimeframe?: { start?: string; end?: string },
 ): Timeseries[] {
