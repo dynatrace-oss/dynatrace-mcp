@@ -700,7 +700,9 @@ const main = async () => {
       description:
         'Get data like Logs, Metrics, Spans, Events, or Entity Data from Dynatrace Grail by executing a Dynatrace Query Language (DQL) statement. ' +
         'Use the "generate_dql_from_natural_language" tool upfront to generate or refine a DQL statement based on your request. ' +
-        'To learn about possible fields available for filtering, use the query "fetch dt.semantic_dictionary.models | filter data_object == \\"logs\\""',
+        'To learn about possible fields available for filtering, use the query "fetch dt.semantic_dictionary.models | filter data_object == \\"logs\\"". ' +
+        'IMPORTANT: The MCP App UI will automatically render the query results as an interactive table and chart. ' +
+        'Do NOT generate Mermaid diagrams, ASCII charts, markdown tables, or any other visual representation of the data — the MCP App is solely responsible for rendering.',
       inputSchema: {
         dqlStatement: z
           .string()
@@ -826,8 +828,8 @@ const main = async () => {
         });
       }
 
-      result += `\n📋 **Query Results**: (${response.records?.length || 0} records):\n\n`;
-      result += `\`\`\`json\n${JSON.stringify(response.records, null, 2)}\n\`\`\``;
+      result += `\n📋 **Query Results**: (${response.records?.length || 0} records) — rendered by the MCP App UI below.\n`;
+      result += `\n> ℹ️ The MCP App is rendering the results interactively. Do NOT generate Mermaid diagrams, ASCII charts, or markdown tables from this data.`;
 
       // Return structured data in _meta for MCP App UI instead of embedding in text
       return {
