@@ -285,6 +285,7 @@ export function ExecuteDqlApp() {
   const chartVariant: ChartVariant = toggleValue === 'area' ? 'area' : 'line';
 
   const appRef = useRef<App | null>(null);
+  const hasInitializedViewModeRef = useRef(false);
   const [toolArguments, setToolArguments] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
@@ -388,14 +389,16 @@ export function ExecuteDqlApp() {
     return parts.length > 0 ? parts.join(', ') : '';
   }, [state.executedAt, state.metadata.scannedBytes, state.metadata.scannedRecords, state.metadata.sampled]);
 
-  // Auto-select chart view when timeseries data is available
+  // Auto-select view only once on first successful data load.
+  // After that, preserve the user's manual toggle choice across refreshes.
   useEffect(() => {
-    if (canChart) {
-      setToggleValue('line');
-    } else {
-      setToggleValue('table');
+    if (hasInitializedViewModeRef.current || state.status !== 'success') {
+      return;
     }
-  }, [canChart]);
+
+    setToggleValue(canChart ? 'line' : 'table');
+    hasInitializedViewModeRef.current = true;
+  }, [canChart, state.status]);
 
   if (state.status === 'loading') {
     return <LoadingState message='Loading query results...' />;
