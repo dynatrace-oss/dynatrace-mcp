@@ -12,7 +12,10 @@ TMP_DIR="$(mktemp -d)"
 ### INIT
 export DT_MCP_DISABLE_TELEMETRY=true
 
-### STEP 1: Create tarball
+### STEP 1: Build and create tarball
+echo "==> Building package in $REPO_ROOT"
+npm run build --prefix "$REPO_ROOT"
+
 echo "==> Packing package from $REPO_ROOT"
 PACK_OUTPUT=$(npm pack --pack-destination "$TMP_DIR" 2>&1)
 TARBALL="$TMP_DIR/$(echo "$PACK_OUTPUT" | tail -n 1)"
