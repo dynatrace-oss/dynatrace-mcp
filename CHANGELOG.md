@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Removed redundant question echo from `chat_with_davis_copilot` response to reduce token usage
+
 ## 1.5.0-beta.3
 
 - Updated dependencies including `@dynatrace-sdk/client-classic-environment-v2`
