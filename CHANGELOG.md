@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Fixed `execute_dql` tool to include query records in the text output, enabling LLMs to process the results directly
+
 ## 1.5.0-beta.3
 
 - Updated dependencies including `@dynatrace-sdk/client-classic-environment-v2`
