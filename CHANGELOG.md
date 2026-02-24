@@ -3,6 +3,7 @@
 ## Unreleased Changes
 
 - Removed redundant question echo from `chat_with_davis_copilot` response to reduce token usage
+- Fixed `execute_dql` tool to include query records in the text output, enabling LLMs to process the results directly
 
 ## 1.5.0-beta.3
 
