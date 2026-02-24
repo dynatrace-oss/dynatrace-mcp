@@ -828,7 +828,8 @@ const main = async () => {
         });
       }
 
-      result += `\n📋 **Query Results**: (${response.records?.length || 0} records)\n`;
+      result += `\n📋 **Query Results**: (${response.records?.length || 0} records) — rendered by the MCP App UI below.\n`;
+      result += `\n> ℹ️ The MCP App is rendering the results interactively. Do NOT generate Mermaid diagrams, ASCII charts, or markdown tables from this data.`;
       if (response.records && response.records.length > 0) {
         result += `\n\`\`\`json\n${JSON.stringify(response.records, null, 2)}\n\`\`\`\n`;
       }
