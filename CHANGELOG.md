@@ -2,21 +2,12 @@
 
 ## Unreleased Changes
 
-- Removed redundant question echo from `chat_with_davis_copilot` response to reduce token usage
-- Fixed `execute_dql` tool to include query records in the text output, enabling LLMs to process the results directly
+## 1.5.0
 
-## 1.5.0-beta.3
-
-- Updated dependencies including `@dynatrace-sdk/client-classic-environment-v2`
-
-## 1.5.0-beta.2
-
-- Small incremental improvements to the MCP App for `execute_dql`
-
-## 1.5.0-beta.1
-
-- Added UI (MCP App) for `execute_dql` to render an interactive `TimeseriesChart` as well as `AreaChart` for chart-worthy results (timeseries/metric data with timeframe and numeric fields). For plain tabular results (logs, entities, etc.) the app auto-hides, keeping the UI clean.
-- Fixed DT_ENVIRONMENT setting in gemini-extension
+- Introduced an interactive MCP App for `execute_dql` that renders a Chart (`TimeSeriesChart` and `AreaChart`) for timeseries and metric data, as well as tabular results (logs, entities, etc.)
+- Removed redundant question echo from `chat_with_davis_copilot` responses, reducing unnecessary token consumption
+- Fixed the `DT_ENVIRONMENT` setting in the Gemini extension configuration
+- Updated dependencies including `@dynatrace-sdk/client-classic-environment-v2` and `hono`
 
 ## 1.4.0
 
