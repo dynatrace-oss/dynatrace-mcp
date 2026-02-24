@@ -1,9 +1,8 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
-## Unreleased Changes
+## 1.5.0-beta.4
 
-- Fixed broken `exports` field in `package.json` that pointed to non-existent files (`./index.js`, `./index.d.ts`), causing `sh: 1: mcp-server-dynatrace: not found` when running via `npx`
-- Fixed `bin` entry path to use normalized form (`dist/index.js`) to prevent npm publish warnings
+- Fixed broken `exports` field in `package.json` that pointed to non-existent files (`./index.js`, `./index.d.ts`), causing `sh: 1: mcp-server-dynatrace: not found` when running via `npx` (introduced in 1.5.0-beta.3)
 
 ## 1.5.0-beta.3
 
