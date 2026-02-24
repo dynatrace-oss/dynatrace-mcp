@@ -1001,7 +1001,6 @@ const main = async () => {
       const response = await chatWithDavisCopilot(dtClient, text, conversationContext);
 
       let resp = `🤖 Davis CoPilot Response:\n\n`;
-      resp += `**Your Question:** "${text}"\n\n`;
       if (response.text) {
         // Typically, text is empty if status is FAILED
         resp += `**Answer:**\n${response.text}\n\n`;
