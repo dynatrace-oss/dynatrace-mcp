@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Fixed HTTP Mode not working (`Already connected to a transport`)
+
 ## 1.5.1
 
 - Fixed MCP App theme handling, such that the MCP host theme is applied correctly.
