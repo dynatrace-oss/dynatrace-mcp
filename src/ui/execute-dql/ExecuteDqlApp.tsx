@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { App } from '@modelcontextprotocol/ext-apps';
+import { useDocumentTheme } from '@modelcontextprotocol/ext-apps/react';
 import type { RangedFieldTypes, ResultRecord } from '@dynatrace-sdk/client-query';
 import { Flex } from '@dynatrace/strato-components/layouts';
 import { Button } from '@dynatrace/strato-components/buttons';
@@ -53,6 +54,12 @@ interface ExecuteDqlMeta {
   warnings?: string[];
   recordLimit?: number;
   recordLimitReached?: boolean;
+}
+
+type HostTheme = 'light' | 'dark';
+
+function isValidHostTheme(theme: unknown): theme is HostTheme {
+  return theme === 'light' || theme === 'dark';
 }
 
 /** Type guard for text content in tool results */
@@ -172,6 +179,11 @@ export function processToolResult(text: string | undefined, meta: ExecuteDqlMeta
 }
 
 export function ExecuteDqlApp() {
+  // MCP Host Theme Detection
+  const documentTheme = useDocumentTheme();
+  // local theme
+  const [hostTheme, setHostTheme] = useState<'light' | 'dark' | null>(null);
+
   const [state, setState] = useState<ToolResultState>({
     status: 'loading',
     metadata: { warnings: [] },
@@ -193,7 +205,6 @@ export function ExecuteDqlApp() {
   useEffect(() => {
     const app = new App({ name: 'DQL Results Viewer', version: '1.0.0' });
     appRef.current = app;
-    app.connect();
 
     app.ontoolinput = (params) => {
       setToolArguments(params.arguments ?? null);
@@ -205,9 +216,30 @@ export function ExecuteDqlApp() {
       setState(processToolResult(textContent?.text, meta));
     };
 
+    // Listen on Host Context Changes in order to update the current theme
+    app.onhostcontextchanged = (context) => {
+      if (isValidHostTheme(context.theme)) {
+        setHostTheme(context.theme);
+      }
+    };
+
+    void (async () => {
+      try {
+        await app.connect();
+
+        const initialHostTheme = app.getHostContext()?.theme;
+        if (isValidHostTheme(initialHostTheme)) {
+          setHostTheme(initialHostTheme);
+        }
+      } catch (error) {
+        console.warn('Failed to connect MCP app for host context', error);
+      }
+    })();
+
     return () => {
       app.ontoolinput = undefined;
       app.ontoolresult = undefined;
+      app.onhostcontextchanged = undefined;
       app.close();
       appRef.current = null;
     };
@@ -301,6 +333,20 @@ export function ExecuteDqlApp() {
     setToggleValue(canChart ? 'line' : 'table');
     hasInitializedViewModeRef.current = true;
   }, [canChart, state.status]);
+
+  // Keep Strato theme in sync with MCP host theme once available.
+  useEffect(() => {
+    if (!hostTheme) {
+      return;
+    }
+
+    document.documentElement.setAttribute('data-theme', hostTheme);
+
+    const appRootElement = document.querySelector('[data-dt-component="AppRoot"]');
+    if (appRootElement instanceof HTMLElement) {
+      appRootElement.setAttribute('data-theme', hostTheme);
+    }
+  }, [hostTheme]);
 
   if (state.status === 'loading') {
     return <LoadingState message='Loading query results...' />;

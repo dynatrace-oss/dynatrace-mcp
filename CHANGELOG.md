@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Fixed an issue with MCP Host theme not being properly used in the MCP App
+
 ## 1.5.0
 
 - Introduced an interactive MCP App for `execute_dql` that renders a Chart (`TimeSeriesChart` and `AreaChart`) for timeseries and metric data, as well as tabular results (logs, entities, etc.)
