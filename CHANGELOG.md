@@ -2,7 +2,9 @@
 
 ## Unreleased Changes
 
-- Fixed an issue with MCP Host theme not being properly used in the MCP App
+## 1.5.1
+
+- Fixed MCP App theme handling, such that the MCP host theme is applied correctly.
 
 ## 1.5.0
 
