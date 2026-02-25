@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { App } from '@modelcontextprotocol/ext-apps';
+import { useDocumentTheme } from '@modelcontextprotocol/ext-apps/react';
 import type { RangedFieldTypes, ResultRecord } from '@dynatrace-sdk/client-query';
 import { Flex } from '@dynatrace/strato-components/layouts';
 import { Button } from '@dynatrace/strato-components/buttons';
@@ -172,6 +173,11 @@ export function processToolResult(text: string | undefined, meta: ExecuteDqlMeta
 }
 
 export function ExecuteDqlApp() {
+  // MCP Host Theme Detection
+  const documentTheme = useDocumentTheme();
+  // local theme
+  const [hostTheme, setHostTheme] = useState<'light' | 'dark' | null>(null);
+
   const [state, setState] = useState<ToolResultState>({
     status: 'loading',
     metadata: { warnings: [] },
@@ -195,6 +201,12 @@ export function ExecuteDqlApp() {
     appRef.current = app;
     app.connect();
 
+    // get initial MCP host theme
+    const initialHostTheme = app.getHostContext()?.theme;
+    if (initialHostTheme === 'light' || initialHostTheme === 'dark') {
+      setHostTheme(initialHostTheme);
+    }
+
     app.ontoolinput = (params) => {
       setToolArguments(params.arguments ?? null);
     };
@@ -205,9 +217,17 @@ export function ExecuteDqlApp() {
       setState(processToolResult(textContent?.text, meta));
     };
 
+    // Listen on Host Context Changes in order to update the current theme
+    app.onhostcontextchanged = (context) => {
+      if (context.theme === 'light' || context.theme === 'dark') {
+        setHostTheme(context.theme);
+      }
+    };
+
     return () => {
       app.ontoolinput = undefined;
       app.ontoolresult = undefined;
+      app.onhostcontextchanged = undefined;
       app.close();
       appRef.current = null;
     };
@@ -301,6 +321,18 @@ export function ExecuteDqlApp() {
     setToggleValue(canChart ? 'line' : 'table');
     hasInitializedViewModeRef.current = true;
   }, [canChart, state.status]);
+
+  const currentHostTheme = hostTheme ?? documentTheme;
+
+  // handle theme changes
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', currentHostTheme);
+
+    const appRootElement = document.querySelector('[data-dt-component="AppRoot"]');
+    if (appRootElement instanceof HTMLElement) {
+      appRootElement.setAttribute('data-theme', currentHostTheme);
+    }
+  }, [currentHostTheme]);
 
   if (state.status === 'loading') {
     return <LoadingState message='Loading query results...' />;
