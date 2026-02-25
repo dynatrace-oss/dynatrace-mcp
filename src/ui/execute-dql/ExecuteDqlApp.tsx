@@ -56,6 +56,12 @@ interface ExecuteDqlMeta {
   recordLimitReached?: boolean;
 }
 
+type HostTheme = 'light' | 'dark';
+
+function isValidHostTheme(theme: unknown): theme is HostTheme {
+  return theme === 'light' || theme === 'dark';
+}
+
 /** Type guard for text content in tool results */
 function isTextContent(content: unknown): content is { type: 'text'; text: string } {
   return (
@@ -199,13 +205,6 @@ export function ExecuteDqlApp() {
   useEffect(() => {
     const app = new App({ name: 'DQL Results Viewer', version: '1.0.0' });
     appRef.current = app;
-    app.connect();
-
-    // get initial MCP host theme
-    const initialHostTheme = app.getHostContext()?.theme;
-    if (initialHostTheme === 'light' || initialHostTheme === 'dark') {
-      setHostTheme(initialHostTheme);
-    }
 
     app.ontoolinput = (params) => {
       setToolArguments(params.arguments ?? null);
@@ -219,10 +218,23 @@ export function ExecuteDqlApp() {
 
     // Listen on Host Context Changes in order to update the current theme
     app.onhostcontextchanged = (context) => {
-      if (context.theme === 'light' || context.theme === 'dark') {
+      if (isValidHostTheme(context.theme)) {
         setHostTheme(context.theme);
       }
     };
+
+    void (async () => {
+      try {
+        await app.connect();
+
+        const initialHostTheme = app.getHostContext()?.theme;
+        if (isValidHostTheme(initialHostTheme)) {
+          setHostTheme(initialHostTheme);
+        }
+      } catch (error) {
+        console.warn('Failed to connect MCP app for host context', error);
+      }
+    })();
 
     return () => {
       app.ontoolinput = undefined;
@@ -322,17 +334,19 @@ export function ExecuteDqlApp() {
     hasInitializedViewModeRef.current = true;
   }, [canChart, state.status]);
 
-  const currentHostTheme = hostTheme ?? documentTheme;
-
-  // handle theme changes
+  // Keep Strato theme in sync with MCP host theme once available.
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', currentHostTheme);
+    if (!hostTheme) {
+      return;
+    }
+
+    document.documentElement.setAttribute('data-theme', hostTheme);
 
     const appRootElement = document.querySelector('[data-dt-component="AppRoot"]');
     if (appRootElement instanceof HTMLElement) {
-      appRootElement.setAttribute('data-theme', currentHostTheme);
+      appRootElement.setAttribute('data-theme', hostTheme);
     }
-  }, [currentHostTheme]);
+  }, [hostTheme]);
 
   if (state.status === 'loading') {
     return <LoadingState message='Loading query results...' />;
