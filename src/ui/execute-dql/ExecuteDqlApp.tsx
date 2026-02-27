@@ -91,19 +91,6 @@ function buildColumns(columns: string[]): DataTableColumnDef<ResultRecord>[] {
     header: col,
     accessor: (row: ResultRecord) => row[col],
     width: 'auto' as const,
-    cell: ({ value }: { value: unknown }) => {
-      if (value === null || value === undefined) {
-        return (
-          <Text textStyle='small'>
-            <em>null</em>
-          </Text>
-        );
-      }
-      if (typeof value === 'object') {
-        return <Code>{JSON.stringify(value)}</Code>;
-      }
-      return <Text textStyle='small'>{String(value)}</Text>;
-    },
   }));
 }
 
