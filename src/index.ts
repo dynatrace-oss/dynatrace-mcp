@@ -240,7 +240,7 @@ const main = async () => {
       // Capture starttime for telemetry and rate limiting
       const startTime = Date.now();
 
-      // Rate Limit: Max. 5 requests per 20 seconds
+      // Rate Limit: Max. 10 requests per 10 seconds
       const rateLimitResult = getToolCallRateLimiter().check(startTime);
       if (rateLimitResult.exceeded) {
         return {

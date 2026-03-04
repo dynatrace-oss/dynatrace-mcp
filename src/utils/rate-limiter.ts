@@ -11,6 +11,8 @@ export type RateLimitResult =
       exceeded: true;
       /** Human-readable message when rate limit is exceeded */
       message: string;
+      /** Milliseconds until the next request slot becomes available */
+      retryAfterMs: number;
     };
 
 /**
@@ -44,9 +46,12 @@ export class RateLimiter {
     this.timestamps = this.timestamps.filter((ts) => ts > windowStart);
 
     if (this.timestamps.length >= this.maxRequests) {
+      const retryAfterMs = this.timestamps[0] + this.windowMs - currentTimestamp;
+      const retryAfterSeconds = Math.ceil(retryAfterMs / 1000);
       return {
         exceeded: true,
-        message: `Rate limit exceeded: Maximum ${this.maxRequests} tool calls per ${this.windowMs / 1000} seconds. Please try again later.`,
+        message: `Rate limit exceeded: Maximum ${this.maxRequests} tool calls per ${this.windowMs / 1000} seconds. Please retry in ${retryAfterSeconds} second${retryAfterSeconds !== 1 ? 's' : ''}.`,
+        retryAfterMs,
       };
     }
 
@@ -62,11 +67,11 @@ export class RateLimiter {
   }
 }
 
-// Global singleton: 5 requests per 20 seconds
+// Global singleton: 10 requests per 10 seconds
 let globalRateLimiter: RateLimiter | null = null;
 
 /**
- * Returns the global singleton tool-call rate limiter (5 requests / 20 s).
+ * Returns the global singleton tool-call rate limiter (10 requests / 10 s).
  * The same instance is reused across all calls; use {@link resetToolCallRateLimiter} to reset it (e.g. in tests).
  *
  * @example
@@ -79,7 +84,7 @@ let globalRateLimiter: RateLimiter | null = null;
  */
 export function getToolCallRateLimiter(): RateLimiter {
   if (!globalRateLimiter) {
-    globalRateLimiter = new RateLimiter(5, 20000);
+    globalRateLimiter = new RateLimiter(10, 10000);
   }
   return globalRateLimiter;
 }

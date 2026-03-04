@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Increased tool call rate limit from 5 per 20 seconds to 10 per 10 seconds to better support parallel tool calls from clients like GitHub Copilot in VSCode. The rate limit error message now includes the exact number of seconds to wait before retrying.
+
 ## 1.5.2
 
 - Fixed a race condition in the OAuth Authorization Code Flow token refresh that caused browser windows to open unexpectedly during server operation. Concurrent token refresh attempts now share a single in-flight refresh request, preventing the refresh token from being consumed multiple times.

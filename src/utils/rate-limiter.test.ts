@@ -23,6 +23,32 @@ describe('RateLimiter', () => {
       }
     });
 
+    it('should include retry-after seconds in the message', () => {
+      const limiter = new RateLimiter(3, 10000);
+      for (let i = 0; i < 3; i++) {
+        limiter.check(i);
+      }
+      const result = limiter.check(3);
+      expect(result.exceeded).toBe(true);
+      if (result.exceeded) {
+        expect(result.message).toContain('Please retry in');
+        expect(result.message).toMatch(/\d+ seconds?\./);
+        expect(result.retryAfterMs).toBeGreaterThan(0);
+      }
+    });
+
+    it('should calculate retryAfterMs correctly', () => {
+      const limiter = new RateLimiter(2, 10000);
+      limiter.check(0);
+      limiter.check(500);
+      // At t=1000: oldest is at 0, retryAfterMs = 0 + 10000 - 1000 = 9000
+      const result = limiter.check(1000);
+      expect(result.exceeded).toBe(true);
+      if (result.exceeded) {
+        expect(result.retryAfterMs).toBe(9000);
+      }
+    });
+
     it('should allow calls again after the window slides past old timestamps', () => {
       const limiter = new RateLimiter(5, 20000);
       // Fill up the window at t=0
@@ -91,11 +117,11 @@ describe('getToolCallRateLimiter / resetToolCallRateLimiter', () => {
     expect(limiter1).not.toBe(limiter2);
   });
 
-  it('should enforce the 5-per-20s default limit', () => {
+  it('should enforce the 10-per-10s default limit', () => {
     const limiter = getToolCallRateLimiter();
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 10; i++) {
       expect(limiter.check(i).exceeded).toBe(false);
     }
-    expect(limiter.check(5).exceeded).toBe(true);
+    expect(limiter.check(10).exceeded).toBe(true);
   });
 });
