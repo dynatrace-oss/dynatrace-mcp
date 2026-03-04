@@ -66,7 +66,16 @@ export class RateLimiter {
 let globalRateLimiter: RateLimiter | null = null;
 
 /**
- * Get the global tool-call rate limiter instance (5 requests / 20 s).
+ * Returns the global singleton tool-call rate limiter (5 requests / 20 s).
+ * The same instance is reused across all calls; use {@link resetToolCallRateLimiter} to reset it (e.g. in tests).
+ *
+ * @example
+ * ```ts
+ * const result = getToolCallRateLimiter().check();
+ * if (result.exceeded) {
+ *   throw new Error(result.message);
+ * }
+ * ```
  */
 export function getToolCallRateLimiter(): RateLimiter {
   if (!globalRateLimiter) {
