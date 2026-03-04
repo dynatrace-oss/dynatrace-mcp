@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Updated `jest` from 29 to 30.
+
 ## 1.5.2
 
 - Fixed a race condition in the OAuth Authorization Code Flow token refresh that caused browser windows to open unexpectedly during server operation. Concurrent token refresh attempts now share a single in-flight refresh request, preventing the refresh token from being consumed multiple times.
