@@ -1,0 +1,177 @@
+---
+applyTo: 'src/**'
+---
+
+# MCP Server – TypeScript Agent Instructions
+
+This document provides guidance for AI agents working on the TypeScript MCP server implementation. It covers the key concepts, patterns and conventions used in this project.
+
+## Reference Documentation
+
+- **MCP Specification & Concepts**: https://modelcontextprotocol.io/docs/concepts/tools
+- **TypeScript SDK (npm)**: https://www.npmjs.com/package/@modelcontextprotocol/sdk
+- **TypeScript SDK (GitHub)**: https://github.com/modelcontextprotocol/typescript-sdk
+- **MCP Server Quickstart**: https://modelcontextprotocol.io/quickstart/server
+- **Tool Annotations**: https://modelcontextprotocol.io/docs/concepts/tools#tool-annotations
+
+## Core Concepts
+
+### McpServer
+
+The entry point is `McpServer` from `@modelcontextprotocol/sdk/server/mcp.js`. It manages tool and resource registration and handles the protocol lifecycle.
+
+```typescript
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+
+const server = new McpServer(
+  { name: 'my-mcp-server', version: '1.0.0' },
+  { capabilities: { tools: {} } },
+);
+```
+
+### Tools
+
+Tools are the primary way to expose functionality to an AI agent. Use `server.registerTool()` with a Zod input schema.
+
+```typescript
+import { z } from 'zod';
+
+server.registerTool(
+  'my_tool',
+  {
+    title: 'My Tool',
+    description: 'Does something useful.',
+    inputSchema: z.object({
+      param: z.string().describe('Description of the parameter'),
+    }),
+    annotations: { readOnlyHint: true },
+  },
+  async ({ param }) => ({
+    content: [{ type: 'text', text: `Result: ${param}` }],
+  }),
+);
+```
+
+### Resources
+
+Resources expose read-only data (files, URIs, HTML pages) to the client. Use `server.registerResource()`.
+
+```typescript
+server.registerResource(
+  'my_resource',
+  'my-resource://data',
+  { title: 'My Resource', mimeType: 'text/plain' },
+  async () => ({
+    contents: [{ uri: 'my-resource://data', mimeType: 'text/plain', text: 'Hello!' }],
+  }),
+);
+```
+
+## Project-Specific Patterns
+
+### The `tool()` Helper
+
+**Always use the `tool()` helper function** (defined in `src/index.ts`) instead of calling `server.registerTool()` directly. It automatically wraps the callback with:
+
+- Rate limiting (max 5 requests per 20 seconds)
+- Error handling (Dynatrace SDK errors are translated to human-readable messages)
+- Telemetry tracking
+
+```typescript
+tool(
+  'my_tool_name',          // snake_case name, used as MCP tool identifier
+  'My Tool Title',          // human-readable title
+  'What this tool does.',   // description shown to the agent
+  {                         // Zod parameter schema (ZodRawShape)
+    entityId: z.string().describe('The entity ID to look up'),
+  },
+  { readOnlyHint: true },   // ToolAnnotations
+  async ({ entityId }) => {
+    const dtClient = await createAuthenticatedHttpClient(['storage:entities:read']);
+    // ... call Dynatrace SDK or capability function
+    return `Result: ${entityId}`;
+  },
+);
+```
+
+The callback must return either a `string` or `{ text: string; _meta?: Record<string, unknown> }`. Errors thrown inside are caught and returned as `isError: true` responses automatically.
+
+### Capability Modules
+
+Each logical feature lives in `src/capabilities/<feature-name>.ts`. These files export plain async functions that accept a `HttpClient` and return data. They do **not** register tools themselves – that is done in `src/index.ts`.
+
+```
+src/capabilities/list-problems.ts        ← pure business logic
+src/index.ts                             ← tool registration using tool() helper
+```
+
+Follow this separation when adding new features:
+1. Create `src/capabilities/my-feature.ts` with the core logic.
+2. Import and register it in `src/index.ts` using `tool()`.
+
+### Authentication – `createAuthenticatedHttpClient`
+
+Use `createAuthenticatedHttpClient(scopes)` to get a Dynatrace `HttpClient` scoped to exactly the permissions required for the operation:
+
+```typescript
+const dtClient = await createAuthenticatedHttpClient([
+  'storage:logs:read',
+  'storage:entities:read',
+]);
+```
+
+When adding a new tool, check whether the required scopes already exist in `allRequiredScopes` (at the top of `src/index.ts`). If not:
+1. Add the new scope to `allRequiredScopes`.
+2. Update the "Scopes for Authentication" section in `README.md` with a description.
+
+### Tool Annotations
+
+Always set `annotations` to signal tool intent to the AI client. See the [MCP Tool Annotations spec](https://modelcontextprotocol.io/docs/concepts/tools#tool-annotations).
+
+| Annotation | When to set `true` |
+|---|---|
+| `readOnlyHint` | Tool only reads data, never writes |
+| `destructiveHint` | Tool may delete or overwrite data |
+| `idempotentHint` | Repeated calls with the same args produce the same result |
+| `openWorldHint` | Tool queries external/live data (e.g. Grail, APIs) |
+
+### Human-in-the-Loop Approval
+
+For irreversible or destructive operations (e.g. creating workflows, modifying entities), use `requestHumanApproval()` before executing:
+
+```typescript
+const approved = await requestHumanApproval('Create a new workflow for problem notification');
+if (!approved) {
+  return 'Operation cancelled by user.';
+}
+// proceed with the write operation
+```
+
+Set `annotations: { destructiveHint: true }` for any tool that uses this pattern.
+
+### Response Format
+
+Simple read-only tools can return a plain `string`. For tools that also surface structured data to an MCP App UI, return `{ text, _meta }`:
+
+```typescript
+return {
+  text: 'Human-readable summary for the AI agent',
+  _meta: {
+    records: queryResult.records,   // consumed by the MCP App renderer
+    environmentUrl: dtEnvironment,
+  },
+};
+```
+
+### Error Handling
+
+- Throw errors naturally inside tool callbacks – `wrapToolCallback` catches them.
+- For expected Dynatrace API errors, `isClientRequestError(error)` from `@dynatrace-sdk/shared-errors` translates them to readable messages.
+- Log unexpected errors with `console.error` before re-throwing; all stderr output is visible in the MCP host's server logs.
+
+## Development Workflow
+
+1. **Build**: `npm run build` – compiles TypeScript to `dist/`.
+2. **Verify startup**: `npm start` – server must start without errors.
+3. **Tests**: `npm test` – Jest unit tests in `src/**/*.test.ts`.
+4. **Changelog**: Add an entry to the `## Unreleased Changes` section of `CHANGELOG.md` for every feature or fix.
