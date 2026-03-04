@@ -244,7 +244,7 @@ const main = async () => {
       const rateLimitResult = getToolCallRateLimiter().check(startTime);
       if (rateLimitResult.exceeded) {
         return {
-          content: [{ type: 'text', text: rateLimitResult.message! }],
+          content: [{ type: 'text', text: rateLimitResult.message }],
           isError: true,
         };
       }
