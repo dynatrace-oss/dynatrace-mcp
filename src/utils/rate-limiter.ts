@@ -1,12 +1,17 @@
 /**
  * Result of a rate limit check.
  */
-export interface RateLimitResult {
-  /** Whether the rate limit was exceeded */
-  exceeded: boolean;
-  /** Human-readable message when rate limit is exceeded */
-  message?: string;
-}
+export type RateLimitResult =
+  | {
+      /** Whether the rate limit was exceeded */
+      exceeded: false;
+    }
+  | {
+      /** Whether the rate limit was exceeded */
+      exceeded: true;
+      /** Human-readable message when rate limit is exceeded */
+      message: string;
+    };
 
 /**
  * Simple in-memory rate limiter: allows at most `maxRequests` calls within a sliding `windowMs` window.
