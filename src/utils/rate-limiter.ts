@@ -27,11 +27,11 @@ export class RateLimiter {
   /**
    * Check whether the current call exceeds the rate limit.
    * If within limits, records the call timestamp.
-   * @param now - Current timestamp in milliseconds (defaults to Date.now())
+   * @param currentTimestamp - Current timestamp in milliseconds (defaults to Date.now())
    * @returns RateLimitResult indicating whether the limit was exceeded
    */
-  check(now = Date.now()): RateLimitResult {
-    const windowStart = now - this.windowMs;
+  check(currentTimestamp = Date.now()): RateLimitResult {
+    const windowStart = currentTimestamp - this.windowMs;
     this.timestamps = this.timestamps.filter((ts) => ts > windowStart);
 
     if (this.timestamps.length >= this.maxRequests) {
@@ -41,7 +41,7 @@ export class RateLimiter {
       };
     }
 
-    this.timestamps.push(now);
+    this.timestamps.push(currentTimestamp);
     return { exceeded: false };
   }
 
