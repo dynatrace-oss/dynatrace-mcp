@@ -15,6 +15,15 @@ export type RateLimitResult =
 
 /**
  * Simple in-memory rate limiter: allows at most `maxRequests` calls within a sliding `windowMs` window.
+ *
+ * @example
+ * ```ts
+ * const limiter = new RateLimiter(5, 20_000); // 5 requests per 20 seconds
+ * const result = limiter.check();
+ * if (result.exceeded) {
+ *   console.error(result.message);
+ * }
+ * ```
  */
 export class RateLimiter {
   private timestamps: number[] = [];
