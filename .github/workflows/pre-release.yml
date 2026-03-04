@@ -1,0 +1,47 @@
+name: Pre-release (next)
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write # Required for npm publishing with provenance
+
+jobs:
+  pre-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Use Node.js # will read version from .nvmrc
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Compute pre-release version
+        id: version
+        run: |
+          # Derive next patch version from package.json (e.g. 1.5.2 -> 1.5.3)
+          BASE_VERSION=$(node -p "
+            const [major, minor, patch] = require('./package.json').version.split('.');
+            \`\${major}.\${minor}.\${parseInt(patch, 10) + 1}\`
+          ")
+          TIMESTAMP=$(date -u +%Y%m%d%H%M%S)
+          GIT_SHA=$(git rev-parse --short HEAD)
+          PRERELEASE_VERSION="${BASE_VERSION}-dev.${TIMESTAMP}+${GIT_SHA}"
+          # Write the pre-release version into package.json without creating a git tag
+          npm version "$PRERELEASE_VERSION" --no-git-tag-version
+          echo "version=$PRERELEASE_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Publish to npm with next tag
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
+        run: npm publish --tag next --provenance --access public
