@@ -2,7 +2,11 @@
 
 ## Unreleased Changes
 
+## 1.5.2
+
 - Fixed a race condition in the OAuth Authorization Code Flow token refresh that caused browser windows to open unexpectedly during server operation. Concurrent token refresh attempts now share a single in-flight refresh request, preventing the refresh token from being consumed multiple times.
+- Improved MCP App table rendering to make cells less dense.
+- Updated dependencies including `@dynatrace-sdk/client-classic-environment-v2` (5.1.0 → 5.2.2), `@dynatrace/strato-components` (1.16.0 → 1.17.0), `@dynatrace/strato-components-preview` (2.14.1 → 2.16.0), `rollup` (4.57.1 → 4.59.0), and `minimatch` (3.1.2 → 3.1.5).
 
 ## 1.5.1
 
