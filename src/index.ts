@@ -45,11 +45,9 @@ import { configureProxyFromEnvironment } from './utils/proxy-config';
 import { listExceptions } from './capabilities/list-exceptions';
 import { createDynatraceNotebook } from './capabilities/notebooks';
 import { parseEnvironmentUrl } from './utils/environment-url-parser';
+import { getToolCallRateLimiter } from './utils/rate-limiter';
 
 const DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID = 'dt0s12.local-dt-mcp-server';
-
-// Rate limiting state: store timestamps of tool calls
-let toolCallTimestamps: number[] = [];
 
 // Base Scopes for MCP Server tools
 let scopesBase = [
@@ -242,27 +240,14 @@ const main = async () => {
       // Capture starttime for telemetry and rate limiting
       const startTime = Date.now();
 
-      /**
-       * Rate Limit: Max. 5 requests per 20 seconds
-       */
-      const twentySecondsAgo = startTime - 20000;
-
-      // First, remove all tool calls older than 20s
-      toolCallTimestamps = toolCallTimestamps.filter((ts) => ts > twentySecondsAgo);
-
-      // Second, check whether we have 5 or more calls in the past 20s
-      if (toolCallTimestamps.length >= 5) {
+      // Rate Limit: Max. 5 requests per 20 seconds
+      const rateLimitResult = getToolCallRateLimiter().check(startTime);
+      if (rateLimitResult.exceeded) {
         return {
-          content: [
-            { type: 'text', text: 'Rate limit exceeded: Maximum 5 tool calls per 20 seconds. Please try again later.' },
-          ],
+          content: [{ type: 'text', text: rateLimitResult.message! }],
           isError: true,
         };
       }
-
-      // Last but not least, record this call
-      toolCallTimestamps.push(startTime);
-      /** Rate Limit End */
 
       // track toolcall for telemetry
       let toolCallSuccessful = false;
