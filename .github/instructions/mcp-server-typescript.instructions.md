@@ -14,11 +14,7 @@ This document provides guidance for AI agents working on the TypeScript MCP serv
 
 ### The `tool()` Helper
 
-**Always use the `tool()` helper function** (defined in `src/index.ts`) instead of calling `server.registerTool()` directly. It automatically wraps the callback with:
-
-- Rate limiting (max 5 requests per 20 seconds)
-- Error handling (Dynatrace SDK errors are translated to human-readable messages)
-- Telemetry tracking
+**Always use the `tool()` helper function** (see [`src/index.ts`](../../src/index.ts)) instead of calling `server.registerTool()` directly.
 
 ```typescript
 tool(
