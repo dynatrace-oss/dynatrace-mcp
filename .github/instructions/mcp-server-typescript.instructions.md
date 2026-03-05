@@ -21,16 +21,25 @@ This document provides guidance for AI agents working on the TypeScript MCP serv
 
 ```typescript
 tool(
-  'my_tool_name',          // snake_case name, used as MCP tool identifier
-  'My Tool Title',          // human-readable title
-  'What this tool does.',   // description shown to the agent
-  {                         // Zod parameter schema (ZodRawShape)
+  'my_tool_name', // snake_case name, used as MCP tool identifier
+  'My Tool Title', // human-readable title
+  'What this tool does.', // description shown to the agent
+  {
+    // Zod parameter schema (ZodRawShape)
     entityId: z.string().describe('The entity ID to look up'),
   },
-  { readOnlyHint: true },   // ToolAnnotations
+  // Tool Annotations
+  {
+    readOnlyHint: true, // only reads data, never modifies it
+    destructiveHint: true, // may perform irreversible actions, requires human approval
+    idempotentHint: true, // repeated calls with the same arguments produce the same result with no additional side-effects
+    openWorldHint: true, // interacts with external or live data sources
+  },
+  // Tool Implementation
   async ({ entityId }) => {
     const dtClient = await createAuthenticatedHttpClient(['storage:entities:read']);
     // ... call Dynatrace SDK or capability function
+    // And return the result
     return `Result: ${entityId}`;
   },
 );
@@ -48,6 +57,7 @@ src/index.ts                             ← tool registration using tool() help
 ```
 
 Follow this separation when adding new features:
+
 1. Create `src/capabilities/my-feature.ts` with the core logic.
 2. Import and register it in `src/index.ts` using `tool()`.
 
@@ -56,28 +66,14 @@ Follow this separation when adding new features:
 Use `createAuthenticatedHttpClient(scopes)` to get a Dynatrace `HttpClient` scoped to exactly the permissions required for the operation:
 
 ```typescript
-const dtClient = await createAuthenticatedHttpClient([
-  'storage:logs:read',
-  'storage:entities:read',
-]);
+const dtClient = await createAuthenticatedHttpClient(['storage:logs:read', 'storage:entities:read']);
 ```
 
 When adding a new tool, check whether the required scopes already exist in `allRequiredScopes` (at the top of `src/index.ts`). If not:
+
 1. Add the new scope to `allRequiredScopes`.
 2. Update the "Scopes for Authentication" section in `README.md` with a description.
 
-### Tool Annotations
-
-Always set `annotations` to signal tool intent to the AI client.
-
-| Annotation | Type | Description |
-|---|---|---|
-| `readOnlyHint` | `boolean` | Tool only reads data, never modifies it. Set to `true` for all query/lookup tools. |
-| `destructiveHint` | `boolean` | Tool may delete or irreversibly overwrite data. Pair with `requestHumanApproval()`. |
-| `idempotentHint` | `boolean` | Repeated calls with the same arguments produce the same result with no additional side-effects. |
-| `openWorldHint` | `boolean` | Tool interacts with external or live data sources (e.g. Grail queries, Dynatrace APIs). |
-
-In this project, the tool title is **not** part of `annotations`. Always pass the human-readable title as the second positional argument to `tool()`, and omit any `title` field from the `annotations` object.
 ### Human-in-the-Loop Approval
 
 For irreversible or destructive operations (e.g. creating workflows, modifying entities), use `requestHumanApproval()` before executing:
@@ -100,7 +96,7 @@ Simple read-only tools can return a plain `string`. For tools that also surface 
 return {
   text: 'Human-readable summary for the AI agent',
   _meta: {
-    records: queryResult.records,   // consumed by the MCP App renderer
+    records: queryResult.records, // consumed by the MCP App renderer
     environmentUrl: dtEnvironment,
   },
 };

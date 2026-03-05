@@ -32,7 +32,7 @@ The repository is structured as follows:
 
 ## Coding Guidelines
 
-Please try to follow basic TypeScript and Node.js coding conventions. We will define a concrete eslint setup at a later point.
+Please try to follow basic TypeScript and Node.js coding conventions, especially [mcp-server-typescript.instructions.md](/.github/instructions/mcp-server-typescript.instructions.md). We will define a concrete eslint setup at a later point.
 
 ## Dependencies
 
@@ -44,7 +44,7 @@ The following dependencies are allowed:
 - `vite` / `vite-plugin-singlefile` and `react` for the UI part of the project,
 - and `@dynatrace` as well as `@dynatrace-sdk` packages.
 
-Please do not install any other dependencies.
+Avoid installing any other dependencies, unless explictly approved.
 
 ## Authentication
 
@@ -64,4 +64,4 @@ The `dist/` folder contains the output of the build process.
 
 ## Changelog
 
-See [changelog.instructions.md](.github/instructions/changelog.instructions.md) for full guidance on what to include and how to format changelog entries.
+See [changelog.instructions.md](/.github/instructions/changelog.instructions.md) for full guidance on what to include and how to format changelog entries.
