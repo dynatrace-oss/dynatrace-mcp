@@ -73,8 +73,8 @@ Always set `annotations` to signal tool intent to the AI client. Full reference:
 | `destructiveHint` | `boolean` | Tool may delete or irreversibly overwrite data. Pair with `requestHumanApproval()`. |
 | `idempotentHint` | `boolean` | Repeated calls with the same arguments produce the same result with no additional side-effects. |
 | `openWorldHint` | `boolean` | Tool interacts with external or live data sources (e.g. Grail queries, Dynatrace APIs). |
-| `title` | `string` | Short human-readable name for the tool, shown in UI clients. |
 
+In this project, the tool title is **not** part of `annotations`. Always pass the human-readable title as the second positional argument to `tool()`, and omit any `title` field from the `annotations` object.
 ### Human-in-the-Loop Approval
 
 For irreversible or destructive operations (e.g. creating workflows, modifying entities), use `requestHumanApproval()` before executing:
