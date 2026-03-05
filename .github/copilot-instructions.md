@@ -8,11 +8,9 @@ It is written in TypeScript and uses Node.js as its runtime. You need to underst
 
 - Follow the user's requirements carefully & to the letter.
 - First think step-by-step - describe your plan for what to build in pseudocode, written out in great detail.
-- Confirm, then write code!
-- Focus on easy and readability code, over being performant.
+- Focus on easy and readable code, over being performant.
 - Fully implement all requested functionality.
 - Leave NO todo's, placeholders or missing pieces.
-- Ensure code is complete! Verify thoroughly finalised.
 - Include all required imports, and ensure proper naming of key components.
 - Be concise, minimize any other prose.
 - If you think there might not be a correct answer, you say so.
@@ -44,11 +42,11 @@ The following dependencies are allowed:
 - `vite` / `vite-plugin-singlefile` and `react` for the UI part of the project,
 - and `@dynatrace` as well as `@dynatrace-sdk` packages.
 
-Avoid installing any other dependencies, unless explictly approved.
+Avoid installing any other dependencies, unless explicitly approved.
 
 ## Authentication
 
-For authentication, we are using OAuth Client ID and Secrets from Dynatrace. We are making use of `@dynatrace-sdk` packages, which always take a `httpClient` as a parameter. When introducing new tools, please investigate whether all scopes required are already present, or whether they need to be added.
+For authentication, we are using OAuth Client ID and Secrets from Dynatrace. We are making use of `@dynatrace-sdk` packages, which always take an `httpClient` as a parameter. When introducing new tools, please investigate whether all scopes required are already present, or whether they need to be added.
 Make sure to not just update the code, but also update README.md with those required scopes.
 
 **Important:** OAuth scopes must always be kept in sync between implementation and documentation:

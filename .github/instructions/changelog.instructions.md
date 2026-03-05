@@ -24,7 +24,7 @@ Do **not** add entries for internal/technical changes that have no user-visible 
 # Style guidelines
 
 - Use semantic versioning headings (e.g., ## <version>)
-- Release candidates are supported with version suffix format (e.g., `0.5.0-rc.1` should be labeled as "0.5.0 (Release Candidate 1)" in the changelog)
+- Release candidates are supported with a version suffix format (e.g., `0.5.0-rc.1` should be labeled as "0.5.0 (Release Candidate 1)" in the changelog)
 - Do not use subheadings
 - Do not mention commit hashes, pull request numbers, or ticket IDs
 - Write in past tense (e.g., "improved", "introduced", "added")
@@ -37,7 +37,7 @@ Do **not** add entries for internal/technical changes that have no user-visible 
 - Write a bullet point for every new, changed, fixed, or removed feature
 - No emojis
 - Include both user benefits and technical specifics when relevant
-- User-centric language ("You can now...", "You will now find...", "It is now possible to...")
+- Use user-centric language ("You can now...", "You will now find...", "It is now possible to...")
 - Explain business value ("enabling more precise...", "providing greater flexibility...", "ensuring smoother performance...")
 
 ## Examples

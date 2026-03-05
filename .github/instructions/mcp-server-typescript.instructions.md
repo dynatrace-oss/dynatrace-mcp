@@ -49,7 +49,7 @@ The callback must return either a `string` or `{ text: string; _meta?: Record<st
 
 ### Capability Modules
 
-Each logical feature lives in `src/capabilities/<feature-name>.ts`. These files export plain async functions that accept a `HttpClient` and return data. They do **not** register tools themselves – that is done in `src/index.ts`.
+Each logical feature lives in `src/capabilities/<feature-name>.ts`. These files export plain async functions that accept an `HttpClient` and return data. They do **not** register tools themselves – that is done in `src/index.ts`.
 
 ```
 src/capabilities/list-problems.ts        ← pure business logic
