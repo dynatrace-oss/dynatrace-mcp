@@ -5,6 +5,23 @@ applyTo: 'CHANGELOG.md'
 Do not edit the file unless explicitly requested by the user.
 When releasing a new version, you will be asked to create a new section in the `CHANGELOG.md` file for the version based on "Unreleased Changes".
 
+# What belongs in the changelog
+
+Only include changes that are **relevant to end-users**:
+
+- New tools or features
+- Bug fixes and reliability improvements
+- Authentication or scope changes
+- Breaking changes or migration guidance
+- Dependency updates that fix security vulnerabilities
+
+Do **not** add entries for internal/technical changes that have no user-visible impact, such as:
+
+- Refactoring or code cleanup
+- Test additions or updates
+- Documentation or instruction file updates
+- Tooling and build configuration changes
+
 # Style guidelines
 
 - Use semantic versioning headings (e.g., ## <version>)
