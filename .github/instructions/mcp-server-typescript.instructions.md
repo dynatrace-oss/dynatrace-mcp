@@ -8,7 +8,10 @@ This document provides guidance for AI agents working on the TypeScript MCP serv
 
 ## Reference Documentation
 
+- **Tools**: https://modelcontextprotocol.io/docs/concepts/tools
 - **Tool Annotations**: https://modelcontextprotocol.io/docs/concepts/tools#tool-annotations
+- **Resources**: https://modelcontextprotocol.io/docs/concepts/resources
+- **Transports** (stdio & Streamable HTTP): https://modelcontextprotocol.io/docs/concepts/transports
 
 ## Project-Specific Patterns
 
