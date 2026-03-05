@@ -68,7 +68,7 @@ When adding a new tool, check whether the required scopes already exist in `allR
 
 ### Tool Annotations
 
-Always set `annotations` to signal tool intent to the AI client. Full reference: [MCP Tool Annotations](https://modelcontextprotocol.io/docs/concepts/tools#tool-annotations).
+Always set `annotations` to signal tool intent to the AI client.
 
 | Annotation | Type | Description |
 |---|---|---|
