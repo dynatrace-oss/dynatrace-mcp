@@ -65,14 +65,15 @@ When adding a new tool, check whether the required scopes already exist in `allR
 
 ### Tool Annotations
 
-Always set `annotations` to signal tool intent to the AI client. See the [MCP Tool Annotations spec](https://modelcontextprotocol.io/docs/concepts/tools#tool-annotations).
+Always set `annotations` to signal tool intent to the AI client. Full reference: [MCP Tool Annotations](https://modelcontextprotocol.io/docs/concepts/tools#tool-annotations).
 
-| Annotation | When to set `true` |
-|---|---|
-| `readOnlyHint` | Tool only reads data, never writes |
-| `destructiveHint` | Tool may delete or overwrite data |
-| `idempotentHint` | Repeated calls with the same args produce the same result |
-| `openWorldHint` | Tool queries external/live data (e.g. Grail, APIs) |
+| Annotation | Type | Description |
+|---|---|---|
+| `readOnlyHint` | `boolean` | Tool only reads data, never modifies it. Set to `true` for all query/lookup tools. |
+| `destructiveHint` | `boolean` | Tool may delete or irreversibly overwrite data. Pair with `requestHumanApproval()`. |
+| `idempotentHint` | `boolean` | Repeated calls with the same arguments produce the same result with no additional side-effects. |
+| `openWorldHint` | `boolean` | Tool interacts with external or live data sources (e.g. Grail queries, Dynatrace APIs). |
+| `title` | `string` | Short human-readable name for the tool, shown in UI clients. |
 
 ### Human-in-the-Loop Approval
 
