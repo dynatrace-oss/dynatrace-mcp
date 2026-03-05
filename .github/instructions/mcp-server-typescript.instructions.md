@@ -106,7 +106,7 @@ return {
 ### Error Handling
 
 - Throw errors naturally inside tool callbacks – `wrapToolCallback` catches them.
-- For expected Dynatrace API errors, `isClientRequestError(error)` from `@dynatrace-sdk/shared-errors` translates them to readable messages.
+- For expected Dynatrace API errors, use `isClientRequestError(error)` from `@dynatrace-sdk/shared-errors` to detect client request errors, and `handleClientRequestError(error)` from `./utils/dynatrace-connection-utils` to translate them into readable messages.
 - Log unexpected errors with `console.error` before re-throwing; all stderr output is visible in the MCP host's server logs.
 
 ## Development Workflow
