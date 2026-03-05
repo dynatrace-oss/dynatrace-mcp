@@ -8,64 +8,7 @@ This document provides guidance for AI agents working on the TypeScript MCP serv
 
 ## Reference Documentation
 
-- **MCP Specification & Concepts**: https://modelcontextprotocol.io/docs/concepts/tools
-- **TypeScript SDK (npm)**: https://www.npmjs.com/package/@modelcontextprotocol/sdk
-- **TypeScript SDK (GitHub)**: https://github.com/modelcontextprotocol/typescript-sdk
-- **MCP Server Quickstart**: https://modelcontextprotocol.io/quickstart/server
 - **Tool Annotations**: https://modelcontextprotocol.io/docs/concepts/tools#tool-annotations
-
-## Core Concepts
-
-### McpServer
-
-The entry point is `McpServer` from `@modelcontextprotocol/sdk/server/mcp.js`. It manages tool and resource registration and handles the protocol lifecycle.
-
-```typescript
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-
-const server = new McpServer(
-  { name: 'my-mcp-server', version: '1.0.0' },
-  { capabilities: { tools: {} } },
-);
-```
-
-### Tools
-
-Tools are the primary way to expose functionality to an AI agent. Use `server.registerTool()` with a Zod input schema.
-
-```typescript
-import { z } from 'zod';
-
-server.registerTool(
-  'my_tool',
-  {
-    title: 'My Tool',
-    description: 'Does something useful.',
-    inputSchema: z.object({
-      param: z.string().describe('Description of the parameter'),
-    }),
-    annotations: { readOnlyHint: true },
-  },
-  async ({ param }) => ({
-    content: [{ type: 'text', text: `Result: ${param}` }],
-  }),
-);
-```
-
-### Resources
-
-Resources expose read-only data (files, URIs, HTML pages) to the client. Use `server.registerResource()`.
-
-```typescript
-server.registerResource(
-  'my_resource',
-  'my-resource://data',
-  { title: 'My Resource', mimeType: 'text/plain' },
-  async () => ({
-    contents: [{ uri: 'my-resource://data', mimeType: 'text/plain', text: 'Hello!' }],
-  }),
-);
-```
 
 ## Project-Specific Patterns
 
