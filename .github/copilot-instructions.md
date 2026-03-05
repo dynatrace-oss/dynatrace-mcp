@@ -64,9 +64,4 @@ The `dist/` folder contains the output of the build process.
 
 ## Changelog
 
-- Only add a changelog entry for changes that are **relevant to end-users**: new tools or features, bug fixes, authentication changes, or breaking changes. Do **not** add entries for internal/technical changes such as refactoring, test updates, documentation, or tooling.
-- Whenever you add a user-facing feature or fix, also add a new line into `CHANGELOG.md`. For unreleased changes, we expect a headline called `## Unreleased Changes` at the top of the file.
-- Follow the existing format:
-  - Use semantic versioning (major.minor.patch)
-  - Group changes by type (Added, Changed, Fixed, etc.)
-  - Keep entries concise but descriptive
+See [changelog.instructions.md](.github/instructions/changelog.instructions.md) for full guidance on what to include and how to format changelog entries.

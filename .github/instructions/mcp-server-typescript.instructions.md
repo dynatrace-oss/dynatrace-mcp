@@ -112,6 +112,5 @@ return {
 ## Development Workflow
 
 1. **Build**: `npm run build` – compiles TypeScript to `dist/`.
-2. **Verify startup**: `npm start` – server must start without errors.
-3. **Tests**: `npm test` – Jest unit tests in `src/**/*.test.ts`.
-4. **Changelog**: Add an entry to the `## Unreleased Changes` section of `CHANGELOG.md` for every feature or fix.
+2. **Verify startup**: `node dist/index.js` (stdio mode) or `node dist/index.js --http` (HTTP mode) – server must start without errors.
+3. **Unit tests**: `npm test` – runs Jest unit tests in `src/**/*.test.ts`.
