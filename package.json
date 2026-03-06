@@ -37,7 +37,9 @@
   "scripts": {
     "build": "npm run build:ui && npm run build:server",
     "build:server": "tsc --build",
-    "build:ui": "vite build --config vite.config.mts",
+    "build:ui": "npm run build:ui:app && npm run build:ui:preview",
+    "build:ui:app": "vite build --config vite.config.mts",
+    "build:ui:preview": "vite build --config vite.preview.config.mts",
     "prepare": "husky",
     "watch": "tsc --watch",
     "test": "jest",
