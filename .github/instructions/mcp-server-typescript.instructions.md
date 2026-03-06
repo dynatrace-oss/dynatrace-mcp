@@ -1,5 +1,5 @@
 ---
-applyTo: 'src/**'
+applyTo: 'src/**.ts'
 ---
 
 # MCP Server – TypeScript Agent Instructions
