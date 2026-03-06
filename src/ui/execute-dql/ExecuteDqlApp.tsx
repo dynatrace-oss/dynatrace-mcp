@@ -165,6 +165,174 @@ export function processToolResult(text: string | undefined, meta: ExecuteDqlMeta
   };
 }
 
+/** Props for the pure DQL results rendering component. */
+export interface ExecuteDqlViewProps {
+  state: ToolResultState;
+  onRefresh: () => void;
+  onOpenInNotebooks: () => void;
+}
+
+/**
+ * Pure presentational component for DQL results.
+ * Handles loading, error, and success states and manages the table/chart toggle.
+ *
+ * Used by {@link ExecuteDqlApp} (live MCP data) and by the preview page (mock data).
+ */
+export function ExecuteDqlView({ state, onRefresh, onOpenInNotebooks }: ExecuteDqlViewProps) {
+  const [toggleValue, setToggleValue] = useState<CombinedChartVariantToggleValue>('table');
+  const hasInitializedViewModeRef = useRef(false);
+
+  const viewMode: ViewMode = toggleValue === 'table' ? 'table' : 'chart';
+  const chartVariant: ChartVariant = toggleValue === 'area' ? 'area' : 'line';
+
+  const tableColumns = useMemo(() => buildColumns(state.columns), [state.columns]);
+  const tableData = state.records;
+  const timeseriesData = useMemo(
+    () => safeConvertToTimeseries(state.records, state.fieldTypes, state.analysisTimeframe),
+    [state.records, state.fieldTypes, state.analysisTimeframe],
+  );
+  const canChart = timeseriesData.length > 0;
+
+  const metadataText = useMemo(() => {
+    const parts: string[] = [];
+    if (state.executedAt) {
+      parts.push(`Executed at: ${state.executedAt.toLocaleString()}`);
+    }
+    if (state.metadata.scannedBytes !== undefined) {
+      const scannedGB = (state.metadata.scannedBytes / (1000 * 1000 * 1000)).toFixed(2);
+      parts.push(`Scanned: ${scannedGB} GB`);
+    }
+    if (state.metadata.scannedRecords !== undefined) {
+      parts.push(`${state.metadata.scannedRecords.toLocaleString()} records scanned`);
+    }
+    if (state.metadata.sampled) {
+      parts.push('Sampled');
+    }
+    return parts.length > 0 ? parts.join(', ') : '';
+  }, [state.executedAt, state.metadata.scannedBytes, state.metadata.scannedRecords, state.metadata.sampled]);
+
+  // Auto-select view only once on first successful data load.
+  // After that, preserve the user's manual toggle choice across refreshes.
+  useEffect(() => {
+    if (hasInitializedViewModeRef.current || state.status !== 'success') {
+      return;
+    }
+
+    setToggleValue(canChart ? 'line' : 'table');
+    hasInitializedViewModeRef.current = true;
+  }, [canChart, state.status]);
+
+  if (state.status === 'loading') {
+    return <LoadingState message='Loading query results...' />;
+  }
+
+  if (state.status === 'error') {
+    return <ErrorState message={state.errorMessage ?? 'An unknown error occurred.'} />;
+  }
+
+  const { metadata } = state;
+
+  return (
+    <Flex flexDirection='column' gap={4} className='execute-dql-app'>
+      {/* Compact metadata toolbar */}
+      <Flex
+        flexDirection='row'
+        gap={12}
+        alignItems='center'
+        padding={4}
+        style={{ paddingLeft: 8 }}
+        className='execute-dql-toolbar'
+      >
+        <Text textStyle='small' className='execute-dql-record-count'>
+          {state.records.length} {state.records.length === 1 ? 'record' : 'records'}
+        </Text>
+        {metadataText && (
+          <Text textStyle='small' style={{ opacity: RECORD_COUNT_TEXT_OPACITY }} className='execute-dql-metadata-text'>
+            {metadataText}
+          </Text>
+        )}
+        {metadata.warnings.length > 0 && (
+          <Flex flexDirection='row' gap={8} alignItems='center' className='execute-dql-warnings'>
+            {metadata.warnings.map((warning, i) => (
+              <MetadataIcon key={`${warning}-${i}`} icon={<WarningIcon />} tooltip={warning} warning />
+            ))}
+          </Flex>
+        )}
+        <Flex
+          flexDirection='row'
+          gap={4}
+          alignItems='center'
+          style={{ marginLeft: 'auto' }}
+          className='execute-dql-toolbar-actions'
+        >
+          <ToggleButtonGroup
+            value={toggleValue}
+            onChange={(val) => setToggleValue(val as CombinedChartVariantToggleValue)}
+          >
+            <Tooltip text='Table'>
+              <ToggleButtonGroup.Item value='table' aria-label='Switch to table view'>
+                <DataTableIcon />
+              </ToggleButtonGroup.Item>
+            </Tooltip>
+            <Tooltip text='Line'>
+              <ToggleButtonGroup.Item value='line' disabled={!canChart} aria-label='Switch to line chart view'>
+                <LineChartIcon />
+              </ToggleButtonGroup.Item>
+            </Tooltip>
+            <Tooltip text='Area'>
+              <ToggleButtonGroup.Item value='area' disabled={!canChart} aria-label='Switch to area chart view'>
+                <StackedAreaChartIcon />
+              </ToggleButtonGroup.Item>
+            </Tooltip>
+          </ToggleButtonGroup>
+
+          <Flex flexDirection='row' gap={4} alignItems='center' className='execute-dql-primary-actions'>
+            <Tooltip text='Open in Notebooks'>
+              <Button
+                variant='default'
+                size='condensed'
+                onClick={onOpenInNotebooks}
+                aria-label='Open query in Dynatrace Notebooks'
+                className='execute-dql-open-button'
+              >
+                <Button.Prefix>
+                  <DocumentStackIcon />
+                </Button.Prefix>
+                <span className='execute-dql-open-button-label'>Open in Notebooks</span>
+              </Button>
+            </Tooltip>
+            <Tooltip text='Refresh'>
+              <Button variant='default' size='condensed' onClick={onRefresh} aria-label='Refresh query results'>
+                <Button.Prefix>
+                  <RefreshIcon />
+                </Button.Prefix>
+              </Button>
+            </Tooltip>
+          </Flex>
+        </Flex>
+      </Flex>
+
+      {state.records.length === 0 ? (
+        <Flex flexDirection='column' alignItems='center' justifyContent='center' padding={32}>
+          <Text textStyle='base-emphasized'>No records returned</Text>
+          <Text textStyle='small' style={{ opacity: EMPTY_STATE_TEXT_OPACITY }}>
+            The query executed successfully but returned no data. Try adjusting your query or timeframe.
+          </Text>
+        </Flex>
+      ) : viewMode === 'table' ? (
+        <DataTable data={tableData} columns={tableColumns} sortable resizable fullWidth>
+          <DataTable.Pagination defaultPageSize={DEFAULT_PAGE_SIZE} />
+        </DataTable>
+      ) : (
+        <TimeseriesChart data={timeseriesData} variant={chartVariant}>
+          <TimeseriesChart.Legend />
+          <TimeseriesChart.YAxis label='Value' />
+        </TimeseriesChart>
+      )}
+    </Flex>
+  );
+}
+
 export function ExecuteDqlApp() {
   // MCP Host Theme Detection
   const documentTheme = useDocumentTheme();
@@ -180,13 +348,8 @@ export function ExecuteDqlApp() {
     analysisTimeframe: undefined,
     environmentUrl: undefined,
   });
-  const [toggleValue, setToggleValue] = useState<CombinedChartVariantToggleValue>('table');
-
-  const viewMode: ViewMode = toggleValue === 'table' ? 'table' : 'chart';
-  const chartVariant: ChartVariant = toggleValue === 'area' ? 'area' : 'line';
 
   const appRef = useRef<App | null>(null);
-  const hasInitializedViewModeRef = useRef(false);
   const [toolArguments, setToolArguments] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
@@ -284,43 +447,6 @@ export function ExecuteDqlApp() {
     await appRef.current.openLink({ url: notebooksUrl });
   }, [toolArguments, state.environmentUrl]);
 
-  const tableColumns = useMemo(() => buildColumns(state.columns), [state.columns]);
-  const tableData = state.records;
-  const timeseriesData = useMemo(
-    () => safeConvertToTimeseries(state.records, state.fieldTypes, state.analysisTimeframe),
-    [state.records, state.fieldTypes, state.analysisTimeframe],
-  );
-  const canChart = timeseriesData.length > 0;
-
-  const metadataText = useMemo(() => {
-    const parts: string[] = [];
-    if (state.executedAt) {
-      parts.push(`Executed at: ${state.executedAt.toLocaleString()}`);
-    }
-    if (state.metadata.scannedBytes !== undefined) {
-      const scannedGB = (state.metadata.scannedBytes / (1000 * 1000 * 1000)).toFixed(2);
-      parts.push(`Scanned: ${scannedGB} GB`);
-    }
-    if (state.metadata.scannedRecords !== undefined) {
-      parts.push(`${state.metadata.scannedRecords.toLocaleString()} records scanned`);
-    }
-    if (state.metadata.sampled) {
-      parts.push('Sampled');
-    }
-    return parts.length > 0 ? parts.join(', ') : '';
-  }, [state.executedAt, state.metadata.scannedBytes, state.metadata.scannedRecords, state.metadata.sampled]);
-
-  // Auto-select view only once on first successful data load.
-  // After that, preserve the user's manual toggle choice across refreshes.
-  useEffect(() => {
-    if (hasInitializedViewModeRef.current || state.status !== 'success') {
-      return;
-    }
-
-    setToggleValue(canChart ? 'line' : 'table');
-    hasInitializedViewModeRef.current = true;
-  }, [canChart, state.status]);
-
   // Keep Strato theme in sync with MCP host theme once available.
   useEffect(() => {
     if (!hostTheme) {
@@ -335,113 +461,5 @@ export function ExecuteDqlApp() {
     }
   }, [hostTheme]);
 
-  if (state.status === 'loading') {
-    return <LoadingState message='Loading query results...' />;
-  }
-
-  if (state.status === 'error') {
-    return <ErrorState message={state.errorMessage ?? 'An unknown error occurred.'} />;
-  }
-
-  const { metadata } = state;
-
-  return (
-    <Flex flexDirection='column' gap={4} className='execute-dql-app'>
-      {/* Compact metadata toolbar */}
-      <Flex
-        flexDirection='row'
-        gap={12}
-        alignItems='center'
-        padding={4}
-        style={{ paddingLeft: 8 }}
-        className='execute-dql-toolbar'
-      >
-        <Text textStyle='small' className='execute-dql-record-count'>
-          {state.records.length} {state.records.length === 1 ? 'record' : 'records'}
-        </Text>
-        {metadataText && (
-          <Text textStyle='small' style={{ opacity: RECORD_COUNT_TEXT_OPACITY }} className='execute-dql-metadata-text'>
-            {metadataText}
-          </Text>
-        )}
-        {metadata.warnings.length > 0 && (
-          <Flex flexDirection='row' gap={8} alignItems='center' className='execute-dql-warnings'>
-            {metadata.warnings.map((warning, i) => (
-              <MetadataIcon key={`${warning}-${i}`} icon={<WarningIcon />} tooltip={warning} warning />
-            ))}
-          </Flex>
-        )}
-        <Flex
-          flexDirection='row'
-          gap={4}
-          alignItems='center'
-          style={{ marginLeft: 'auto' }}
-          className='execute-dql-toolbar-actions'
-        >
-          <ToggleButtonGroup
-            value={toggleValue}
-            onChange={(val) => setToggleValue(val as CombinedChartVariantToggleValue)}
-          >
-            <Tooltip text='Table'>
-              <ToggleButtonGroup.Item value='table' aria-label='Switch to table view'>
-                <DataTableIcon />
-              </ToggleButtonGroup.Item>
-            </Tooltip>
-            <Tooltip text='Line'>
-              <ToggleButtonGroup.Item value='line' disabled={!canChart} aria-label='Switch to line chart view'>
-                <LineChartIcon />
-              </ToggleButtonGroup.Item>
-            </Tooltip>
-            <Tooltip text='Area'>
-              <ToggleButtonGroup.Item value='area' disabled={!canChart} aria-label='Switch to area chart view'>
-                <StackedAreaChartIcon />
-              </ToggleButtonGroup.Item>
-            </Tooltip>
-          </ToggleButtonGroup>
-
-          <Flex flexDirection='row' gap={4} alignItems='center' className='execute-dql-primary-actions'>
-            <Tooltip text='Open in Notebooks'>
-              <Button
-                variant='default'
-                size='condensed'
-                onClick={handleOpenInNotebooks}
-                aria-label='Open query in Dynatrace Notebooks'
-                className='execute-dql-open-button'
-              >
-                <Button.Prefix>
-                  <DocumentStackIcon />
-                </Button.Prefix>
-                <span className='execute-dql-open-button-label'>Open in Notebooks</span>
-              </Button>
-            </Tooltip>
-            <Tooltip text='Refresh'>
-              <Button variant='default' size='condensed' onClick={handleRefresh} aria-label='Refresh query results'>
-                <Button.Prefix>
-                  <RefreshIcon />
-                </Button.Prefix>
-              </Button>
-            </Tooltip>
-          </Flex>
-        </Flex>
-      </Flex>
-
-      {state.records.length === 0 ? (
-        <Flex flexDirection='column' alignItems='center' justifyContent='center' padding={32}>
-          <Text textStyle='base-emphasized'>No records returned</Text>
-          <Text textStyle='small' style={{ opacity: EMPTY_STATE_TEXT_OPACITY }}>
-            The query executed successfully but returned no data. Try adjusting your query or timeframe.
-          </Text>
-        </Flex>
-      ) : viewMode === 'table' ? (
-        <DataTable data={tableData} columns={tableColumns} sortable resizable fullWidth>
-          <DataTable.Pagination defaultPageSize={DEFAULT_PAGE_SIZE} />
-        </DataTable>
-      ) : (
-        <TimeseriesChart data={timeseriesData} variant={chartVariant}>
-          <TimeseriesChart.Legend />
-          <TimeseriesChart.YAxis label='Value' />
-        </TimeseriesChart>
-      )}
-    </Flex>
-  );
+  return <ExecuteDqlView state={state} onRefresh={handleRefresh} onOpenInNotebooks={handleOpenInNotebooks} />;
 }
