@@ -57,8 +57,7 @@ Make sure to not just update the code, but also update README.md with those requ
 
 ## Building and Running
 
-Try to build every change using `npm run build`, and verify that you can still start the server using `npm start`. The server should be able to run without any errors.
-The `dist/` folder contains the output of the build process.
+See [build.prompt.md](/.github/prompts/build.prompt.md) for instructions on how to build and run the server.
 
 ## Changelog
 

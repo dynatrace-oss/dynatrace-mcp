@@ -15,6 +15,10 @@ This document provides guidance for AI agents working on the TypeScript MCP serv
 
 ## Project-Specific Patterns
 
+### console.error for Logging
+
+Use `console.error` for all logging purposes in the MCP server code. This ensures that all log output is visible in the MCP host's log, which typically captures `stderr` output. Avoid using `console.log` as this prints to `stdin`, which is reserved for the MCP protocol communication and may not be visible in logs.
+
 ### The `tool()` Helper
 
 **Always use the `tool()` helper function** (see [`src/index.ts`](../../src/index.ts)) instead of calling `server.registerTool()` directly.
@@ -107,9 +111,3 @@ return {
 - Throw errors naturally inside tool callbacks – `wrapToolCallback` catches them.
 - For expected Dynatrace API errors, use `isClientRequestError(error)` from `@dynatrace-sdk/shared-errors` to detect client request errors, and `handleClientRequestError(error)` from `./utils/dynatrace-connection-utils` to translate them into readable messages.
 - Log unexpected errors with `console.error` before re-throwing; all stderr output is visible in the MCP host's server logs.
-
-## Development Workflow
-
-1. **Build**: `npm run build` – compiles TypeScript to `dist/`.
-2. **Verify startup**: `node dist/index.js` (stdio mode) or `node dist/index.js --http` (HTTP mode) – server must start without errors.
-3. **Unit tests**: `npm test` – runs Jest unit tests in `src/**/*.test.ts`.
