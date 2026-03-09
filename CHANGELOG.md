@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Added ESLint configuration for TypeScript with rules for indentation (2 spaces), trailing commas, consistent brace style, and unused variable detection. The lint step now runs on every pull request.
+
 ## 1.5.2
 
 - Fixed a race condition in the OAuth Authorization Code Flow token refresh that caused browser windows to open unexpectedly during server operation. Concurrent token refresh attempts now share a single in-flight refresh request, preventing the refresh token from being consumed multiple times.
