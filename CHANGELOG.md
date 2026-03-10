@@ -2,6 +2,10 @@
 
 ## Unreleased Changes
 
+## 1.5.3
+
+- Fixed the `mcp-server-dynatrace` bin path in `package.json` to resolve an npm publish warning.
+- Updated dependencies including `@dynatrace-sdk/client-query` (1.21.2 → 1.22.1), `hono` (4.12.2 → 4.12.5), `@hono/node-server` (1.19.9 → 1.19.10), and `express-rate-limit` (8.2.1 → 8.3.0).
 - Refined instructions for DQL statements (related to `smartscapeNodes` and `smartscapeEdges`) to use `toSmartscapeId()`, ensuring correct type casting when querying Smartscape topology data.
 
 ## 1.5.2
