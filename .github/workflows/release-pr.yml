@@ -1,0 +1,146 @@
+name: Create Release PR
+
+# Triggers on every push to main so that a Release PR is always kept up-to-date.
+# Skips automatically when the triggering commit is itself a release-preparation commit
+# (i.e. merging the Release PR would not spawn another Release PR).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write # Required to push the release branch
+  pull-requests: write # Required to create / update the PR
+
+jobs:
+  # ── Guard ────────────────────────────────────────────────────────────────────
+  # Skip the whole workflow when the latest commit on main is a release commit
+  # to avoid an infinite cycle of Release PRs being created.
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Detect release commit
+        id: check
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=format:%s)
+          if [[ "$COMMIT_MSG" == chore\(release\):* ]]; then
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping: last commit is a release-preparation commit."
+          else
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ── Create / update Release PR ───────────────────────────────────────────────
+  create-release-pr:
+    needs: check
+    if: needs.check.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # Full history for git describe / git log
+
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── Determine the next patch version ─────────────────────────────────────
+      - name: Compute next patch version
+        id: version
+        run: |
+          CURRENT=$(node -p "require('./package.json').version")
+          NEXT=$(node -p "
+            const [major, minor, patch] = '${CURRENT}'.split('.');
+            \`\${major}.\${minor}.\${parseInt(patch, 10) + 1}\`
+          ")
+          echo "current=${CURRENT}" >> "$GITHUB_OUTPUT"
+          echo "next=${NEXT}"        >> "$GITHUB_OUTPUT"
+          echo "branch=chore/prepare-next-patch-release" >> "$GITHUB_OUTPUT"
+
+      # ── Build the release branch ──────────────────────────────────────────────
+      - name: Configure git
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create release branch from main
+        run: |
+          BRANCH="${{ steps.version.outputs.branch }}"
+          # Start from a clean local branch (always based on the current main HEAD)
+          git checkout -b "$BRANCH"
+
+      - name: Prepare CHANGELOG
+        run: npm run release:prepare-changelog -- ${{ steps.version.outputs.next }}
+
+      - name: Bump version in package.json (and package-lock.json)
+        run: npm version ${{ steps.version.outputs.next }} --no-git-tag-version
+
+      - name: Update versions in server.json and gemini-extension.json
+        run: npm run release:update-versions -- ${{ steps.version.outputs.next }}
+
+      - name: Sync package-lock.json
+        run: npm install --package-lock-only
+
+      - name: Commit release preparations
+        run: |
+          git add CHANGELOG.md package.json package-lock.json server.json gemini-extension.json
+          git commit -m "chore(release): prepare for ${{ steps.version.outputs.next }} release"
+
+      - name: Force-push release branch
+        run: git push --force origin "${{ steps.version.outputs.branch }}"
+
+      # ── Create or update the PR ───────────────────────────────────────────────
+      - name: Create or update Release PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="${{ steps.version.outputs.branch }}"
+          CURRENT="${{ steps.version.outputs.current }}"
+          NEXT="${{ steps.version.outputs.next }}"
+          TITLE="chore(release): prepare ${NEXT} patch release"
+          WORKFLOW_URL="${{ github.server_url }}/${{ github.repository }}/actions/workflows/release-pr.yml"
+
+          cat > /tmp/pr_body.md << HEREDOC
+Bumps version from \`${CURRENT}\` → \`${NEXT}\` and documents all changes accumulated since the last release.
+
+## What's included
+
+- **CHANGELOG**: Added \`## ${NEXT}\` section with all unreleased changes
+- **Version bump** in \`package.json\`, \`server.json\` (×2), and \`gemini-extension.json\`
+- **\`package-lock.json\`** synced via \`npm install --package-lock-only\`
+
+---
+_This PR was automatically created/updated by the [Create Release PR](${WORKFLOW_URL}) workflow._
+HEREDOC
+
+          # Check whether a PR for this branch already exists
+          EXISTING_PR=$(gh pr list \
+            --head "$BRANCH" \
+            --base main \
+            --state open \
+            --json number \
+            --jq '.[0].number' 2>/dev/null || true)
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "Updating existing PR #${EXISTING_PR}"
+            gh pr edit "$EXISTING_PR" \
+              --title "$TITLE" \
+              --body-file /tmp/pr_body.md
+          else
+            echo "Creating new Release PR"
+            gh pr create \
+              --base  main \
+              --head  "$BRANCH" \
+              --title "$TITLE" \
+              --body-file /tmp/pr_body.md
+          fi

@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Added automated Release PR workflow that creates or updates a release PR on every push to the main branch, including CHANGELOG preparation, version bumps in all relevant files, and package-lock.json synchronization.
+
 ## 1.5.2
 
 - Fixed a race condition in the OAuth Authorization Code Flow token refresh that caused browser windows to open unexpectedly during server operation. Concurrent token refresh attempts now share a single in-flight refresh request, preventing the refresh token from being consumed multiple times.
