@@ -44,7 +44,8 @@
     "test:unit": "jest --selectProjects unit",
     "test:integration": "jest --selectProjects integration --runInBand",
     "prettier": "prettier --check .",
-    "prettier:fix": "prettier --write ."
+    "prettier:fix": "prettier --write .",
+    "lint": "eslint src"
   },
   "author": "Dynatrace",
   "license": "MIT",
@@ -71,12 +72,16 @@
     "zod-to-json-schema": "~3.25.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@types/jest": "^30.0.0",
     "@types/node": "^22",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
     "@vitejs/plugin-react": "^5.1.4",
     "dotenv": "^17.2.1",
+    "eslint": "^10.0.3",
     "husky": "^9.1.7",
     "jest": "^30.0.2",
     "prettier": "^3.6.2",
@@ -88,6 +93,9 @@
   },
   "overrides": {
     "ajv": "8.18.0",
+    "eslint": {
+      "ajv": "^6.12.6"
+    },
     "jws": "^3.2.3",
     "node-forge": "^1.3.2"
   }
