@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Updates the version field in server.json and gemini-extension.json.
+ * Updates the version field in server.json and gemini-extension.json,
+ * then syncs package-lock.json via `npm install --package-lock-only`.
  * The version in package.json is handled separately by `npm version`.
  *
  * Usage: node scripts/update-versions.js <version>
@@ -10,6 +11,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 
 const version = process.argv[2];
 if (!version) {
@@ -30,3 +32,10 @@ function updateVersionInFile(filePath) {
 
 updateVersionInFile(path.join(process.cwd(), 'server.json'));
 updateVersionInFile(path.join(process.cwd(), 'gemini-extension.json'));
+
+const result = spawnSync('npm', ['install', '--package-lock-only'], { stdio: 'inherit' });
+if (result.status !== 0) {
+  console.error('Failed to sync package-lock.json');
+  process.exit(result.status ?? 1);
+}
+console.log('Synced package-lock.json.');

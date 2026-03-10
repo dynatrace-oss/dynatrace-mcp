@@ -88,9 +88,6 @@ jobs:
       - name: Update versions in server.json and gemini-extension.json
         run: npm run release:update-versions -- ${{ steps.version.outputs.next }}
 
-      - name: Sync package-lock.json
-        run: npm install --package-lock-only
-
       - name: Commit release preparations
         run: |
           git add CHANGELOG.md package.json package-lock.json server.json gemini-extension.json
