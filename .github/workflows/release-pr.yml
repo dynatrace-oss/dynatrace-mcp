@@ -11,6 +11,7 @@ on:
 permissions:
   contents: write # Required to push the release branch
   pull-requests: write # Required to create / update the PR
+  models: read # Required for GitHub Models API (AI release notes generation)
 
 jobs:
   # ── Guard ────────────────────────────────────────────────────────────────────
@@ -80,6 +81,8 @@ jobs:
           git checkout -b "$BRANCH"
 
       - name: Prepare CHANGELOG
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run release:prepare-changelog -- ${{ steps.version.outputs.next }}
 
       - name: Bump version in package.json (and package-lock.json)
