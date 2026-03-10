@@ -11,7 +11,7 @@ When preparing a release, follow these steps to ensure everything is in order:
 3. Work on a release branch, typically named `chore/prepare-release-<version>`.
 4. Create a new section in CHANGELOG.md for the version below "Unreleased Changes".
 5. Move all entries from "Unreleased Changes" to this new section. Reword them in the process to fit the content guidelines specified in `.github/instructions/changelog.instructions.md`.
-6. Update the version number in `package.json`, `server.json`, and `gemini-extension.json`.
+6. Run `npm version <version> --no-git-tag-version` to update `package.json` and `package-lock.json`, then run `npm run release:update-versions -- <version>` to update `server.json` and `gemini-extension.json`.
 7. Run `npm install --package-lock-only` to sync the lock file.
 8. Let the user verify the release notes and version number before proceeding.
 9. Commit the changes with a message like `chore(release): prepare for <version> release`.
