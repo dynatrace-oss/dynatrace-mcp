@@ -80,10 +80,72 @@ jobs:
           # Start from a clean local branch (always based on the current main HEAD)
           git checkout -b "$BRANCH"
 
-      - name: Prepare CHANGELOG
+      - name: Prepare CHANGELOG with GitHub Copilot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run release:prepare-changelog -- ${{ steps.version.outputs.next }}
+          NEXT_VERSION: ${{ steps.version.outputs.next }}
+        run: |
+          python3 - << 'PYEOF'
+          import json, os, re, sys, urllib.request, urllib.error
+
+          version = os.environ['NEXT_VERSION']
+          token   = os.environ['GITHUB_TOKEN']
+
+          # Load changelog style guide (strip YAML frontmatter)
+          with open('.github/instructions/changelog.instructions.md') as f:
+              guidelines = re.sub(r'^---\s*\n.*?---\s*\n', '', f.read(), count=1, flags=re.DOTALL).strip()
+
+          # Load current CHANGELOG.md
+          with open('CHANGELOG.md') as f:
+              changelog = f.read()
+
+          # Prompt mirrors steps 4 and 5 of .github/prompts/release.prompt.md
+          prompt = (
+              'You are preparing a software release. Follow these changelog guidelines:\n\n'
+              + guidelines + '\n\n'
+              + 'Here is the current CHANGELOG.md:\n\n'
+              + changelog + '\n\n'
+              + f'4. Create a new section "## {version}" in CHANGELOG.md immediately below "## Unreleased Changes".\n'
+              + '5. Move all entries from "## Unreleased Changes" to this new section. '
+              + 'Reword them in the process to fit the content guidelines above.\n\n'
+              + 'Output ONLY the complete updated CHANGELOG.md. No markdown code fences, no explanation.'
+          )
+
+          payload = json.dumps({
+              'model': 'gpt-4o-mini',
+              'messages': [{'role': 'user', 'content': prompt}],
+              'temperature': 0.3,
+          }).encode()
+
+          req = urllib.request.Request(
+              'https://models.inference.ai.azure.com/chat/completions',
+              data=payload,
+              headers={
+                  'Content-Type': 'application/json',
+                  'Authorization': f'Bearer {token}',
+              },
+              method='POST',
+          )
+
+          try:
+              with urllib.request.urlopen(req) as resp:
+                  result = json.loads(resp.read())
+          except urllib.error.HTTPError as e:
+              print(f'GitHub Models API error {e.code}: {e.reason}', file=sys.stderr)
+              print(e.read().decode(), file=sys.stderr)
+              sys.exit(1)
+
+          content = result['choices'][0]['message']['content'].strip()
+          # Strip accidental code fences if the model wrapped the output
+          if content.startswith('```'):
+              content = re.sub(r'^```[^\n]*\n', '', content)
+              content = re.sub(r'\n```$', '', content)
+
+          with open('CHANGELOG.md', 'w') as f:
+              f.write(content + '\n')
+
+          print(f'CHANGELOG.md updated with "## {version}" section.')
+          PYEOF
 
       - name: Bump version in package.json (and package-lock.json)
         run: npm version ${{ steps.version.outputs.next }} --no-git-tag-version
