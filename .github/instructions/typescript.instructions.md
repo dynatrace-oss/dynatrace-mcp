@@ -19,41 +19,13 @@ This document provides guidance for AI agents working on the TypeScript MCP serv
 
 Use `console.error` for all logging purposes in the MCP server code. This ensures that all log output is visible in the MCP host's log, which typically captures `stderr` output. Avoid using `console.log` as this prints to `stdin`, which is reserved for the MCP protocol communication and may not be visible in logs.
 
-### The `tool()` Helper
+### Implementing MCP Tools
 
-**Always use the `tool()` helper function** (see [`src/index.ts`](../../src/index.ts)) instead of calling `server.registerTool()` directly.
-
-```typescript
-tool(
-  'my_tool_name', // snake_case name, used as MCP tool identifier
-  'My Tool Title', // human-readable title
-  'What this tool does.', // description shown to the agent
-  {
-    // Zod parameter schema (ZodRawShape)
-    entityId: z.string().describe('The entity ID to look up'),
-  },
-  // Tool Annotations
-  {
-    readOnlyHint: true, // only reads data, never modifies it
-    destructiveHint: true, // may perform irreversible actions, requires human approval
-    idempotentHint: true, // repeated calls with the same arguments produce the same result with no additional side-effects
-    openWorldHint: true, // interacts with external or live data sources
-  },
-  // Tool Implementation
-  async ({ entityId }) => {
-    const dtClient = await createAuthenticatedHttpClient(['storage:entities:read']);
-    // ... call Dynatrace SDK or capability function
-    // And return the result
-    return `Result: ${entityId}`;
-  },
-);
-```
-
-The callback must return either a `string` or `{ text: string; _meta?: Record<string, unknown> }`. Errors thrown inside are caught and returned as `isError: true` responses automatically.
+Please refer to [./.github/instructions/mcp-tools.instructions.md](./mcp-tools.instructions.md) for detailed instructions on implementing MCP tools in this codebase.
 
 ### Capability Modules
 
-Each logical feature lives in `src/capabilities/<feature-name>.ts`. These files export plain async functions that accept an `HttpClient` and return data. They do **not** register tools themselves – that is done in `src/index.ts`.
+Tools call capabilities (features), which live in `src/capabilities/<feature-name>.ts`. These files export plain async functions that accept an `HttpClient` and return data. They do **not** register tools themselves – that is done in `src/index.ts`.
 
 ```
 src/capabilities/list-problems.ts        ← pure business logic

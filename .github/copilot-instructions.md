@@ -30,7 +30,7 @@ The repository is structured as follows:
 
 ## Coding Guidelines
 
-Please try to follow basic TypeScript and Node.js coding conventions, especially [mcp-server-typescript.instructions.md](/.github/instructions/mcp-server-typescript.instructions.md). We will define a concrete eslint setup at a later point.
+Please try to follow basic TypeScript and Node.js coding conventions, especially [mtypescript.instructions.md](/.github/instructions/typescript.instructions.md).
 
 ## Dependencies
 
