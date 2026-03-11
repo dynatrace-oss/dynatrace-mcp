@@ -57,7 +57,7 @@ Make sure to not just update the code, but also update README.md with those requ
 
 ## Building and Running
 
-See [build.prompt.md](/.github/prompts/build.prompt.md) for instructions on how to build and run the server.
+See [build.instructions.md](/.github/instructions/build.instructions.md) for instructions on how to build and run the MCP server.
 
 ## Changelog
 

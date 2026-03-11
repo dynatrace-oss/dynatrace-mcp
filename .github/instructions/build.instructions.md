@@ -1,5 +1,5 @@
 ---
-agent: agent
+applyTo: '*'
 ---
 
 # Build Instructions
