@@ -46,7 +46,6 @@
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",
     "lint": "eslint src",
-    "release:prepare-changelog": "node scripts/prepare-release-changelog.js",
     "release:update-versions": "node scripts/update-versions.js"
   },
   "author": "Dynatrace",
