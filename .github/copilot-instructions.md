@@ -8,11 +8,9 @@ It is written in TypeScript and uses Node.js as its runtime. You need to underst
 
 - Follow the user's requirements carefully & to the letter.
 - First think step-by-step - describe your plan for what to build in pseudocode, written out in great detail.
-- Confirm, then write code!
-- Focus on easy and readability code, over being performant.
+- Focus on easy and readable code, over being performant.
 - Fully implement all requested functionality.
 - Leave NO todo's, placeholders or missing pieces.
-- Ensure code is complete! Verify thoroughly finalised.
 - Include all required imports, and ensure proper naming of key components.
 - Be concise, minimize any other prose.
 - If you think there might not be a correct answer, you say so.
@@ -32,7 +30,7 @@ The repository is structured as follows:
 
 ## Coding Guidelines
 
-Please try to follow basic TypeScript and Node.js coding conventions. We will define a concrete eslint setup at a later point.
+Please try to follow basic TypeScript and Node.js coding conventions, especially [mtypescript.instructions.md](/.github/instructions/typescript.instructions.md).
 
 ## Dependencies
 
@@ -44,11 +42,11 @@ The following dependencies are allowed:
 - `vite` / `vite-plugin-singlefile` and `react` for the UI part of the project,
 - and `@dynatrace` as well as `@dynatrace-sdk` packages.
 
-Please do not install any other dependencies.
+Avoid installing any other dependencies, unless explicitly approved.
 
 ## Authentication
 
-For authentication, we are using OAuth Client ID and Secrets from Dynatrace. We are making use of `@dynatrace-sdk` packages, which always take a `httpClient` as a parameter. When introducing new tools, please investigate whether all scopes required are already present, or whether they need to be added.
+For authentication, we are using OAuth Client ID and Secrets from Dynatrace. We are making use of `@dynatrace-sdk` packages, which always take an `httpClient` as a parameter. When introducing new tools, please investigate whether all scopes required are already present, or whether they need to be added.
 Make sure to not just update the code, but also update README.md with those required scopes.
 
 **Important:** OAuth scopes must always be kept in sync between implementation and documentation:
@@ -59,13 +57,8 @@ Make sure to not just update the code, but also update README.md with those requ
 
 ## Building and Running
 
-Try to build every change using `npm run build`, and verify that you can still start the server using `npm start`. The server should be able to run without any errors.
-The `dist/` folder contains the output of the build process.
+See [build.instructions.md](/.github/instructions/build.instructions.md) for instructions on how to build and run the MCP server.
 
 ## Changelog
 
-- Whenever you add a new feature, please also add a new line into `CHANGELOG.md`. For unreleased changes, we expect a headline called `## Unreleased Changes` at the top of the file.
-- Follow the existing format:
-  - Use semantic versioning (major.minor.patch)
-  - Group changes by type (Added, Changed, Fixed, etc.)
-  - Keep entries concise but descriptive
+See [changelog.instructions.md](/.github/instructions/changelog.instructions.md) for full guidance on what to include and how to format changelog entries.
