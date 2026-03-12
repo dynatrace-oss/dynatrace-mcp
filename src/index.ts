@@ -69,6 +69,7 @@ const allRequiredScopes = scopesBase.concat([
   'storage:bizevents:read', // Read bizevents for reliability guardian validations
   'storage:spans:read', // Read spans from Grail
   'storage:system:read', // Read System Data from Grail
+  'storage:files:read', // Read Files from Grail (needed for DQL `load` statements, e.g. lookup data)
 
   // Settings and configuration scopes
   'app-settings:objects:read', // Read app settings objects
@@ -739,6 +740,7 @@ const main = async () => {
             'storage:user.sessions:read', // Read User sessions from Grail
             'storage:security.events:read', // Read Security events from Grail
             'storage:smartscape:read', // Read Smartscape Entities from Grail
+            'storage:files:read', // Read Files from Grail (needed for DQL `load` statements, e.g. lookup data)
           ),
         );
         const response = await executeDql(
