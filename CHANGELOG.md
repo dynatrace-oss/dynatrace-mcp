@@ -2,7 +2,9 @@
 
 ## Unreleased Changes
 
-- Fixed DQL `load` statements failing with insufficient permissions by adding the `storage:files:read` scope to the `execute_dql` tool.
+## 1.6.0
+
+- Fixed DQL `load` statements (e.g., `load "/lookups/http_status_codes"`) failing with an insufficient permissions error by adding the `storage:files:read` scope to the `execute_dql` tool. This enables lookup data joins in DQL queries, such as enriching span data with HTTP status code descriptions.
 
 ## 1.5.3
 
