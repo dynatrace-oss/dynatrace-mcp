@@ -2,7 +2,7 @@
 
 ## Unreleased Changes
 
-- Fixed DQL `load` statements failing with insufficient permissions by adding the `storage:lookup:read` scope to the `execute_dql` tool.
+- Fixed DQL `load` statements failing with insufficient permissions by adding the `storage:files:read` scope to the `execute_dql` tool.
 
 ## 1.5.3
 
