@@ -376,6 +376,7 @@ Depending on the features you are using, the following scopes are needed:
 - `storage:user.events:read` - needed for `execute_dql` tool to read User events from Grail
 - `storage:user.sessions:read` - needed for `execute_dql` tool to read User sessions from Grail
 - `storage:smartscape:read` - needed for `execute_dql` tool to read Smartscape Data
+- `storage:lookup:read` - needed for `execute_dql` tool to use DQL `load` statements for lookup data
 - `storage:events:write` - needed for `send_event` tool to send event data to Dynatrace
 - `davis-copilot:conversations:execute` - execute conversational skill (chat with Copilot)
 - `davis-copilot:nl2dql:execute` - execute Davis Copilot Natural Language (NL) to DQL skill

@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Fixed DQL `load` statements failing with insufficient permissions by adding the `storage:lookup:read` scope to the `execute_dql` tool.
+
 ## 1.5.3
 
 - Fixed the `mcp-server-dynatrace` bin path in `package.json` to resolve an npm publish warning.
