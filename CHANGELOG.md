@@ -2,7 +2,11 @@
 
 ## Unreleased Changes
 
-- Fixed DQL `load` statements failing with insufficient permissions by adding the `storage:files:read` scope to the `execute_dql` tool.
+## 1.6.0
+
+- Fixed an `"Already connected to a transport"` error in HTTP mode (`--http` flag) that caused all requests after the first concurrent connection to fail. Each incoming HTTP request now gets its own `McpServer` instance, matching the stateless server pattern recommended by the MCP SDK.
+- Fixed DQL `load` statements (e.g., `load "/lookups/http_status_codes"`) failing with an insufficient permissions error by adding the `storage:files:read` scope to the `execute_dql` tool. This enables lookup data joins in DQL queries, such as enriching span data with HTTP status code descriptions.
+- Updated dependencies including `hono` (4.12.5 → 4.12.7), which includes security hardening against prototype pollution in `parseBody`.
 
 ## 1.5.3
 
