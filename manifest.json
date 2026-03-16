@@ -1,0 +1,67 @@
+{
+  "manifest_version": "0.3",
+  "name": "dynatrace-mcp-server",
+  "display_name": "Dynatrace MCP Server",
+  "version": "1.6.1",
+  "description": "Access Dynatrace observability data: logs, metrics, problems, vulnerabilities via DQL and Davis AI",
+  "long_description": "The Dynatrace MCP Server connects Claude to your Dynatrace observability platform, enabling real-time access to logs, metrics, problems, vulnerabilities, traces, and more — directly from your AI assistant. Supports DQL queries, Davis AI, workflow automation, and document management.",
+  "author": {
+    "name": "Dynatrace OSS",
+    "url": "https://github.com/dynatrace-oss"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dynatrace-oss/dynatrace-mcp"
+  },
+  "homepage": "https://github.com/dynatrace-oss/dynatrace-mcp",
+  "license": "MIT",
+  "keywords": ["dynatrace", "mcp", "observability", "monitoring", "logs", "metrics", "devops"],
+  "server": {
+    "type": "node",
+    "mcp_config": {
+      "command": "npx",
+      "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
+      "env": {
+        "DT_ENVIRONMENT": "${user_config.dt_environment}",
+        "DT_PLATFORM_TOKEN": "${user_config.dt_platform_token}",
+        "OAUTH_CLIENT_ID": "${user_config.oauth_client_id}",
+        "OAUTH_CLIENT_SECRET": "${user_config.oauth_client_secret}",
+        "DT_GRAIL_QUERY_BUDGET_GB": "${user_config.dt_grail_query_budget_gb}"
+      }
+    }
+  },
+  "user_config": {
+    "dt_environment": {
+      "type": "string",
+      "title": "Dynatrace Environment URL",
+      "description": "URL to your Dynatrace Platform (e.g. https://abc12345.apps.dynatrace.com). Do not use Dynatrace classic URLs.",
+      "required": true
+    },
+    "dt_platform_token": {
+      "type": "string",
+      "title": "Dynatrace Platform Token",
+      "description": "Dynatrace Platform Token for authentication. Alternative to browser-based OAuth authentication.",
+      "required": false,
+      "sensitive": true
+    },
+    "oauth_client_id": {
+      "type": "string",
+      "title": "OAuth Client ID",
+      "description": "OAuth Client ID for advanced authentication scenarios. Use together with OAUTH_CLIENT_SECRET.",
+      "required": false
+    },
+    "oauth_client_secret": {
+      "type": "string",
+      "title": "OAuth Client Secret",
+      "description": "OAuth Client Secret for advanced authentication scenarios. Use together with OAUTH_CLIENT_ID.",
+      "required": false,
+      "sensitive": true
+    },
+    "dt_grail_query_budget_gb": {
+      "type": "number",
+      "title": "Grail Query Budget (GB)",
+      "description": "Budget limit in GB for Grail query bytes scanned per session. Default: 1000. Set to -1 to disable.",
+      "required": false
+    }
+  }
+}
