@@ -1,7 +1,5 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
-## Unreleased Changes
-
 ## 1.6.0
 
 - Fixed an `"Already connected to a transport"` error in HTTP mode (`--http` flag) that caused all requests after the first concurrent connection to fail. Each incoming HTTP request now gets its own `McpServer` instance, matching the stateless server pattern recommended by the MCP SDK.
