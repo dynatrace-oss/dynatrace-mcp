@@ -4,6 +4,7 @@
 
 ## 1.6.1
 
+- Improved `execute_dql` MCP App UI styling using Strato design tokens, condensed table row density, and a refined toolbar layout.
 - Updated dependencies including `undici` (6.23.0 → 6.24.0).
 
 ## 1.6.0
