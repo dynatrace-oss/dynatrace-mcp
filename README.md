@@ -288,6 +288,52 @@ npx -y @dynatrace-oss/dynatrace-mcp-server@latest --version
 }
 ```
 
+### MCP Bundle (MCPB)
+
+This repository includes a MCP Bundle-compatible [manifest.json](manifest.json) for local installation.
+The bundle runs the compiled local server entrypoint via stdio:
+
+- `server.type`: `node`
+- `server.entry_point`: `dist/index.js`
+- `mcp_config.command`: `node`
+- `mcp_config.args`: `["${__dirname}/dist/index.js"]`
+
+Build and validate before packing:
+
+```bash
+npm ci
+npm run build
+npm run mcpb:validate
+```
+
+Create a local bundle archive:
+
+```bash
+npm run mcpb:pack
+```
+
+Or run the full flow in one command:
+
+```bash
+npm ci
+npm run mcpb:bundle
+```
+
+The resulting `.mcpb` file can then be installed in MCPB-compatible hosts.
+Tagged GitHub releases also attach the generated `.mcpb` bundle asset automatically.
+
+For local startup verification before packing:
+
+```bash
+DT_ENVIRONMENT=https://<your-env>.apps.dynatrace.com node dist/index.js
+```
+
+For HTTP mode verification:
+
+```bash
+DT_ENVIRONMENT=https://<your-env>.apps.dynatrace.com node dist/index.js --http
+```
+
 ### Rule File
 
 For efficient result retrieval from Dynatrace, please consider creating a rule file (e.g., [.github/copilot-instructions.md](https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions), [.amazonq/rules/](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/context-project-rules.html)), instructing coding agents on how to get more details for your component/app/service. Here is an example for [easytrade](https://github.com/Dynatrace/easytrade), please adapt the names and filters to fit your use-cases and components:
