@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import { EnvironmentInformationClient } from '@dynatrace-sdk/client-platform-management-service';
 import { isClientRequestError } from '@dynatrace-sdk/shared-errors';
-// Dynamically imported below (ESM-only package)
-// import { registerAppTool, registerAppResource, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
+// Dynamically imported below: @modelcontextprotocol/ext-apps is ESM-only.
+// With module: Node16, TypeScript preserves the import() call instead of transforming it to require().
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -100,13 +100,8 @@ const allRequiredScopes = scopesBase.concat([
 ]);
 
 const main = async () => {
-  // Dynamic import: @modelcontextprotocol/ext-apps is ESM-only and can't be require()'d.
-  const dynamicImport = new Function('specifier', 'return import(specifier)') as (
-    specifier: string,
-  ) => Promise<typeof import('@modelcontextprotocol/ext-apps/server')>;
-  const { registerAppTool, registerAppResource, RESOURCE_MIME_TYPE } = await dynamicImport(
-    '@modelcontextprotocol/ext-apps/server',
-  );
+  const { registerAppTool, registerAppResource, RESOURCE_MIME_TYPE } =
+    await import('@modelcontextprotocol/ext-apps/server');
 
   console.error(`Initializing Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
@@ -851,12 +846,20 @@ const main = async () => {
     );
 
     // MCP App: Register the HTML resource for the execute_dql interactive UI (MCP App)
-    registerAppResource(server, 'DQL Results Viewer', executeDqlResourceUri, {}, async () => {
-      const html = readFileSync(join(__dirname, 'ui', 'execute-dql', 'index.html'), 'utf-8');
-      return {
-        contents: [{ uri: executeDqlResourceUri, mimeType: RESOURCE_MIME_TYPE, text: html }],
-      };
-    });
+    // The `unknown` cast works around a TypeScript dual-module hazard where ext-apps (ESM) imports McpServer
+    // from the ESM build of @modelcontextprotocol/sdk, while our code imports from the CJS build.
+    registerAppResource(
+      server as unknown as Parameters<typeof registerAppResource>[0],
+      'DQL Results Viewer',
+      executeDqlResourceUri,
+      {},
+      async () => {
+        const html = readFileSync(join(__dirname, 'ui', 'execute-dql', 'index.html'), 'utf-8');
+        return {
+          contents: [{ uri: executeDqlResourceUri, mimeType: RESOURCE_MIME_TYPE, text: html }],
+        };
+      },
+    );
 
     tool(
       'generate_dql_from_natural_language',
