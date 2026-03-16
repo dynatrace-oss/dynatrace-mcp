@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Updates the version field in server.json and gemini-extension.json,
+ * Updates the version field in server.json, gemini-extension.json, and manifest.json,
  * then syncs package-lock.json via `npm install --package-lock-only`.
  * The version in package.json is handled separately by `npm version`.
  *
@@ -32,6 +32,7 @@ function updateVersionInFile(filePath) {
 
 updateVersionInFile(path.join(process.cwd(), 'server.json'));
 updateVersionInFile(path.join(process.cwd(), 'gemini-extension.json'));
+updateVersionInFile(path.join(process.cwd(), 'manifest.json'));
 
 const result = spawnSync('npm', ['install', '--package-lock-only'], { stdio: 'inherit' });
 if (result.status !== 0) {
