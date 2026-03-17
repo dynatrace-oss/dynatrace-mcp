@@ -4,12 +4,17 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "rootDir": "./src",
-    "moduleResolution": "node16",
+    "moduleResolution": "node",
     "strict": true,
-    "module": "Node16",
+    "module": "CommonJS",
     "outDir": "./dist",
     "resolveJsonModule": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@modelcontextprotocol/ext-apps/server": [
+        "./node_modules/@modelcontextprotocol/ext-apps/dist/src/server/index.d.ts"
+      ]
+    }
   },
   "include": ["src/**/*", "package.json"],
   "exclude": ["node_modules", "src/ui"]
