@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 import { EnvironmentInformationClient } from '@dynatrace-sdk/client-platform-management-service';
 import { isClientRequestError } from '@dynatrace-sdk/shared-errors';
-// Dynamically imported below (ESM-only package)
-// import { registerAppTool, registerAppResource, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
+import { registerAppTool, registerAppResource, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -100,14 +99,6 @@ const allRequiredScopes = scopesBase.concat([
 ]);
 
 const main = async () => {
-  // Dynamic import: @modelcontextprotocol/ext-apps is ESM-only and can't be require()'d.
-  const dynamicImport = new Function('specifier', 'return import(specifier)') as (
-    specifier: string,
-  ) => Promise<typeof import('@modelcontextprotocol/ext-apps/server')>;
-  const { registerAppTool, registerAppResource, RESOURCE_MIME_TYPE } = await dynamicImport(
-    '@modelcontextprotocol/ext-apps/server',
-  );
-
   console.error(`Initializing Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
   // Configure proxy from environment variables early in the startup process
