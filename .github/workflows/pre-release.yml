@@ -23,9 +23,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build
-
       - name: Compute pre-release version
         id: version
         run: |
@@ -41,7 +38,10 @@ jobs:
           npm version "$PRERELEASE_VERSION" --no-git-tag-version
           echo "version=$PRERELEASE_VERSION" >> $GITHUB_OUTPUT
 
+      - name: Build
+        run: npm run build
+
       - name: Publish to npm with next tag
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
-        run: npm publish --tag next --provenance --access public
+        run: npm publish dist/ --tag next --provenance --access public
