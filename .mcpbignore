@@ -8,6 +8,7 @@ integration-tests/
 scripts/
 src/
 assets/
+node_modules/
 
 *.log
 
