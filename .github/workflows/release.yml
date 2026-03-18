@@ -69,10 +69,10 @@ jobs:
           # Publish to npm with provenance
           if [[ "${{ steps.version.outputs.version }}" == *"-"* ]]; then
             # Pre-release version - publish with next tag
-            npm publish --tag next --provenance --access public
+            npm publish dist/ --tag next --provenance --access public
           else
             # Stable release - publish with latest tag
-            npm publish --provenance --access public
+            npm publish dist/ --provenance --access public
           fi
 
       - name: Create GitHub Release
