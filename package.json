@@ -30,7 +30,7 @@
     "build:ui": "vite build --config vite.config.mts",
     "typecheck": "tsc --noEmit",
     "prepare": "husky",
-    "watch": "tsc --noEmit --watch",
+    "watch": "node scripts/build-server.mjs --watch",
     "test": "jest",
     "test:unit": "jest --selectProjects unit",
     "test:integration": "jest --selectProjects integration --runInBand",
