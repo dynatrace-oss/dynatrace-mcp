@@ -25,7 +25,7 @@
     "dist": "dist"
   },
   "scripts": {
-    "build": "npm run build:ui && npm run build:server",
+    "build": "npm run typecheck && npm run build:ui && npm run build:server",
     "build:server": "node scripts/build-server.mjs",
     "build:ui": "vite build --config vite.config.mts",
     "typecheck": "tsc --noEmit",
