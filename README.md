@@ -290,7 +290,7 @@ npx -y @dynatrace-oss/dynatrace-mcp-server@latest --version
 
 ### MCP Bundle (MCPB)
 
-This repository includes a MCP Bundle-compatible [manifest.json](manifest.json) for local installation.
+This repository includes an MCP Bundle-compatible [manifest.json](manifest.json) for local installation.
 The bundle runs the compiled local server entrypoint via stdio:
 
 - `server.type`: `node`
