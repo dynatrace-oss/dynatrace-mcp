@@ -30,7 +30,7 @@
     "build:ui": "vite build --config vite.config.mts",
     "typecheck": "tsc --noEmit",
     "mcpb:validate": "npx -y @anthropic-ai/mcpb validate manifest.json",
-    "mcpb:pack": "npx -y @anthropic-ai/mcpb pack .",
+    "mcpb:pack": "npx -y @anthropic-ai/mcpb pack dist/",
     "mcpb:bundle": "npm run build && npm run mcpb:validate && npm run mcpb:pack",
     "prepare": "husky",
     "watch": "node scripts/build-server.mjs --watch",
