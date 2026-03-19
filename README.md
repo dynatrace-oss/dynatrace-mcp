@@ -288,6 +288,16 @@ npx -y @dynatrace-oss/dynatrace-mcp-server@latest --version
 }
 ```
 
+### MCP Bundle (MCPB)
+
+This repository includes an MCP Bundle-compatible [manifest.json](manifest.json) for local installation.
+The bundle runs the compiled local server entrypoint via stdio:
+
+- `server.type`: `node`
+- `server.entry_point`: `dist/index.js`
+- `mcp_config.command`: `node`
+- `mcp_config.args`: `["${__dirname}/dist/index.js"]`
+
 ### Rule File
 
 For efficient result retrieval from Dynatrace, please consider creating a rule file (e.g., [.github/copilot-instructions.md](https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions), [.amazonq/rules/](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/context-project-rules.html)), instructing coding agents on how to get more details for your component/app/service. Here is an example for [easytrade](https://github.com/Dynatrace/easytrade), please adapt the names and filters to fit your use-cases and components:

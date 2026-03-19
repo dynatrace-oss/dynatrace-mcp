@@ -14,22 +14,117 @@
     "url": "https://github.com/dynatrace-oss/dynatrace-mcp"
   },
   "homepage": "https://github.com/dynatrace-oss/dynatrace-mcp",
+  "documentation": "https://github.com/dynatrace-oss/dynatrace-mcp#readme",
+  "support": "https://github.com/dynatrace-oss/dynatrace-mcp/issues",
   "license": "MIT",
   "keywords": ["dynatrace", "mcp", "observability", "monitoring", "logs", "metrics", "devops"],
   "server": {
     "type": "node",
+    "entry_point": "dist/index.js",
     "mcp_config": {
-      "command": "npx",
-      "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
+      "command": "node",
+      "args": ["${__dirname}/dist/index.js"],
       "env": {
         "DT_ENVIRONMENT": "${user_config.dt_environment}",
         "DT_PLATFORM_TOKEN": "${user_config.dt_platform_token}",
         "OAUTH_CLIENT_ID": "${user_config.oauth_client_id}",
         "OAUTH_CLIENT_SECRET": "${user_config.oauth_client_secret}",
-        "DT_GRAIL_QUERY_BUDGET_GB": "${user_config.dt_grail_query_budget_gb}"
+        "DT_SSO_URL": "${user_config.dt_sso_url}",
+        "DT_GRAIL_QUERY_BUDGET_GB": "${user_config.dt_grail_query_budget_gb}",
+        "DT_MCP_DISABLE_TELEMETRY": "${user_config.dt_mcp_disable_telemetry}"
       }
     }
   },
+  "tools": [
+    {
+      "name": "get_environment_info",
+      "description": "Get information about the connected Dynatrace Environment and verify connection/authentication."
+    },
+    {
+      "name": "list_vulnerabilities",
+      "description": "Retrieve active vulnerabilities from Dynatrace with optional filters."
+    },
+    {
+      "name": "list_problems",
+      "description": "List Davis problems in Dynatrace with status and timeframe filters."
+    },
+    {
+      "name": "find_entity_by_name",
+      "description": "Find monitored Dynatrace entities by name and return entity IDs/types."
+    },
+    {
+      "name": "send_slack_message",
+      "description": "Send a Slack message through Dynatrace Slack Connector."
+    },
+    {
+      "name": "verify_dql",
+      "description": "Syntactically verify a DQL query before execution."
+    },
+    {
+      "name": "execute_dql",
+      "description": "Execute DQL and retrieve logs, metrics, events, spans, and entity data."
+    },
+    {
+      "name": "generate_dql_from_natural_language",
+      "description": "Generate DQL statements from natural language using Davis CoPilot."
+    },
+    {
+      "name": "explain_dql_in_natural_language",
+      "description": "Explain DQL statements in natural language using Davis CoPilot."
+    },
+    {
+      "name": "chat_with_davis_copilot",
+      "description": "Ask general Dynatrace questions using Davis CoPilot."
+    },
+    {
+      "name": "create_workflow_for_notification",
+      "description": "Create a Dynatrace workflow for problem notifications."
+    },
+    {
+      "name": "make_workflow_public",
+      "description": "Update a workflow and make it publicly accessible in the Dynatrace environment."
+    },
+    {
+      "name": "get_kubernetes_events",
+      "description": "Retrieve Kubernetes events from Dynatrace for a cluster and timeframe."
+    },
+    {
+      "name": "reset_grail_budget",
+      "description": "Reset the local Grail query budget tracker for the current MCP session."
+    },
+    {
+      "name": "send_email",
+      "description": "Send email through the Dynatrace Email API."
+    },
+    {
+      "name": "send_event",
+      "description": "Send custom events to Dynatrace using Events API v2."
+    },
+    {
+      "name": "list_exceptions",
+      "description": "List recent exceptions known to Dynatrace."
+    },
+    {
+      "name": "list_davis_analyzers",
+      "description": "List available Davis analyzers."
+    },
+    {
+      "name": "execute_davis_analyzer",
+      "description": "Execute a Davis analyzer with custom input."
+    },
+    {
+      "name": "create_dynatrace_notebook",
+      "description": "Create a Dynatrace notebook document for sharing findings."
+    }
+  ],
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=20.0.0"
+    }
+  },
+  "privacy_policies": ["https://www.dynatrace.com/company/trust-center/privacy-notice/"],
   "user_config": {
     "dt_environment": {
       "type": "string",
@@ -57,11 +152,25 @@
       "required": false,
       "sensitive": true
     },
+    "dt_sso_url": {
+      "type": "string",
+      "title": "Dynatrace SSO URL Override",
+      "description": "Optional SSO URL override for OAuth authentication (advanced troubleshooting only).",
+      "required": false
+    },
     "dt_grail_query_budget_gb": {
       "type": "number",
       "title": "Grail Query Budget (GB)",
       "description": "Budget limit in GB for Grail query bytes scanned per session. Default: 1000. Set to -1 to disable.",
-      "required": false
+      "required": false,
+      "default": 1000
+    },
+    "dt_mcp_disable_telemetry": {
+      "type": "boolean",
+      "title": "Disable Telemetry",
+      "description": "Disable usage telemetry events sent by the MCP server.",
+      "required": false,
+      "default": false
     }
   }
 }

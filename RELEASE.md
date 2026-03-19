@@ -5,7 +5,8 @@ This repository uses automated GitHub workflows to prepare releases whenever a n
 ## How it works
 
 1. When you push a tag starting with `v` (e.g., `v1.0.0`, `v2.1.3`), the release workflow automatically triggers
-2. The workflow builds the project, runs tests, and creates a GitHub release with auto-generated release notes
+2. The workflow builds the project, runs tests, validates the MCPB manifest, packs the `.mcpb` bundle, and creates a GitHub release with auto-generated release notes
+3. The generated `.mcpb` file is attached to the GitHub release as a downloadable asset
 
 **Note**: This workflow does (not yet) publish the release to npmjs.com.
 
@@ -33,6 +34,7 @@ After pushing the tag, the workflow will automatically:
 2. Build the project
 3. Generate release notes from commit history
 4. Create a GitHub release
+5. Attach the generated `.mcpb` asset to the release
 
 ### Creating Pre-releases
 

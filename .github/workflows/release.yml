@@ -44,6 +44,29 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
+      - name: Validate MCPB manifest
+        run: npm run mcpb:validate
+
+      - name: Pack MCPB bundle
+        id: mcpb
+        run: |
+          npm run mcpb:pack
+
+          PACKED_FILE=$(find . -maxdepth 1 -name '*.mcpb' | head -n1)
+          if [ -z "$PACKED_FILE" ]; then
+            echo "No .mcpb bundle was produced"
+            exit 1
+          fi
+
+          ASSET_NAME="dynatrace-mcp-server-${{ steps.version.outputs.version }}.mcpb"
+          mv "$PACKED_FILE" "$ASSET_NAME"
+
+          echo "asset_path=$ASSET_NAME" >> $GITHUB_OUTPUT
+          echo "Created MCPB asset: $ASSET_NAME"
+
+      - name: Sign MCPB bundle (self-signed)
+        run: npx -y @anthropic-ai/mcpb sign "${{ steps.mcpb.outputs.asset_path }}" --self-signed
+
       - name: Generate changelog for GitHub Release
         id: changelog
         run: |
@@ -90,6 +113,12 @@ jobs:
           ```bash
           npx -y @dynatrace-oss/dynatrace-mcp-server@${{ steps.version.outputs.version }}
           ```
+
+          ## MCP Bundle
+
+          This release also includes the local MCP Bundle asset:
+
+          `${{ steps.mcpb.outputs.asset_path }}`
           EOF
 
           # Create the release
@@ -97,11 +126,13 @@ jobs:
             gh release create "${{ steps.version.outputs.tag }}" \
               --title "Release ${{ steps.version.outputs.tag }}" \
               --notes-file release_body.md \
+              "${{ steps.mcpb.outputs.asset_path }}" \
               --prerelease
           else
             gh release create "${{ steps.version.outputs.tag }}" \
               --title "Release ${{ steps.version.outputs.tag }}" \
-              --notes-file release_body.md
+              --notes-file release_body.md \
+              "${{ steps.mcpb.outputs.asset_path }}"
           fi
 
       # From https://github.com/modelcontextprotocol/registry/blob/main/docs/guides/publishing/github-actions.md

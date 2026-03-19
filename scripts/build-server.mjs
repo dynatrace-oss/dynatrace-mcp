@@ -43,7 +43,22 @@ if (watchMode) {
   writeFileSync('./dist/package.json', JSON.stringify(distPkg, null, 2) + '\n');
 
   // Copy documentation and registry files into dist/ for npm publish
-  for (const file of ['README.md', 'LICENSE', 'CHANGELOG.md', 'manifest.json', 'server.json']) {
+  for (const file of ['README.md', 'LICENSE', 'CHANGELOG.md', 'server.json']) {
     copyFileSync(`./${file}`, `./dist/${file}`);
   }
+
+  // Generate dist/manifest.json with paths relative to dist/ (used by mcpb pack dist/)
+  const manifest = JSON.parse(readFileSync('./manifest.json', 'utf-8'));
+  const distManifest = {
+    ...manifest,
+    server: {
+      ...manifest.server,
+      entry_point: 'index.js',
+      mcp_config: {
+        ...manifest.server.mcp_config,
+        args: ['${__dirname}/index.js'],
+      },
+    },
+  };
+  writeFileSync('./dist/manifest.json', JSON.stringify(distManifest, null, 2) + '\n');
 }
