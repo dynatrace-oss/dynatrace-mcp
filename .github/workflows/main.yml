@@ -43,6 +43,13 @@ jobs:
       - name: Pack MCPB bundle
         run: npm run mcpb:pack
 
+      - name: Sign MCPB bundle (self-signed)
+        run: |
+          for bundle in ./*.mcpb; do
+            [ -e "$bundle" ] || continue
+            npx -y @anthropic-ai/mcpb sign "$bundle" --self-signed
+          done
+
       - name: Upload MCPB bundle artifact
         uses: actions/upload-artifact@v7
         with:

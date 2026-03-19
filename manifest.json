@@ -121,7 +121,7 @@
     "claude_desktop": ">=0.10.0",
     "platforms": ["darwin", "win32", "linux"],
     "runtimes": {
-      "node": ">=18.0.0"
+      "node": ">=20.0.0"
     }
   },
   "privacy_policies": ["https://www.dynatrace.com/company/trust-center/privacy-notice/"],
@@ -163,8 +163,7 @@
       "title": "Grail Query Budget (GB)",
       "description": "Budget limit in GB for Grail query bytes scanned per session. Default: 1000. Set to -1 to disable.",
       "required": false,
-      "default": 1000,
-      "min": -1
+      "default": 1000
     },
     "dt_mcp_disable_telemetry": {
       "type": "boolean",
