@@ -59,7 +59,7 @@
     "@dynatrace-sdk/client-query": "^1.18.1",
     "@dynatrace-sdk/shared-errors": "^1.0.0",
     "@dynatrace/openkit-js": "^4.1.0",
-    "@dynatrace/strato-components": "^1.16.0",
+    "@dynatrace/strato-components": "^3.1.0",
     "@dynatrace/strato-components-preview": "^2.14.1",
     "@dynatrace/strato-icons": "^1.12.0",
     "@modelcontextprotocol/ext-apps": "^1.0.1",
