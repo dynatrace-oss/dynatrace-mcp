@@ -2,6 +2,11 @@
 
 ## Unreleased Changes
 
+## 1.7.0
+
+- Added MCP-Bundle (`.mcpb`) for the Anthropics MCP Connectors marketplace, making the server directly installable from the marketplace.
+- Added `esbuild` to create a self-contained NPM package, improving install and startup time of the MCP server.
+
 ## 1.6.1
 
 - Improved `execute_dql` MCP App UI styling using Strato design tokens, condensed table row density, and a refined toolbar layout.
