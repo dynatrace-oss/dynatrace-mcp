@@ -3,9 +3,16 @@ import * as os from 'os';
 import * as crypto from 'crypto';
 import { getPackageJsonVersion } from './version';
 
+export type AuthenticationType =
+  | 'oauth_authorization_code_flow'
+  | 'oauth_client_credentials_flow'
+  | 'platform_token'
+  | 'unknown';
+
 export interface EnvironmentInfo {
   environmentId: string;
   stage: string;
+  authType: AuthenticationType;
 }
 
 export interface Telemetry {
@@ -112,6 +119,7 @@ class DynatraceMcpTelemetry implements Telemetry {
       os_release: os.release(),
       environment_id: this.environmentInfo.environmentId,
       stage: this.environmentInfo.stage,
+      auth_type: this.environmentInfo.authType,
     };
   }
 
