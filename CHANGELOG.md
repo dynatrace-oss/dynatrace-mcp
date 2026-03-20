@@ -2,6 +2,10 @@
 
 ## Unreleased Changes
 
+## 1.7.0
+
+- Added automated publishing of the `.mcpb` bundle to the Anthropics MCP marketplace on each release, making the server directly installable from the marketplace.
+
 ## 1.6.1
 
 - Improved `execute_dql` MCP App UI styling using Strato design tokens, condensed table row density, and a refined toolbar layout.
