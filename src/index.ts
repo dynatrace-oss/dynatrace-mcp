@@ -1577,6 +1577,8 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
     .option('--server', 'enable HTTP server mode (alias for --http)')
     .option('-p, --port <number>', 'port for HTTP server', '3000')
     .option('-H, --host <host>', 'host for HTTP server', '127.0.0.1')
+    .allowUnknownOption() // Claude Desktop / Electron UtilityProcess may inject extra arguments
+    .allowExcessArguments() // Avoid "too many arguments" when launched from .mcpb bundles
     .parse();
 
   const options = program.opts();

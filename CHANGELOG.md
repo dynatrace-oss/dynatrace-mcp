@@ -2,6 +2,10 @@
 
 ## Unreleased Changes
 
+## 1.7.1
+
+- Fixed MCPB bundle file not working on Claude Desktop
+
 ## 1.7.0
 
 - Added MCP-Bundle (`.mcpb`) for the Anthropics MCP Connectors marketplace, making the server directly installable from the marketplace.
