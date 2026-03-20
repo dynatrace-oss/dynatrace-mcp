@@ -4,7 +4,8 @@
 
 ## 1.7.0
 
-- Added automated publishing of the `.mcpb` bundle to the Anthropics MCP marketplace on each release, making the server directly installable from the marketplace.
+- Added MCP-Bundle (`.mcpb`) for the Anthropics MCP Connectors marketplace, making the server directly installable from the marketplace.
+- Added `esbuild` to create a self-contained NPM package, improving install and startup time of the MCP server.
 
 ## 1.6.1
 
