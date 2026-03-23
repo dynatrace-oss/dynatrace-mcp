@@ -1,5 +1,5 @@
 import { context, build } from 'esbuild';
-import { readFileSync, writeFileSync, copyFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, copyFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
 const watchMode = process.argv.includes('--watch');
@@ -47,18 +47,19 @@ if (watchMode) {
     copyFileSync(`./${file}`, `./dist/${file}`);
   }
 
-  // Generate dist/manifest.json with paths relative to dist/ (used by mcpb pack dist/)
-  const manifest = JSON.parse(readFileSync('./manifest.json', 'utf-8'));
-  const distManifest = {
-    ...manifest,
-    server: {
-      ...manifest.server,
-      entry_point: 'index.js',
-      mcp_config: {
-        ...manifest.server.mcp_config,
-        args: ['${__dirname}/index.js'],
-      },
-    },
-  };
-  writeFileSync('./dist/manifest.json', JSON.stringify(distManifest, null, 2) + '\n');
+  // Create dist-bundle/ staging directory for mcpb pack
+  // Layout: dist-bundle/dist/index.js + dist-bundle/dist/ui/ so that __dirname resolves correctly
+  const bundleDir = './dist-bundle';
+  rmSync(bundleDir, { recursive: true, force: true });
+  mkdirSync(`${bundleDir}/dist`, { recursive: true });
+
+  copyFileSync('./dist/index.js', `${bundleDir}/dist/index.js`);
+  cpSync('./dist/ui', `${bundleDir}/dist/ui`, { recursive: true });
+
+  // Copy source manifest.json unchanged — it already references dist/index.js
+  copyFileSync('./manifest.json', `${bundleDir}/manifest.json`);
+
+  for (const file of ['README.md', 'LICENSE', 'CHANGELOG.md', 'server.json']) {
+    copyFileSync(`./${file}`, `${bundleDir}/${file}`);
+  }
 }
