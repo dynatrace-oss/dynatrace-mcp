@@ -59,6 +59,9 @@ if (watchMode) {
   // Copy source manifest.json unchanged — it already references dist/index.js
   copyFileSync('./manifest.json', `${bundleDir}/manifest.json`);
 
+  // Copy assets/ (icon referenced by manifest.json)
+  cpSync('./assets', `${bundleDir}/assets`, { recursive: true });
+
   for (const file of ['README.md', 'LICENSE', 'CHANGELOG.md', 'server.json']) {
     copyFileSync(`./${file}`, `${bundleDir}/${file}`);
   }

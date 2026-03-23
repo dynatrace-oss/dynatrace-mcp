@@ -2,6 +2,10 @@
 
 ## Unreleased Changes
 
+## 1.7.3
+
+- Fixed: Set default values (empty string) for several environment variables in Claude Desktop to avoid `${user_config.VARIABLE_NAME}` being set as a value
+
 ## 1.7.2
 
 - Fixed: Empty string values for `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRET`, and `DT_PLATFORM_TOKEN` environment variables are now treated as unset, preventing authentication failures when tools like Claude Desktop set blank fields to `""`. A warning is logged when an empty string is detected.
