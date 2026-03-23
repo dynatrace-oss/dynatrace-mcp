@@ -36,7 +36,7 @@ import {
   DAVIS_COPILOT_DOCS,
 } from './capabilities/davis-copilot';
 import { DynatraceEnv, getDynatraceEnv } from './getDynatraceEnv';
-import { createTelemetry, Telemetry } from './utils/telemetry-openkit';
+import { createTelemetry, Telemetry, AuthenticationType } from './utils/telemetry-openkit';
 import { getEntityTypeFromId } from './utils/dynatrace-entity-types';
 import { resetGrailBudgetTracker, getGrailBudgetTracker } from './utils/grail-budget-tracker';
 import { handleClientRequestError } from './utils/dynatrace-connection-utils';
@@ -123,8 +123,18 @@ const main = async () => {
     oauthClientId = DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID; // Default OAuth client ID for auth code flow
   }
 
+  // Determine authentication type for telemetry
+  let authType: AuthenticationType;
+  if (dtPlatformToken) {
+    authType = 'platform_token';
+  } else if (oauthClientId && oauthClientSecret) {
+    authType = 'oauth_client_credentials_flow';
+  } else {
+    authType = 'oauth_authorization_code_flow';
+  }
+
   // Parse environment information for telemetry
-  const environmentInfo = parseEnvironmentUrl(dtEnvironment);
+  const environmentInfo = { ...parseEnvironmentUrl(dtEnvironment), authType };
 
   // Initialize usage tracking
   const telemetry = createTelemetry(environmentInfo);
@@ -1668,7 +1678,7 @@ main().catch(async (error) => {
   console.error('Fatal error in main():', error);
   try {
     // report error in main - use unknown environment info since we might not have parsed it yet
-    const telemetry = createTelemetry({ environmentId: 'unknown', stage: 'unknown' });
+    const telemetry = createTelemetry({ environmentId: 'unknown', stage: 'unknown', authType: 'unknown' });
     await telemetry.trackError(error, 'main_error');
     await telemetry.shutdown();
   } catch (e) {
