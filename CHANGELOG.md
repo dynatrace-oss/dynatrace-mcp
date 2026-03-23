@@ -2,7 +2,7 @@
 
 ## Unreleased Changes
 
-- Updated `@dynatrace/strato-components` (1.17.0 → 3.1.1), `@dynatrace/strato-components-preview` (2.16.0 → 3.1.1), and `@dynatrace/strato-icons` (1.12.0 → 2.1.0). In strato v3, the preview components have been promoted to the stable package — `strato-components-preview` now re-exports from `strato-components`. There are no import changes required for this project.
+- Updated `@dynatrace/strato-components` (1.17.0 → 3.1.1), `@dynatrace/strato-components-preview` (2.16.0 → 3.1.1), and `@dynatrace/strato-icons` (1.12.0 → 2.1.0). In strato v3, the preview components have been promoted to the stable package — all UI imports now use `@dynatrace/strato-components` directly.
 
 ## 1.7.1
 
