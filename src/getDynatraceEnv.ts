@@ -15,7 +15,7 @@ export interface DynatraceEnv {
  */
 function normalizeOptionalEnvVar(name: string, value: string | undefined): string | undefined {
   if (value === '') {
-    console.error(`⚠️ ${name} is set to an empty string – ignoring it and treating it as unset.`);
+    console.warn(`⚠️ ${name} is set to an empty string – ignoring it and treating it as unset.`);
     return undefined;
   }
   return value;
