@@ -2,9 +2,9 @@
   "manifest_version": "0.3",
   "name": "dynatrace-mcp-server",
   "display_name": "Dynatrace MCP Server",
-  "version": "1.7.1",
-  "description": "Access Dynatrace observability data: logs, metrics, problems, vulnerabilities via DQL and Davis AI",
-  "long_description": "The Dynatrace MCP Server connects Claude to your Dynatrace observability platform, enabling real-time access to logs, metrics, problems, vulnerabilities, traces, and more — directly from your AI assistant. Supports DQL queries, Davis AI, workflow automation, and document management.",
+  "version": "1.7.3",
+  "description": "Access Dynatrace observability data: logs, metrics, problems, vulnerabilities via DQL and Dynatrace Intelligence",
+  "long_description": "The Dynatrace MCP Server connects Claude to your Dynatrace observability platform, enabling real-time access to logs, metrics, problems, vulnerabilities, traces, and more — directly from your AI assistant. Supports DQL queries, Dynatrace Intelligence, workflow automation, and document management.",
   "author": {
     "name": "Dynatrace OSS",
     "url": "https://github.com/dynatrace-oss"
@@ -17,6 +17,7 @@
   "documentation": "https://github.com/dynatrace-oss/dynatrace-mcp#readme",
   "support": "https://github.com/dynatrace-oss/dynatrace-mcp/issues",
   "license": "MIT",
+  "icon": "assets/Dynatrace_Logo_color_positive.png",
   "keywords": ["dynatrace", "mcp", "observability", "monitoring", "logs", "metrics", "devops"],
   "server": {
     "type": "node",
@@ -29,7 +30,6 @@
         "DT_PLATFORM_TOKEN": "${user_config.dt_platform_token}",
         "OAUTH_CLIENT_ID": "${user_config.oauth_client_id}",
         "OAUTH_CLIENT_SECRET": "${user_config.oauth_client_secret}",
-        "DT_SSO_URL": "${user_config.dt_sso_url}",
         "DT_GRAIL_QUERY_BUDGET_GB": "${user_config.dt_grail_query_budget_gb}",
         "DT_MCP_DISABLE_TELEMETRY": "${user_config.dt_mcp_disable_telemetry}"
       }
@@ -46,7 +46,7 @@
     },
     {
       "name": "list_problems",
-      "description": "List Davis problems in Dynatrace with status and timeframe filters."
+      "description": "List problems in Dynatrace with status and timeframe filters."
     },
     {
       "name": "find_entity_by_name",
@@ -66,15 +66,15 @@
     },
     {
       "name": "generate_dql_from_natural_language",
-      "description": "Generate DQL statements from natural language using Davis CoPilot."
+      "description": "Generate DQL statements from natural language using Dynatrace Intelligence."
     },
     {
       "name": "explain_dql_in_natural_language",
-      "description": "Explain DQL statements in natural language using Davis CoPilot."
+      "description": "Explain DQL statements in natural language using Dynatrace Intelligence."
     },
     {
       "name": "chat_with_davis_copilot",
-      "description": "Ask general Dynatrace questions using Davis CoPilot."
+      "description": "Ask general Dynatrace questions using Dynatrace Intelligence."
     },
     {
       "name": "create_workflow_for_notification",
@@ -134,29 +134,26 @@
     },
     "dt_platform_token": {
       "type": "string",
-      "title": "Dynatrace Platform Token",
+      "title": "[OPTIONAL] Dynatrace Platform Token",
       "description": "Dynatrace Platform Token for authentication. Alternative to browser-based OAuth authentication.",
       "required": false,
-      "sensitive": true
+      "sensitive": true,
+      "default": ""
     },
     "oauth_client_id": {
       "type": "string",
-      "title": "OAuth Client ID",
+      "title": "[OPTIONAL] OAuth Client ID",
       "description": "OAuth Client ID for advanced authentication scenarios. Use together with OAUTH_CLIENT_SECRET.",
-      "required": false
+      "required": false,
+      "default": ""
     },
     "oauth_client_secret": {
       "type": "string",
-      "title": "OAuth Client Secret",
+      "title": "[OPTIONAL] OAuth Client Secret",
       "description": "OAuth Client Secret for advanced authentication scenarios. Use together with OAUTH_CLIENT_ID.",
       "required": false,
-      "sensitive": true
-    },
-    "dt_sso_url": {
-      "type": "string",
-      "title": "Dynatrace SSO URL Override",
-      "description": "Optional SSO URL override for OAuth authentication (advanced troubleshooting only).",
-      "required": false
+      "sensitive": true,
+      "default": ""
     },
     "dt_grail_query_budget_gb": {
       "type": "number",

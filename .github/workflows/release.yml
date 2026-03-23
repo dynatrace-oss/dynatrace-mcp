@@ -64,9 +64,6 @@ jobs:
           echo "asset_path=$ASSET_NAME" >> $GITHUB_OUTPUT
           echo "Created MCPB asset: $ASSET_NAME"
 
-      - name: Sign MCPB bundle (self-signed)
-        run: npx -y @anthropic-ai/mcpb sign "${{ steps.mcpb.outputs.asset_path }}" --self-signed
-
       - name: Generate changelog for GitHub Release
         id: changelog
         run: |
