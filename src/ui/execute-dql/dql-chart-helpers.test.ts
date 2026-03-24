@@ -5,11 +5,11 @@
  */
 
 import type { RangedFieldTypes, ResultRecord } from '@dynatrace-sdk/client-query';
-import type { Timeseries } from '@dynatrace/strato-components-preview/charts';
+import type { Timeseries } from '@dynatrace/strato-components/charts';
 
 // Mock Strato's convertToTimeseries before importing the module under test
 const mockConvertToTimeseries = jest.fn<Timeseries[], [ResultRecord[], RangedFieldTypes[]]>();
-jest.mock('@dynatrace/strato-components-preview/charts', () => ({
+jest.mock('@dynatrace/strato-components/charts', () => ({
   convertToTimeseries: (...args: [ResultRecord[], RangedFieldTypes[]]) => mockConvertToTimeseries(...args),
 }));
 

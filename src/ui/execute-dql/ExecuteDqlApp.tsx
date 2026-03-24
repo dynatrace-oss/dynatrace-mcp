@@ -5,10 +5,10 @@ import type { RangedFieldTypes, ResultRecord } from '@dynatrace-sdk/client-query
 import { Flex } from '@dynatrace/strato-components/layouts';
 import { Button } from '@dynatrace/strato-components/buttons';
 import { Text, Code } from '@dynatrace/strato-components/typography';
-import { DataTable, type DataTableColumnDef } from '@dynatrace/strato-components-preview/tables';
-import { TimeseriesChart, type Timeseries } from '@dynatrace/strato-components-preview/charts';
-import { ToggleButtonGroup } from '@dynatrace/strato-components-preview/forms';
-import { Tooltip } from '@dynatrace/strato-components-preview/overlays';
+import { DataTable, type DataTableColumnDef } from '@dynatrace/strato-components/tables';
+import { TimeseriesChart, type Timeseries } from '@dynatrace/strato-components/charts';
+import { ToggleButtonGroup } from '@dynatrace/strato-components/forms';
+import { Tooltip } from '@dynatrace/strato-components/overlays';
 import {
   DataTableIcon,
   DocumentStackIcon,

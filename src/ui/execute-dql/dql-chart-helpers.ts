@@ -5,7 +5,7 @@
  */
 
 import type { RangedFieldTypes, ResultRecord } from '@dynatrace-sdk/client-query';
-import { convertToTimeseries, type Timeseries } from '@dynatrace/strato-components-preview/charts';
+import { convertToTimeseries, type Timeseries } from '@dynatrace/strato-components/charts';
 
 /** Default fallback timeframe when analysisTimeframe is not available (2 hours). */
 const DEFAULT_TIMEFRAME_MS = 2 * 60 * 60 * 1000;
