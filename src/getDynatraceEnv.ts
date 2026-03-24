@@ -9,13 +9,26 @@ export interface DynatraceEnv {
 }
 
 /**
+ * Returns the value of an optional env var, or undefined if it is absent or an empty string.
+ * Logs a warning when an empty string is detected, because tools like Claude Desktop may set
+ * env vars to "" when the user leaves the field blank.
+ */
+function normalizeOptionalEnvVar(name: string, value: string | undefined): string | undefined {
+  if (value === '') {
+    console.warn(`⚠️ ${name} is set to an empty string – ignoring it and treating it as unset.`);
+    return undefined;
+  }
+  return value;
+}
+
+/**
  * Reads and validates required environment variables for Dynatrace MCP.
  * Throws an Error if validation fails.
  */
 export function getDynatraceEnv(env: NodeJS.ProcessEnv = process.env): DynatraceEnv {
-  const oauthClientId = env.OAUTH_CLIENT_ID;
-  const oauthClientSecret = env.OAUTH_CLIENT_SECRET;
-  const dtPlatformToken = env.DT_PLATFORM_TOKEN;
+  const oauthClientId = normalizeOptionalEnvVar('OAUTH_CLIENT_ID', env.OAUTH_CLIENT_ID);
+  const oauthClientSecret = normalizeOptionalEnvVar('OAUTH_CLIENT_SECRET', env.OAUTH_CLIENT_SECRET);
+  const dtPlatformToken = normalizeOptionalEnvVar('DT_PLATFORM_TOKEN', env.DT_PLATFORM_TOKEN);
   const dtEnvironment = env.DT_ENVIRONMENT;
   const slackConnectionId = env.SLACK_CONNECTION_ID || 'fake-slack-connection-id';
   let grailBudgetGB = parseFloat(env.DT_GRAIL_QUERY_BUDGET_GB || '1000'); // Default to 1000 GB
