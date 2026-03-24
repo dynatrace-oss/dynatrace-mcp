@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Flex } from '@dynatrace/strato-components/layouts';
 import { Text } from '@dynatrace/strato-components/typography';
 
@@ -56,9 +57,12 @@ export interface ProblemRecord {
 interface ProblemRowProps {
   problem: ProblemRecord;
   environmentUrl?: string;
+  onNavigate?: (url: string) => void;
 }
 
-export function ProblemRow({ problem, environmentUrl }: ProblemRowProps) {
+export function ProblemRow({ problem, environmentUrl, onNavigate }: ProblemRowProps) {
+  const [hovered, setHovered] = useState(false);
+
   const status = String(problem['event.status'] ?? '');
   const category = String(problem['event.category'] ?? '');
   const name = String(problem['event.name'] ?? 'Unknown Problem');
@@ -70,14 +74,40 @@ export function ProblemRow({ problem, environmentUrl }: ProblemRowProps) {
   const problemUrl =
     environmentUrl && problemId ? `${environmentUrl}/ui/apps/dynatrace.davis.problems/problem/${problemId}` : undefined;
 
-  const rowContent = (
+  const isClickable = Boolean(problemUrl && onNavigate);
+
+  const handleClick = () => {
+    if (problemUrl && onNavigate) {
+      onNavigate(problemUrl);
+    }
+  };
+
+  return (
     <div
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      onClick={isClickable ? handleClick : undefined}
+      onKeyDown={
+        isClickable
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleClick();
+              }
+            }
+          : undefined
+      }
+      onMouseEnter={isClickable ? () => setHovered(true) : undefined}
+      onMouseLeave={isClickable ? () => setHovered(false) : undefined}
       style={{
-        background: 'var(--dt-colors-background-surface-default)',
+        background: hovered
+          ? 'var(--dt-colors-background-surface-raised)'
+          : 'var(--dt-colors-background-surface-default)',
         border: '1px solid var(--dt-colors-border-neutral-default)',
         borderRadius: 'var(--dt-borders-radius-surface-default, 4px)',
         padding: '10px 16px',
-        cursor: problemUrl ? 'pointer' : 'default',
+        cursor: isClickable ? 'pointer' : 'default',
+        transition: 'background 0.1s ease',
       }}
     >
       <Flex flexDirection='row' alignItems='center' gap={8}>
@@ -98,19 +128,4 @@ export function ProblemRow({ problem, environmentUrl }: ProblemRowProps) {
       </Text>
     </div>
   );
-
-  if (problemUrl) {
-    return (
-      <a
-        href={problemUrl}
-        target='_blank'
-        rel='noopener noreferrer'
-        style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
-      >
-        {rowContent}
-      </a>
-    );
-  }
-
-  return rowContent;
 }
