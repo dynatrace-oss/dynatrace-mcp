@@ -7,6 +7,7 @@ import { Button } from '@dynatrace/strato-components/buttons';
 import { LoadingState, ErrorState } from '../components';
 import { SummaryCard } from './SummaryCard';
 import { ProblemRow, type ProblemRecord } from './ProblemRow';
+import { type HostTheme, isValidHostTheme } from '../utils/theme';
 
 const PAGE_SIZE = 5;
 
@@ -16,12 +17,6 @@ interface ListProblemsMeta {
   totalProblems?: number;
   environmentUrl?: string;
   timeframe?: string;
-}
-
-type HostTheme = 'light' | 'dark';
-
-function isValidHostTheme(theme: unknown): theme is HostTheme {
-  return theme === 'light' || theme === 'dark';
 }
 
 /** Type guard for text content in tool results */
