@@ -19,6 +19,7 @@ import {
 } from '@dynatrace/strato-icons';
 import { LoadingState, ErrorState, MetadataIcon, type ViewMode, type ChartVariant } from '../components';
 import { type HostTheme, isValidHostTheme } from '../utils/theme';
+import { isTextContent } from '../utils/tool-result';
 import { createNotebooksURL } from '../../utils/environment-url-parser';
 import { safeConvertToTimeseries } from './dql-chart-helpers';
 
@@ -55,17 +56,6 @@ interface ExecuteDqlMeta {
   warnings?: string[];
   recordLimit?: number;
   recordLimitReached?: boolean;
-}
-
-/** Type guard for text content in tool results */
-function isTextContent(content: unknown): content is { type: 'text'; text: string } {
-  return (
-    typeof content === 'object' &&
-    content !== null &&
-    'type' in content &&
-    (content as { type: string }).type === 'text' &&
-    'text' in content
-  );
 }
 
 /**
