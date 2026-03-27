@@ -18,6 +18,7 @@ import {
   WarningIcon,
 } from '@dynatrace/strato-icons';
 import { LoadingState, ErrorState, MetadataIcon, type ViewMode, type ChartVariant } from '../components';
+import { type HostTheme, isValidHostTheme } from '../utils/theme';
 import { createNotebooksURL } from '../../utils/environment-url-parser';
 import { safeConvertToTimeseries } from './dql-chart-helpers';
 
@@ -54,12 +55,6 @@ interface ExecuteDqlMeta {
   warnings?: string[];
   recordLimit?: number;
   recordLimitReached?: boolean;
-}
-
-type HostTheme = 'light' | 'dark';
-
-function isValidHostTheme(theme: unknown): theme is HostTheme {
-  return theme === 'light' || theme === 'dark';
 }
 
 /** Type guard for text content in tool results */
@@ -169,7 +164,7 @@ export function ExecuteDqlApp() {
   // MCP Host Theme Detection
   const documentTheme = useDocumentTheme();
   // local theme
-  const [hostTheme, setHostTheme] = useState<'light' | 'dark' | null>(null);
+  const [hostTheme, setHostTheme] = useState<HostTheme | null>(null);
 
   const [state, setState] = useState<ToolResultState>({
     status: 'loading',
