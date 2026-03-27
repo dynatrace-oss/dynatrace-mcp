@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "dynatrace-mcp-server",
   "display_name": "Dynatrace MCP Server",
-  "version": "1.7.3",
+  "version": "1.7.4",
   "description": "Access Dynatrace observability data: logs, metrics, problems, vulnerabilities via DQL and Dynatrace Intelligence",
   "long_description": "The Dynatrace MCP Server connects Claude to your Dynatrace observability platform, enabling real-time access to logs, metrics, problems, vulnerabilities, traces, and more — directly from your AI assistant. Supports DQL queries, Dynatrace Intelligence, workflow automation, and document management.",
   "author": {
