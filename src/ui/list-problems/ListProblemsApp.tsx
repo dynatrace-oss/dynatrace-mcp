@@ -8,6 +8,7 @@ import { LoadingState, ErrorState } from '../components';
 import { SummaryCard } from './SummaryCard';
 import { ProblemRow, type ProblemRecord } from './ProblemRow';
 import { type HostTheme, isValidHostTheme } from '../utils/theme';
+import { isTextContent } from '../utils/tool-result';
 
 const PAGE_SIZE = 5;
 
@@ -17,17 +18,6 @@ interface ListProblemsMeta {
   totalProblems?: number;
   environmentUrl?: string;
   timeframe?: string;
-}
-
-/** Type guard for text content in tool results */
-function isTextContent(content: unknown): content is { type: 'text'; text: string } {
-  return (
-    typeof content === 'object' &&
-    content !== null &&
-    'type' in content &&
-    (content as { type: string }).type === 'text' &&
-    'text' in content
-  );
 }
 
 type AppStatus = 'loading' | 'error' | 'success';
