@@ -2,7 +2,10 @@
 
 ## Unreleased Changes
 
-- Updated `@dynatrace/strato-components` (1.17.0 → 3.1.1), `@dynatrace/strato-components-preview` (2.16.0 → 3.1.1), and `@dynatrace/strato-icons` (1.12.0 → 2.1.0). In strato v3, the preview components have been promoted to the stable package — all UI imports now use `@dynatrace/strato-components` directly.
+## 1.7.4
+
+- Updated `@dynatrace/strato-components` (1.17.0 → 3.1.1), `@dynatrace/strato-components-preview` (2.16.0 → 3.1.1), and `@dynatrace/strato-icons` (1.12.0 → 2.1.0).
+- Updated dependencies including `picomatch` (2.3.1 → 2.3.2), `yaml` (1.10.2 → 1.10.3), and `handlebars` (4.7.8 → 4.7.9).
 
 ## 1.7.3
 
