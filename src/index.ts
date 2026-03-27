@@ -529,7 +529,7 @@ const main = async () => {
             if (problem) {
               resp += `Problem ${problem['display_id']} (please refer to this problem with \`problemId\` or \`event.id\` ${problem['problem_id']}))
                   with event.status ${problem['event.status']}, event.category ${problem['event.category']}: ${problem['event.name']} -
-                  affects ${problem['affected_entities_count']} entities for a duration of ${problem['duration']}s\n`;
+                  affects ${problem['affected_users_count']} users and ${problem['affected_entities_count']} entities for a duration of ${problem['duration']}s\n`;
             }
           });
 
