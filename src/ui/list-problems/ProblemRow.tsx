@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Flex } from '@dynatrace/strato-components/layouts';
 import { Text } from '@dynatrace/strato-components/typography';
+import { Chip } from '@dynatrace/strato-components/content';
 
 /** Formats a duration in seconds to a human-readable approximate string (e.g. "~2 min"). */
 export function formatDuration(seconds: number): string {
@@ -20,25 +21,9 @@ interface StatusBadgeProps {
 function StatusBadge({ status }: StatusBadgeProps) {
   const isActive = status === 'ACTIVE';
   return (
-    <span
-      style={{
-        display: 'inline-block',
-        padding: '1px 8px',
-        borderRadius: '3px',
-        fontSize: '0.75rem',
-        fontWeight: 600,
-        background: isActive
-          ? 'var(--dt-colors-background-critical-subtle, rgba(196, 20, 37, 0.1))'
-          : 'var(--dt-colors-background-neutral-subtle, rgba(0,0,0,0.05))',
-        color: isActive ? 'var(--dt-colors-text-critical-default, #c41425)' : 'var(--dt-colors-text-neutral-subdued)',
-        border: isActive
-          ? '1px solid var(--dt-colors-border-critical-default, rgba(196, 20, 37, 0.3))'
-          : '1px solid var(--dt-colors-border-neutral-default)',
-        whiteSpace: 'nowrap',
-      }}
-    >
+    <Chip color={isActive ? 'critical' : 'neutral'} size='condensed'>
       {isActive ? 'Active' : 'Closed'}
-    </span>
+    </Chip>
   );
 }
 
@@ -100,14 +85,19 @@ export function ProblemRow({ problem, environmentUrl, onNavigate }: ProblemRowPr
       onMouseEnter={isClickable ? () => setHovered(true) : undefined}
       onMouseLeave={isClickable ? () => setHovered(false) : undefined}
       style={{
-        background: hovered
-          ? 'var(--dt-colors-background-surface-raised)'
-          : 'var(--dt-colors-background-surface-default)',
-        border: '1px solid var(--dt-colors-border-neutral-default)',
-        borderRadius: 'var(--dt-borders-radius-surface-default, 4px)',
+        background:
+          hovered && isClickable
+            ? 'var(--dt-colors-background-primary-subtle)'
+            : 'var(--dt-colors-background-surface-default)',
+        border:
+          hovered && isClickable
+            ? '1px solid var(--dt-colors-border-primary-default)'
+            : '1px solid var(--dt-colors-border-neutral-default)',
+        borderRadius: 'var(--dt-borders-radius-surface-default)',
         padding: '6px 12px',
         cursor: isClickable ? 'pointer' : 'default',
-        transition: 'background 0.1s ease',
+        transition: 'background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease',
+        boxShadow: hovered && isClickable ? '0 1px 4px var(--dt-colors-border-primary-default)' : 'none',
       }}
     >
       <Flex flexDirection='row' alignItems='center' gap={6}>
