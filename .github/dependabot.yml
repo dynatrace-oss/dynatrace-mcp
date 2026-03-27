@@ -10,8 +10,8 @@ updates:
       timezone: 'UTC'
     open-pull-requests-limit: 10
     commit-message:
-      prefix: 'deps'
-      prefix-development: 'deps-dev'
+      prefix: 'chore'
+      prefix-development: 'chore'
       include: 'scope'
     labels:
       - 'dependencies'
@@ -118,7 +118,7 @@ updates:
       timezone: 'UTC'
     open-pull-requests-limit: 3
     commit-message:
-      prefix: 'docker'
+      prefix: 'ci'
       include: 'scope'
     labels:
       - 'docker'

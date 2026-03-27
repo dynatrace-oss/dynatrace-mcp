@@ -59,6 +59,22 @@ Make sure to not just update the code, but also update README.md with those requ
 
 See [build.instructions.md](/.github/instructions/build.instructions.md) for instructions on how to build and run the MCP server.
 
+## Commit Messages and PR Titles
+
+This project uses **[Conventional Commits](https://www.conventionalcommits.org/)** (semantic commits). All commit messages **and PR titles** must follow the format:
+
+```
+<type>(<optional scope>): <description>
+```
+
+Common types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `perf`, `build`, `revert`.
+
+Examples:
+
+- `feat(tools): add new problem analysis tool`
+- `fix(auth): handle token refresh race condition`
+- `chore(deps): bump @modelcontextprotocol/sdk from 1.25.0 to 1.26.0`
+
 ## Changelog
 
 See [changelog.instructions.md](/.github/instructions/changelog.instructions.md) for full guidance on what to include and how to format changelog entries.
