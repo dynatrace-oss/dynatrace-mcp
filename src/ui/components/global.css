@@ -45,3 +45,14 @@ body,
     display: none;
   }
 }
+
+.list-problems-surface {
+  background-color: var(--dt-colors-background-surface-default);
+  border: 1px solid var(--dt-colors-border-neutral-default);
+  border-radius: var(--dt-borders-radius-surface-default);
+  padding: 8px;
+}
+
+.list-problems-app {
+  width: 100%;
+}

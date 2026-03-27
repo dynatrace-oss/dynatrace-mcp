@@ -458,55 +458,78 @@ const main = async () => {
       },
     );
 
-    tool(
+    // MCP App: Define the resource URI for the list_problems interactive UI
+    // The ui:// scheme tells hosts this is an MCP App resource.
+    const listProblemsResourceUri = 'ui://list-problems/list-problems.html';
+
+    // Register the list_problems tool with MCP App UI support.
+    registerAppTool(
+      server,
       'list_problems',
-      'List Problems',
-      'List all problems (based on "fetch dt.davis.problems") known on Dynatrace, sorted by their recency.',
       {
-        timeframe: z
-          .string()
-          .optional()
-          .default('24h')
-          .describe(
-            'Timeframe to query problems (e.g., "12h", "24h", "7d", "30d"). Default: "24h". Supports hours (h) and days (d).',
-          ),
-        status: z
-          .enum(['ACTIVE', 'CLOSED', 'ALL'])
-          .optional()
-          .default('ALL')
-          .describe(
-            'Fitler problems by their status. "ACTIVE": only active problems (those without an end time set), "CLOSED": only closed problems (those with an end time set), "ALL": active and closed problems (default)',
-          ),
-        additionalFilter: z
-          .string()
-          .optional()
-          .describe(
-            'Additional DQL filter for dt.davis.problems - filter by entity type (preferred), like \'dt.entity.<service|host|application|$type> == "<entity-id>"\', or by entity tags \'entity_tags == array("dt.owner:team-foobar", "tag:tag")\'',
-          ),
-        maxProblemsToDisplay: z
-          .number()
-          .min(1)
-          .max(5000)
-          .default(10)
-          .describe('Maximum number of problems to display in the response.'),
+        title: 'List Problems',
+        description:
+          'List all problems (based on "fetch dt.davis.problems") known on Dynatrace, sorted by their recency. ' +
+          'IMPORTANT: The MCP App UI will automatically render the problems as an interactive overview with summary cards and a list. ' +
+          'Do NOT generate Mermaid diagrams, ASCII charts, markdown tables, or any other visual representation of the data — the MCP App is solely responsible for rendering.',
+        inputSchema: {
+          timeframe: z
+            .string()
+            .optional()
+            .default('24h')
+            .describe(
+              'Timeframe to query problems (e.g., "12h", "24h", "7d", "30d"). Default: "24h". Supports hours (h) and days (d).',
+            ),
+          status: z
+            .enum(['ACTIVE', 'CLOSED', 'ALL'])
+            .optional()
+            .default('ALL')
+            .describe(
+              'Filter problems by their status. "ACTIVE": only active problems (those without an end time set), "CLOSED": only closed problems (those with an end time set), "ALL": active and closed problems (default)',
+            ),
+          additionalFilter: z
+            .string()
+            .optional()
+            .describe(
+              'Additional DQL filter for dt.davis.problems - filter by entity type (preferred), like \'dt.entity.<service|host|application|$type> == "<entity-id>"\', or by entity tags \'entity_tags == array("dt.owner:team-foobar", "tag:tag")\'',
+            ),
+          maxProblemsToDisplay: z
+            .number()
+            .min(1)
+            .max(5000)
+            .default(10)
+            .describe('Maximum number of problems to display in the response.'),
+        },
+        annotations: {
+          readOnlyHint: true,
+        },
+        _meta: {
+          // MCP App
+          ui: { resourceUri: listProblemsResourceUri },
+        },
       },
-      {
-        readOnlyHint: true,
-      },
-      async ({ timeframe, status, additionalFilter, maxProblemsToDisplay }) => {
+      wrapToolCallback('list_problems', async ({ timeframe, status, additionalFilter, maxProblemsToDisplay }) => {
         const dtClient = await createAuthenticatedHttpClient(
           scopesBase.concat('storage:events:read', 'storage:buckets:read'),
         );
         // get problems (uses fetch)
         const result = await listProblems(dtClient, additionalFilter, status, timeframe);
-        if (result && result.records && result.records.length > 0) {
-          let resp = `Found ${result.records.length} problems! Displaying the top ${maxProblemsToDisplay} problems:\n`;
+        const problems = result?.records ?? [];
+
+        let resp = '';
+        if (problems.length > 0) {
+          const totalProblems = result?.records?.length ?? problems.length;
+          const isMoreProblems = totalProblems > maxProblemsToDisplay;
+          resp = `Found ${totalProblems} problems! Displaying the top ${Math.min(maxProblemsToDisplay, problems.length)} of ${totalProblems} problems:\n`;
+          if (isMoreProblems) {
+            resp += `(Note: There are ${totalProblems - maxProblemsToDisplay} more problems not shown. Use pagination or filters in the UI to view more.)\n\n`;
+          }
           // iterate over dqlResponse and create a string with the problem details, but only show the top maxProblemsToDisplay problems
-          result.records.slice(0, maxProblemsToDisplay).forEach((problem) => {
+          problems.slice(0, maxProblemsToDisplay).forEach((problem) => {
             if (problem) {
               resp += `Problem ${problem['display_id']} (please refer to this problem with \`problemId\` or \`event.id\` ${problem['problem_id']}))
                   with event.status ${problem['event.status']}, event.category ${problem['event.category']}: ${problem['event.name']} -
-                  affects ${problem['affected_users_count']} users and ${problem['affected_entity_count']} entities for a duration of ${problem['duration']}s\n`;
+                  affects ${problem['affected_users_count']} users and ${problem['affected_entities_count']} entities for a duration of ${problem['duration']}s\n`;
             }
           });
 
@@ -521,14 +544,31 @@ const main = async () => {
             dt.cost.costcenter, dt.cost.product, dt.host_group.id, dt.security_context, gcp.project.id,
             host.name, k8s.cluster.name, k8s.cluster.uid, k8s.container.name, k8s.namespace.name, k8s.node.name, k8s.pod.name, k8s.service.name, k8s.workload.kind, k8s.workload.name"` +
             `\n2. Use "chat_with_davis_copilot" tool and provide \`problemId\` along with all details from step 1 as context, to get insights about a specific problem via Davis Copilot (e.g., provide actionable steps to solve problem P-<problem-id>).` +
-            `\n3. Tell the user to visit ${dtEnvironment}/ui/apps/dynatrace.davis.problems/problem/<problem-id> for more details.`;
-
-          return resp;
+            `\n3. Tell the user to visit ${dtEnvironment}/ui/apps/dynatrace.davis.problems/problem/<problem-id> for more details.` +
+            `\n\n> ℹ️ The MCP App is rendering the results interactively. Do NOT generate Mermaid diagrams, ASCII charts, or markdown tables from this data.`;
         } else {
-          return 'No problems found';
+          resp = 'No problems found';
         }
-      },
+
+        return {
+          text: resp,
+          _meta: {
+            problems: problems.slice(0, maxProblemsToDisplay),
+            totalProblems: problems.length,
+            environmentUrl: dtEnvironment,
+            timeframe,
+          },
+        };
+      }),
     );
+
+    // MCP App: Register the HTML resource for the list_problems interactive UI (MCP App)
+    registerAppResource(server, 'Problems Overview', listProblemsResourceUri, {}, async () => {
+      const html = readFileSync(join(__dirname, 'ui', 'list-problems', 'index.html'), 'utf-8');
+      return {
+        contents: [{ uri: listProblemsResourceUri, mimeType: RESOURCE_MIME_TYPE, text: html }],
+      };
+    });
 
     tool(
       'find_entity_by_name',
