@@ -39,15 +39,15 @@ export function SummaryCard({ count, label, variant }: SummaryCardProps) {
         background,
         border,
         borderRadius: 'var(--dt-borders-radius-surface-default, 4px)',
-        padding: '12px 16px',
-        flex: '1 1 120px',
-        minWidth: 100,
+        padding: '8px 12px',
+        flex: '1 1 90px',
+        minWidth: 80,
       }}
     >
-      <Text textStyle='base-emphasized' style={{ color, fontSize: '2rem', display: 'block', lineHeight: 1.1 }}>
+      <Text textStyle='base-emphasized' style={{ color, fontSize: '1.5rem', display: 'block', lineHeight: 1.1 }}>
         {count}
       </Text>
-      <Text textStyle='small' style={{ color }}>
+      <Text textStyle='small' style={{ color, fontSize: '0.75rem' }}>
         {label}
       </Text>
     </div>

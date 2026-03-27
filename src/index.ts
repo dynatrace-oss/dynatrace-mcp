@@ -536,13 +536,18 @@ const main = async () => {
 
         let resp = '';
         if (problems.length > 0) {
-          resp = `Found ${problems.length} problems! Displaying the top ${maxProblemsToDisplay} problems:\n`;
+          const totalProblems = result?.records?.length ?? problems.length;
+          const isMoreProblems = totalProblems > maxProblemsToDisplay;
+          resp = `Found ${totalProblems} problems! Displaying the top ${Math.min(maxProblemsToDisplay, problems.length)} of ${totalProblems} problems:\n`;
+          if (isMoreProblems) {
+            resp += `(Note: There are ${totalProblems - maxProblemsToDisplay} more problems not shown. Use pagination or filters in the UI to view more.)\n\n`;
+          }
           // iterate over dqlResponse and create a string with the problem details, but only show the top maxProblemsToDisplay problems
           problems.slice(0, maxProblemsToDisplay).forEach((problem) => {
             if (problem) {
               resp += `Problem ${problem['display_id']} (please refer to this problem with \`problemId\` or \`event.id\` ${problem['problem_id']}))
                   with event.status ${problem['event.status']}, event.category ${problem['event.category']}: ${problem['event.name']} -
-                  affects ${problem['affected_users_count']} users and ${problem['affected_entity_count']} entities for a duration of ${problem['duration']}s\n`;
+                  affects ${problem['affected_entities_count']} entities for a duration of ${problem['duration']}s\n`;
             }
           });
 
@@ -567,6 +572,7 @@ const main = async () => {
           text: resp,
           _meta: {
             problems: problems.slice(0, maxProblemsToDisplay),
+            totalProblems: problems.length,
             environmentUrl: dtEnvironment,
             timeframe,
           },

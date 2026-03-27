@@ -13,6 +13,7 @@ const PAGE_SIZE = 5;
 /** Shape of the _meta object returned by the list_problems tool. */
 interface ListProblemsMeta {
   problems?: ProblemRecord[];
+  totalProblems?: number;
   environmentUrl?: string;
   timeframe?: string;
 }
@@ -40,6 +41,7 @@ interface AppState {
   status: AppStatus;
   errorMessage?: string;
   problems: ProblemRecord[];
+  totalProblems?: number;
   environmentUrl?: string;
   timeframe: string;
 }
@@ -72,6 +74,7 @@ export function ListProblemsApp() {
       setState({
         status: 'success',
         problems: meta?.problems ?? [],
+        totalProblems: meta?.totalProblems,
         environmentUrl: meta?.environmentUrl,
         timeframe: meta?.timeframe ?? '24h',
       });
@@ -133,8 +136,10 @@ export function ListProblemsApp() {
   // Compute summary stats over all problems
   const activeCount = problems.filter((p) => p['event.status'] === 'ACTIVE').length;
   const totalCount = problems.length;
-  const availabilityCount = problems.filter((p) => p['event.category'] === 'AVAILABILITY').length;
-  const usersAffected = problems.reduce((sum, p) => sum + (Number(p['affected_users_count']) || 0), 0);
+  const totalProblems = state.totalProblems ?? totalCount;
+  const isTruncated = totalProblems > totalCount;
+  const usersAffected = problems.reduce((sum, p) => sum + (Number(p['affected_users_count']) || 0), 0); // field aliased from dt.davis.affected_users_count in DQL
+  const entitiesAffected = problems.reduce((sum, p) => sum + (Number(p['affected_entities_count']) || 0), 0);
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(problems.length / PAGE_SIZE));
@@ -143,14 +148,22 @@ export function ListProblemsApp() {
 
   return (
     <div className='list-problems-surface'>
-      <Flex flexDirection='column' gap={12} className='list-problems-app'>
+      <Flex flexDirection='column' gap={8} className='list-problems-app'>
         {/* Summary cards */}
-        <Flex flexDirection='row' gap={8} style={{ flexWrap: 'wrap' }}>
+        <Flex flexDirection='row' gap={6} style={{ flexWrap: 'wrap' }}>
           <SummaryCard count={activeCount} label='Active problems' variant='critical' />
-          <SummaryCard count={totalCount} label={`Total (last ${timeframe})`} variant='neutral' />
-          <SummaryCard count={availabilityCount} label='Availability issues' variant='warning' />
-          <SummaryCard count={usersAffected.toLocaleString()} label='Users affected' variant='primary' />
+          <SummaryCard count={totalProblems} label={`Total (last ${timeframe})`} variant='neutral' />
+          <SummaryCard count={usersAffected} label='Users affected' variant='warning' />
+          <SummaryCard count={entitiesAffected.toLocaleString()} label='Entities affected' variant='primary' />
         </Flex>
+
+        {/* Truncation notice */}
+        {isTruncated && (
+          <Text textStyle='small' style={{ color: 'var(--dt-colors-text-neutral-subdued)', fontStyle: 'italic' }}>
+            Showing {totalCount} of {totalProblems.toLocaleString()} problems — use filters or a shorter timeframe to
+            narrow results.
+          </Text>
+        )}
 
         {/* Problem list */}
         {problems.length === 0 ? (
@@ -162,7 +175,7 @@ export function ListProblemsApp() {
           </Flex>
         ) : (
           <>
-            <Flex flexDirection='column' gap={6}>
+            <Flex flexDirection='column' gap={4}>
               {pagedProblems.map((problem, idx) => (
                 <ProblemRow
                   key={String(problem['problem_id'] ?? idx)}

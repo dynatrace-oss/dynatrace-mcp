@@ -105,24 +105,30 @@ export function ProblemRow({ problem, environmentUrl, onNavigate }: ProblemRowPr
           : 'var(--dt-colors-background-surface-default)',
         border: '1px solid var(--dt-colors-border-neutral-default)',
         borderRadius: 'var(--dt-borders-radius-surface-default, 4px)',
-        padding: '10px 16px',
+        padding: '6px 12px',
         cursor: isClickable ? 'pointer' : 'default',
         transition: 'background 0.1s ease',
       }}
     >
-      <Flex flexDirection='row' alignItems='center' gap={8}>
+      <Flex flexDirection='row' alignItems='center' gap={6}>
         <StatusBadge status={status} />
         <Text
           textStyle='base-emphasized'
-          style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+          style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.9375rem' }}
         >
           {name}
         </Text>
-        <Text textStyle='small' style={{ color: 'var(--dt-colors-text-neutral-subdued)', whiteSpace: 'nowrap' }}>
+        <Text
+          textStyle='small'
+          style={{ color: 'var(--dt-colors-text-neutral-subdued)', whiteSpace: 'nowrap', fontSize: '0.8125rem' }}
+        >
           {durationText}
         </Text>
       </Flex>
-      <Text textStyle='small' style={{ color: 'var(--dt-colors-text-neutral-subdued)', marginTop: 2 }}>
+      <Text
+        textStyle='small'
+        style={{ color: 'var(--dt-colors-text-neutral-subdued)', marginTop: 1, fontSize: '0.8125rem' }}
+      >
         {category}
         {displayId ? ` · ${displayId}` : ''}
       </Text>
