@@ -74,8 +74,6 @@ Examples:
 - `fix(auth): handle token refresh race condition`
 - `chore(deps): bump @modelcontextprotocol/sdk from 1.25.0 to 1.26.0`
 
-Commits are validated locally via [commitlint](https://commitlint.js.org/) (run by the `commit-msg` Husky hook). PR titles are validated by a GitHub Actions workflow on every PR.
-
 ## Changelog
 
 See [changelog.instructions.md](/.github/instructions/changelog.instructions.md) for full guidance on what to include and how to format changelog entries.
