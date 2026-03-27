@@ -70,6 +70,7 @@ This project uses **[Conventional Commits](https://www.conventionalcommits.org/)
 Common types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `perf`, `build`, `revert`.
 
 Examples:
+
 - `feat(tools): add new problem analysis tool`
 - `fix(auth): handle token refresh race condition`
 - `chore(deps): bump @modelcontextprotocol/sdk from 1.25.0 to 1.26.0`
