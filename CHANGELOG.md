@@ -2,6 +2,10 @@
 
 ## Unreleased Changes
 
+## 1.7.5
+
+- Fixed: Replaced deprecated `fetch metric.series` DQL command with the `metrics` command.
+
 ## 1.7.4
 
 - Updated `@dynatrace/strato-components` (1.17.0 → 3.1.1), `@dynatrace/strato-components-preview` (2.16.0 → 3.1.1), and `@dynatrace/strato-icons` (1.12.0 → 2.1.0).
