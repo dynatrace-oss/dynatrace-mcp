@@ -7,6 +7,7 @@ export type AuthenticationType =
   | 'oauth_authorization_code_flow'
   | 'oauth_client_credentials_flow'
   | 'platform_token'
+  | 'sso_bearer_token' // Per-user bearer token passthrough (HTTP multi-user mode)
   | 'unknown';
 
 export interface EnvironmentInfo {

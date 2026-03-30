@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Added `--sso` flag for HTTP mode (`--http --sso`) to enable per-user SSO/bearer-token authentication. In this mode the server holds no shared credentials; each connecting user must supply an `Authorization: Bearer <token>` header with their own Dynatrace Platform Token or OAuth access token. This enables multi-user deployments on OpenShift/Kubernetes where each user retains their own identity, RBAC, and audit trail.
+
 ## 1.7.4
 
 - Updated `@dynatrace/strato-components` (1.17.0 → 3.1.1), `@dynatrace/strato-components-preview` (2.16.0 → 3.1.1), and `@dynatrace/strato-icons` (1.12.0 → 2.1.0).

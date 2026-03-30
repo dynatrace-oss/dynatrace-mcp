@@ -13,7 +13,7 @@ import { Command } from 'commander';
 import { z, ZodRawShape, ZodTypeAny } from 'zod';
 
 import { getPackageJsonVersion } from './utils/version';
-import { createDtHttpClient } from './authentication/dynatrace-clients';
+import { createDtHttpClient, createHttpClientFromBearerToken } from './authentication/dynatrace-clients';
 import { listVulnerabilities } from './capabilities/list-vulnerabilities';
 import { listProblems } from './capabilities/list-problems';
 import { getEventsForCluster } from './capabilities/get-events-for-cluster';
@@ -104,6 +104,32 @@ const main = async () => {
   // Configure proxy from environment variables early in the startup process
   configureProxyFromEnvironment();
 
+  // Parse command line arguments early so we know the operating mode before validation
+  const program = new Command();
+
+  program
+    .name('dynatrace-mcp-server')
+    .description('Dynatrace Model Context Protocol (MCP) Server')
+    .version(getPackageJsonVersion())
+    .option('--http', 'enable HTTP server mode instead of stdio')
+    .option('--server', 'enable HTTP server mode (alias for --http)')
+    .option('-p, --port <number>', 'port for HTTP server', '3000')
+    .option('-H, --host <host>', 'host for HTTP server', '127.0.0.1')
+    .option(
+      '--sso',
+      'enable per-user SSO authentication in HTTP mode: each request must supply an "Authorization: Bearer <token>" header; no shared server credentials are required',
+    )
+    .allowUnknownOption() // Claude Desktop / Electron UtilityProcess may inject extra arguments
+    .allowExcessArguments() // Avoid "too many arguments" when launched from .mcpb bundles
+    .parse();
+
+  const options = program.opts();
+  const httpMode = options.http || options.server;
+  const httpPort = parseInt(options.port, 10);
+  const host = options.host || '0.0.0.0';
+  // SSO mode is only meaningful (and allowed) in HTTP mode
+  const ssoMode = httpMode && !!options.sso;
+
   // read Environment variables
   let dynatraceEnv: DynatraceEnv;
   try {
@@ -117,15 +143,22 @@ const main = async () => {
   let { oauthClientId, oauthClientSecret, dtEnvironment, dtPlatformToken, slackConnectionId, grailBudgetGB } =
     dynatraceEnv;
 
-  // Infer OAuth auth code flow if no OAuth Client credentials are provided
-  if (!oauthClientId && !oauthClientSecret && !dtPlatformToken) {
-    console.error('No OAuth credentials or platform token provided - switching to OAuth authorization code flow.');
-    oauthClientId = DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID; // Default OAuth client ID for auth code flow
+  // In SSO mode, each connecting user provides their own bearer token – the server itself does not
+  // hold shared credentials.  Suppress the auth-code-flow fallback that would otherwise prompt for
+  // an interactive browser login at startup.
+  if (!ssoMode) {
+    // Infer OAuth auth code flow if no OAuth Client credentials are provided
+    if (!oauthClientId && !oauthClientSecret && !dtPlatformToken) {
+      console.error('No OAuth credentials or platform token provided - switching to OAuth authorization code flow.');
+      oauthClientId = DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID; // Default OAuth client ID for auth code flow
+    }
   }
 
   // Determine authentication type for telemetry
   let authType: AuthenticationType;
-  if (dtPlatformToken) {
+  if (ssoMode) {
+    authType = 'sso_bearer_token';
+  } else if (dtPlatformToken) {
     authType = 'platform_token';
   } else if (oauthClientId && oauthClientSecret) {
     authType = 'oauth_client_credentials_flow';
@@ -155,9 +188,10 @@ const main = async () => {
   // In HTTP mode, a fresh instance is created per request to support
   // concurrent connections without "Already connected to a transport" errors.
   // See https://github.com/dynatrace-oss/dynatrace-mcp/issues/345
-  // Helper function to create HTTP client with current auth settings
-  // This is used to provide global scopes for auth code flow
-  const createAuthenticatedHttpClient = async (scopes: string[]) => {
+
+  // Server-level HTTP client factory using shared credentials (platform token / OAuth client creds /
+  // OAuth auth-code flow).  Used in STDIO mode and in HTTP mode without --sso.
+  const serverCreateAuthenticatedHttpClient = async (scopes: string[]) => {
     // If we use authorization code flow (e.g., oauthClientId is set, but oauthClientSecret is empty), we pass all scopes in.
     // For all other cases, we use allRequiredScopes
     return await createDtHttpClient(
@@ -192,29 +226,46 @@ const main = async () => {
     process.exit(3);
   }
 
-  // Second, we will try with proper authentication
-  try {
-    const dtClient = await createAuthenticatedHttpClient(scopesBase);
-    const environmentInformationClient = new EnvironmentInformationClient(dtClient);
+  // Second, we will try with proper authentication.
+  // Skipped in SSO mode because the server holds no shared credentials – each user brings their own
+  // token at request time.
+  if (!ssoMode) {
+    try {
+      const dtClient = await serverCreateAuthenticatedHttpClient(scopesBase);
+      const environmentInformationClient = new EnvironmentInformationClient(dtClient);
 
-    await environmentInformationClient.getEnvironmentInformation();
+      await environmentInformationClient.getEnvironmentInformation();
 
-    console.error(`✅ Successfully connected to the Dynatrace environment at ${dtEnvironment}.`);
-  } catch (error: any) {
-    if (isClientRequestError(error)) {
-      console.error(`❌ Failed to connect to Dynatrace environment ${dtEnvironment}:`, handleClientRequestError(error));
-    } else {
-      console.error(`❌ Failed to connect to Dynatrace environment ${dtEnvironment}:`, error.message);
-      // Logging more exhaustive error details for troubleshooting
-      console.error(error);
+      console.error(`✅ Successfully connected to the Dynatrace environment at ${dtEnvironment}.`);
+    } catch (error: any) {
+      if (isClientRequestError(error)) {
+        console.error(
+          `❌ Failed to connect to Dynatrace environment ${dtEnvironment}:`,
+          handleClientRequestError(error),
+        );
+      } else {
+        console.error(`❌ Failed to connect to Dynatrace environment ${dtEnvironment}:`, error.message);
+        // Logging more exhaustive error details for troubleshooting
+        console.error(error);
+      }
+      process.exit(2);
     }
-    process.exit(2);
+  } else {
+    console.error(
+      `ℹ️  SSO mode enabled – skipping upfront authenticated connection check. Each incoming request must supply its own "Authorization: Bearer <token>" header.`,
+    );
   }
 
   // Ready to start the server
   console.error(`Starting Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
-  const createConfiguredMcpServer = () => {
+  // createConfiguredMcpServer accepts an optional per-request HTTP client factory.
+  // When provided (SSO mode), it shadows the server-level factory so every tool in
+  // the request context uses the caller's own credentials instead of shared ones.
+  const createConfiguredMcpServer = (createHttpClientFn?: (scopes: string[]) => Promise<any>) => {
+    // Resolve which factory to use for this server instance.
+    // In SSO mode, the caller passes a per-user factory; otherwise we use the shared server-level one.
+    const createAuthenticatedHttpClient = createHttpClientFn ?? serverCreateAuthenticatedHttpClient;
     const server = new McpServer(
       {
         name: 'Dynatrace MCP Server',
@@ -1576,50 +1627,33 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
     return server;
   }; // end createConfiguredMcpServer
 
-  // Parse command line arguments using commander
-  const program = new Command();
-
-  program
-    .name('dynatrace-mcp-server')
-    .description('Dynatrace Model Context Protocol (MCP) Server')
-    .version(getPackageJsonVersion())
-    .option('--http', 'enable HTTP server mode instead of stdio')
-    .option('--server', 'enable HTTP server mode (alias for --http)')
-    .option('-p, --port <number>', 'port for HTTP server', '3000')
-    .option('-H, --host <host>', 'host for HTTP server', '127.0.0.1')
-    .allowUnknownOption() // Claude Desktop / Electron UtilityProcess may inject extra arguments
-    .allowExcessArguments() // Avoid "too many arguments" when launched from .mcpb bundles
-    .parse();
-
-  const options = program.opts();
-  const httpMode = options.http || options.server;
-  const httpPort = parseInt(options.port, 10);
-  const host = options.host || '0.0.0.0';
-
   // HTTP server mode (Stateless)
   if (httpMode) {
-    const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
-      // Parse request body for POST requests
+    // Shared helper: creates a fresh MCP server + transport, wires them together, and handles the
+    // request.  Called once per incoming HTTP request regardless of the auth mode so that the
+    // concurrent-connection limitation ("Already connected to a transport", see #345) is avoided.
+    const handleHttpRequest = async (
+      req: IncomingMessage,
+      res: ServerResponse,
+      createHttpClientFn?: (scopes: string[]) => Promise<any>,
+    ) => {
       let body: unknown;
-      // Create a fresh MCP server instance per request to support concurrent
-      // connections. Reusing a single McpServer instance causes
-      // "Already connected to a transport" errors. See #345.
-      const server = createConfiguredMcpServer();
-      // Create a new Stateless HTTP Transport
+
+      // Create a fresh MCP server instance per request to support concurrent connections.
+      const server = createConfiguredMcpServer(createHttpClientFn);
       const httpTransport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined, // No Session ID needed
       });
 
       res.on('close', () => {
-        // close transport and server for this request
         httpTransport.close();
         server.close();
       });
 
-      // Connecting MCP-server to HTTP transport
+      // Connect MCP server to HTTP transport
       await server.connect(httpTransport);
 
-      // Handle POST Requests for this endpoint
+      // Parse POST body before dispatching to transport
       if (req.method === 'POST') {
         const chunks: Buffer[] = [];
         for await (const chunk of req) {
@@ -1637,11 +1671,51 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
       }
 
       await httpTransport.handleRequest(req, res, body);
+    };
+
+    const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
+      // In SSO mode, each request must carry an "Authorization: Bearer <token>" header.
+      // The token is extracted here and forwarded to a per-request HTTP client factory so
+      // every tool call within this request uses the caller's own Dynatrace identity.
+      if (ssoMode) {
+        const authHeader = req.headers['authorization'];
+        const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : undefined;
+
+        if (!bearerToken) {
+          console.error('⚠️  SSO mode: Rejected request – missing Authorization: Bearer header');
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(
+            JSON.stringify({
+              error: 'Unauthorized',
+              message:
+                'Please include an "Authorization: Bearer <token>" header with your Dynatrace Platform Token or OAuth access token.',
+            }),
+          );
+          return;
+        }
+
+        // Build a per-user HTTP client factory that always uses the caller's bearer token.
+        // Scopes are intentionally ignored: the bearer token already encodes the caller's permissions.
+        const perUserCreateHttpClient = async (_scopes: string[]) => {
+          return createHttpClientFromBearerToken(dtEnvironment, bearerToken);
+        };
+
+        await handleHttpRequest(req, res, perUserCreateHttpClient);
+      } else {
+        // Standard HTTP mode: all requests share the server-level credentials
+        await handleHttpRequest(req, res);
+      }
     });
 
     // Start HTTP Server on the specified host and port
     httpServer.listen(httpPort, host, () => {
-      console.error(`Dynatrace MCP Server running on HTTP at http://${host}:${httpPort}`);
+      if (ssoMode) {
+        console.error(
+          `Dynatrace MCP Server running on HTTP at http://${host}:${httpPort} (SSO/per-user auth mode – each request must supply "Authorization: Bearer <token>")`,
+        );
+      } else {
+        console.error(`Dynatrace MCP Server running on HTTP at http://${host}:${httpPort}`);
+      }
     });
 
     // Handle graceful shutdown for http server mode

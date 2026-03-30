@@ -47,6 +47,20 @@ export const createDtHttpClient = async (
 };
 
 /**
+ * Creates an HTTP Client scoped to a user-supplied bearer token (e.g. a Dynatrace Platform Token
+ * or an OAuth access token obtained independently by the caller).
+ * Intended for HTTP-mode multi-user deployments where each request carries its own token.
+ */
+export const createHttpClientFromBearerToken = async (
+  environmentUrl: string,
+  bearerToken: string,
+): Promise<HttpClient> => {
+  // Deliberately kept at debug-level to avoid flooding logs in high-request-volume SSO deployments
+  console.error(`🔒 SSO mode: Creating per-user HTTP client for ${environmentUrl}`);
+  return createBearerTokenHttpClient(environmentUrl, bearerToken);
+};
+
+/**
  * Creates an HTTP Client based on environmentUrl and a bearer token, and also sets the user agent
  */
 const createBearerTokenHttpClient = async (environmentUrl: string, bearerToken: string): Promise<HttpClient> => {

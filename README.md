@@ -288,6 +288,54 @@ npx -y @dynatrace-oss/dynatrace-mcp-server@latest --version
 }
 ```
 
+### Multi-User / Per-User SSO Authentication (HTTP Mode)
+
+For centralized deployments (e.g., OpenShift/Kubernetes) where multiple users connect to a single MCP server instance, the `--sso` flag enables **per-user authentication**. Each connecting user provides their own Dynatrace identity via an `Authorization: Bearer <token>` HTTP header. The server itself holds **no shared credentials** — only `DT_ENVIRONMENT` is required at startup.
+
+**Starting the server in SSO mode:**
+
+```bash
+# Only DT_ENVIRONMENT is required – no shared token or OAuth client needed
+export DT_ENVIRONMENT=https://abc12345.apps.dynatrace.com
+
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --sso
+# or on a specific port/host:
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --sso --host 0.0.0.0 --port 3000
+```
+
+**How users authenticate:**
+
+Each request to the MCP server must include an `Authorization` header containing a valid Dynatrace [Platform Token](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens) or OAuth Bearer Token for the target environment:
+
+```
+Authorization: Bearer <dt-platform-token-or-oauth-access-token>
+```
+
+MCP clients that support custom HTTP headers can be configured like this:
+
+```json
+{
+  "mcpServers": {
+    "dynatrace-sso": {
+      "url": "http://<host>:3000",
+      "transport": "http",
+      "headers": {
+        "Authorization": "Bearer dt0s16.YOUR_PLATFORM_TOKEN_HERE"
+      }
+    }
+  }
+}
+```
+
+**Key properties of SSO mode:**
+
+- Each user's Dynatrace permissions and audit trail are preserved — no shared service account.
+- The server performs no upfront authenticated connection check at startup (since there is no shared credential).
+- A request without a valid `Authorization: Bearer` header receives an HTTP `401 Unauthorized` response.
+- Compatible with both Dynatrace Platform Tokens and OAuth Bearer Tokens (access tokens).
+
+> **Note:** `--sso` is only available in `--http` mode and is ignored in stdio mode.
+
 ### MCP Bundle (MCPB)
 
 This repository includes an MCP Bundle-compatible [manifest.json](manifest.json) for local installation.
