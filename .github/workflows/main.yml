@@ -16,6 +16,9 @@ jobs:
         with:
           node-version-file: '.nvmrc'
 
+      - name: Check version consistency
+        run: node scripts/check-versions.js
+
       - name: Install dependencies
         run: npm ci
 
