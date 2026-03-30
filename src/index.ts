@@ -698,7 +698,7 @@ const main = async () => {
           dqlStatement: z
             .string()
             .describe(
-              'DQL Statement (Ex: "fetch [logs, spans, events, ...], from: now()-4h, to: now() [| filter <some-filter>] [| summarize count(), by:{some-fields}]", or for metrics: "metrics [filter: {<filter>}] [from: now()-4h] [to: now()]" or "timeseries { avg(<metric-name>), value.A = avg(<metric-name>, scalar: true) }", or for entities via smartscape: "smartscapeNodes \\"[*, HOST, PROCESS, ...]\\" [| filter id == \\"<ENTITY-ID>\\"]"). ' +
+              'DQL Statement (Ex: "fetch [logs, spans, events, ...], from: now()-4h, to: now() [| filter <some-filter>] [| summarize count(), by:{some-fields}]", or for metrics: "metrics [from: now()-4h] [to: now()] [| filter: {<filter>}]" or "timeseries { avg(<metric-name>), value.A = avg(<metric-name>, scalar: true) }", or for entities via smartscape: "smartscapeNodes \\"[*, HOST, PROCESS, ...]\\" [| filter id == \\"<ENTITY-ID>\\"]"). ' +
                 'When querying data for a specific entity, call the `find_entity_by_name` tool first to get an appropriate filter like `dt.entity.service == "SERVICE-1234"` or `dt.entity.host == "HOST-1234"` to be used in the DQL statement. ' +
                 'Note: `dt.entity.*` filters only work in `fetch` queries (logs, metrics, spans, etc.). For `smartscapeNodes`, filter by `id == toSmartscapeId("<ENTITY-ID>")` or simply `id == "<ENTITY-ID>"` (raw string). For `smartscapeEdges`, use `source_id == toSmartscapeId("<ENTITY-ID>")` or `target_id == toSmartscapeId("<ENTITY-ID>")`. String functions like `contains()` or `startsWith()` do NOT work on smartscape `id` fields. ',
             ),
