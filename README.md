@@ -493,3 +493,8 @@ To disable usage tracking, add this to your environment:
 ```bash
 DT_MCP_DISABLE_TELEMETRY=true
 ```
+
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/dynatrace-oss-dynatrace-mcp).
+
