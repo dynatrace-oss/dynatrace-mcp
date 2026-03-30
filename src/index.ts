@@ -14,6 +14,14 @@ import { z, ZodRawShape, ZodTypeAny } from 'zod';
 
 import { getPackageJsonVersion } from './utils/version';
 import { createDtHttpClient, createHttpClientFromBearerToken } from './authentication/dynatrace-clients';
+import {
+  handleWellKnown,
+  handleAuthorize,
+  handleCallback,
+  handleToken,
+  OAuthProxyState,
+} from './authentication/oauth-proxy';
+import { getSSOUrl } from './authentication/get-sso-url';
 import { listVulnerabilities } from './capabilities/list-vulnerabilities';
 import { listProblems } from './capabilities/list-problems';
 import { getEventsForCluster } from './capabilities/get-events-for-cluster';
@@ -119,6 +127,10 @@ const main = async () => {
       '--sso',
       'enable per-user SSO authentication in HTTP mode: each request must supply an "Authorization: Bearer <token>" header; no shared server credentials are required',
     )
+    .option(
+      '--base-url <url>',
+      'public-facing base URL of the server (e.g. https://mcp.example.com); used in OAuth discovery metadata when running behind a reverse proxy',
+    )
     .allowUnknownOption() // Claude Desktop / Electron UtilityProcess may inject extra arguments
     .allowExcessArguments() // Avoid "too many arguments" when launched from .mcpb bundles
     .parse();
@@ -129,6 +141,11 @@ const main = async () => {
   const host = options.host || '0.0.0.0';
   // SSO mode is only meaningful (and allowed) in HTTP mode
   const ssoMode = httpMode && !!options.sso;
+  // serverBaseUrl is used in OAuth discovery metadata.  Defaults to http://localhost:<port>;
+  // use --base-url to override when running behind a Kubernetes Ingress or reverse proxy.
+  const serverBaseUrl: string = ssoMode
+    ? (options.baseUrl as string | undefined)?.replace(/\/$/, '') ?? `http://localhost:${httpPort}`
+    : '';
 
   // read Environment variables
   let dynatraceEnv: DynatraceEnv;
@@ -254,6 +271,23 @@ const main = async () => {
     console.error(
       `ℹ️  SSO mode enabled – skipping upfront authenticated connection check. Each incoming request must supply its own "Authorization: Bearer <token>" header.`,
     );
+  }
+
+  // In SSO mode, pre-fetch the Dynatrace SSO base URL once at startup so it is available for
+  // every request without repeated discovery calls.  Also initialise the OAuth proxy state.
+  let ssoBaseUrl: string | undefined;
+  let oauthProxyState: OAuthProxyState | undefined;
+  if (ssoMode) {
+    try {
+      ssoBaseUrl = await getSSOUrl(dtEnvironment);
+      oauthProxyState = new OAuthProxyState();
+      console.error(`🔑 SSO mode: Dynatrace SSO URL resolved to ${ssoBaseUrl}`);
+      console.error(`🔑 SSO mode: OAuth discovery base URL → ${serverBaseUrl}`);
+      console.error(`🔑 SSO mode: OAuth endpoints → ${serverBaseUrl}/.well-known/oauth-protected-resource`);
+    } catch (err) {
+      console.error(`⚠️ SSO mode: Failed to resolve Dynatrace SSO URL: ${(err as Error).message}`);
+      // Non-fatal – individual requests will see an error if they attempt the OAuth flow.
+    }
   }
 
   // Ready to start the server
@@ -1674,16 +1708,57 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
     };
 
     const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
-      // In SSO mode, each request must carry an "Authorization: Bearer <token>" header.
-      // The token is extracted here and forwarded to a per-request HTTP client factory so
-      // every tool call within this request uses the caller's own Dynatrace identity.
       if (ssoMode) {
+        // SSO mode: serve OAuth discovery + proxy endpoints without auth, require Bearer token
+        // for all other requests (MCP traffic).  serverBaseUrl is always non-empty in SSO mode.
+        const reqUrl = req.url ?? '/';
+
+        // 1. Serve OAuth well-known discovery documents (no auth required).
+        if (reqUrl.startsWith('/.well-known/oauth-')) {
+          handleWellKnown(req, res, serverBaseUrl, allRequiredScopes);
+          return;
+        }
+
+        // 2. Serve OAuth proxy endpoints (no auth required – these ARE the auth flow).
+        if (reqUrl.startsWith('/oauth/authorize') && req.method === 'GET') {
+          if (!ssoBaseUrl || !oauthProxyState) {
+            res.writeHead(503, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'service_unavailable', error_description: 'SSO URL not yet resolved' }));
+            return;
+          }
+          await handleAuthorize(req, res, ssoBaseUrl, DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID, serverBaseUrl, oauthProxyState);
+          return;
+        }
+        if (reqUrl.startsWith('/oauth/callback') && req.method === 'GET') {
+          if (!oauthProxyState) {
+            res.writeHead(503, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'service_unavailable', error_description: 'OAuth proxy not initialised' }));
+            return;
+          }
+          await handleCallback(req, res, serverBaseUrl, oauthProxyState);
+          return;
+        }
+        if (reqUrl.startsWith('/oauth/token') && req.method === 'POST') {
+          if (!ssoBaseUrl || !oauthProxyState) {
+            res.writeHead(503, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'service_unavailable', error_description: 'SSO URL not yet resolved' }));
+            return;
+          }
+          await handleToken(req, res, ssoBaseUrl, DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID, oauthProxyState);
+          return;
+        }
+
+        // 3. All other requests (MCP traffic) require a Bearer token.
         const authHeader = req.headers['authorization'];
         const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : undefined;
 
         if (!bearerToken) {
-          console.error('⚠️  SSO mode: Rejected request – missing Authorization: Bearer header');
-          res.writeHead(401, { 'Content-Type': 'application/json' });
+          // Include WWW-Authenticate per RFC 9728 so clients supporting OAuth discovery
+          // can auto-configure the auth flow via /.well-known/oauth-protected-resource.
+          res.writeHead(401, {
+            'Content-Type': 'application/json',
+            'WWW-Authenticate': `Bearer realm="Dynatrace MCP Server", resource_metadata="${serverBaseUrl}/.well-known/oauth-protected-resource"`,
+          });
           res.end(
             JSON.stringify({
               error: 'Unauthorized',
@@ -1711,8 +1786,11 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
     httpServer.listen(httpPort, host, () => {
       if (ssoMode) {
         console.error(
-          `Dynatrace MCP Server running on HTTP at http://${host}:${httpPort} (SSO/per-user auth mode – each request must supply "Authorization: Bearer <token>")`,
+          `Dynatrace MCP Server running on HTTP at http://${host}:${httpPort} (SSO/per-user auth mode)`,
         );
+        console.error(`  OAuth discovery: ${serverBaseUrl}/.well-known/oauth-protected-resource`);
+        console.error(`  OAuth authorize: ${serverBaseUrl}/oauth/authorize`);
+        console.error(`  OAuth token:     ${serverBaseUrl}/oauth/token`);
       } else {
         console.error(`Dynatrace MCP Server running on HTTP at http://${host}:${httpPort}`);
       }

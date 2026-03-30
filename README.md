@@ -301,17 +301,19 @@ export DT_ENVIRONMENT=https://abc12345.apps.dynatrace.com
 npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --sso
 # or on a specific port/host:
 npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --sso --host 0.0.0.0 --port 3000
+
+# When running behind a reverse proxy (Kubernetes Ingress, etc.), set the public URL so
+# OAuth discovery metadata contains the correct endpoints:
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --sso --host 0.0.0.0 --base-url https://mcp.example.com
 ```
 
-**How users authenticate:**
+#### Option A – Manual Token (direct header passthrough)
 
-Each request to the MCP server must include an `Authorization` header containing a valid Dynatrace [Platform Token](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens) or OAuth Bearer Token for the target environment:
+MCP clients that support custom HTTP headers can pass a Dynatrace [Platform Token](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens) or OAuth access token directly:
 
 ```
 Authorization: Bearer <dt-platform-token-or-oauth-access-token>
 ```
-
-MCP clients that support custom HTTP headers can be configured like this:
 
 ```json
 {
@@ -327,12 +329,39 @@ MCP clients that support custom HTTP headers can be configured like this:
 }
 ```
 
+#### Option B – Automatic OAuth via RFC 9728 Discovery + CIMD (recommended)
+
+In SSO mode the server acts as an **OAuth 2.0 Authorization Server proxy** in front of Dynatrace SSO.
+MCP clients that support [RFC 9728 Protected Resource Metadata](https://www.rfc-editor.org/rfc/rfc9728) and
+[Client ID Metadata Documents (CIMD)](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-00)
+can discover and complete the full OAuth Authorization Code + PKCE flow automatically — **no Dynamic Client Registration needed**.
+
+**Discovery endpoints exposed by the server:**
+
+| Path | Description |
+|------|-------------|
+| `GET /.well-known/oauth-protected-resource` | RFC 9728 Protected Resource Metadata |
+| `GET /.well-known/oauth-authorization-server` | RFC 8414 Authorization Server Metadata (with `client_id_metadata_document_supported: true`) |
+| `GET /oauth/authorize` | OAuth authorization endpoint — redirects to Dynatrace SSO |
+| `GET /oauth/callback` | Dynatrace SSO redirect target — relays code to the MCP client |
+| `POST /oauth/token` | Token endpoint — proxies code exchange to Dynatrace SSO |
+
+**Automatic flow (MCP client perspective):**
+1. Client makes unauthenticated request → server returns `401` with `WWW-Authenticate: Bearer resource_metadata=...`
+2. Client fetches `/.well-known/oauth-protected-resource` and discovers the authorization server.
+3. Client fetches `/.well-known/oauth-authorization-server`, sees `client_id_metadata_document_supported: true`.
+4. Client starts Authorization Code + PKCE flow via `/oauth/authorize` — user is redirected to Dynatrace SSO login.
+5. After login, Dynatrace SSO redirects to `/oauth/callback`, which relays the code to the client.
+6. Client exchanges the code via `POST /oauth/token` — server proxies to Dynatrace SSO using the pre-registered `dt0s12.local-dt-mcp-server` application.
+7. Client receives a Dynatrace access token and uses it as `Authorization: Bearer` in MCP requests.
+
 **Key properties of SSO mode:**
 
 - Each user's Dynatrace permissions and audit trail are preserved — no shared service account.
 - The server performs no upfront authenticated connection check at startup (since there is no shared credential).
-- A request without a valid `Authorization: Bearer` header receives an HTTP `401 Unauthorized` response.
+- A request without a valid `Authorization: Bearer` header receives an HTTP `401 Unauthorized` response with a `WWW-Authenticate` header pointing to the OAuth discovery endpoint.
 - Compatible with both Dynatrace Platform Tokens and OAuth Bearer Tokens (access tokens).
+- The pre-registered Dynatrace OAuth application (`dt0s12.local-dt-mcp-server`) is used for the browser-based SSO flow — no Dynamic Client Registration required.
 
 > **Note:** `--sso` is only available in `--http` mode and is ignored in stdio mode.
 

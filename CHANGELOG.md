@@ -2,7 +2,15 @@
 
 ## Unreleased Changes
 
-- Added `--sso` flag for HTTP mode (`--http --sso`) to enable per-user SSO/bearer-token authentication. In this mode the server holds no shared credentials; each connecting user must supply an `Authorization: Bearer <token>` header with their own Dynatrace Platform Token or OAuth access token. This enables multi-user deployments on OpenShift/Kubernetes where each user retains their own identity, RBAC, and audit trail.
+- Added `--sso` flag for HTTP mode (`--http --sso`) to enable per-user SSO/bearer-token authentication.
+  Each connecting user supplies an `Authorization: Bearer <token>` header with their own Dynatrace
+  Platform Token or OAuth access token. STDIO mode is unaffected.
+- Added OAuth 2.0 discovery endpoints in `--sso` mode (RFC 9728 Protected Resource Metadata,
+  RFC 8414 Authorization Server Metadata) and an OAuth proxy (`/oauth/authorize`, `/oauth/callback`,
+  `/oauth/token`) so MCP clients supporting CIMD can complete the Dynatrace SSO login flow
+  automatically without Dynamic Client Registration.
+- Added `--base-url` flag for HTTP mode to set the public-facing URL used in OAuth discovery
+  metadata (useful when running behind a Kubernetes Ingress or reverse proxy).
 
 ## 1.7.4
 
