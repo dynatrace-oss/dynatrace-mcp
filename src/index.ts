@@ -574,7 +574,7 @@ const main = async () => {
             '\n\n**Next Steps:**\n' +
             '1. Fetch more details about the entity, using the `execute_dql` tool with the following DQL Statement: "smartscapeNodes \"<entity-type>\" | filter id == toSmartscapeId("<entity-id>)"\n' +
             '2. Perform a sanity check that found entities are actually the ones you are looking for, by comparing name and by type (hosts vs. containers vs. apps vs. functions) and technology (Java, TypeScript, .NET) with what is available in the local source code repo.\n' +
-            '3. Find and investigate available metrics for relevant entities, by using the `execute_dql` tool with the following DQL statement: "fetch metric.series | filter dt.smartscape.<entity-type> == toSmartscapeId(<entity-id>) | limit 20"\n' +
+            '3. Find and investigate available metrics for relevant entities, by using the `execute_dql` tool with the following DQL statement: "metrics | filter dt.smartscape.<entity-type> == toSmartscapeId(<entity-id>) | limit 20"\n' +
             '4. Find out whether any problems exist for this entity using the `list_problems` or `list_vulnerabilities` tool, and the provided DQL-Filter\n' +
             '5. Explore dependency & relationships with: "smartscapeEdges \"*\" | filter source_id == toSmartscapeId(<entity-id>) or target_id == toSmartscapeId(<entity-id>)" to list inbound/outbound edges (e.g., runs_on, belongs_to, calls, is_called_by) for graph context\n';
 
@@ -603,7 +603,7 @@ const main = async () => {
             '\n\n**Next Steps:**\n' +
             '1. Fetch more details about the entity, using the `execute_dql` tool with the following DQL Statements: "describe(dt.entity.<entity-type>)", and "fetch dt.entity.<entity-type> | filter id == <entity-id> | fieldsAdd <field-1>, <field-2>, ..."\n' +
             '2. Perform a sanity check that found entities are actually the ones you are looking for, by comparing name and by type (hosts vs. containers vs. apps vs. functions) and technology (Java, TypeScript, .NET) with what is available in the local source code repo.\n' +
-            '3. Find and investigate available metrics for relevant entities, by using the `execute_dql` tool with the following DQL statement: "fetch metric.series | filter dt.entity.<entity-type> == <entity-id> | limit 20"\n' +
+            '3. Find and investigate available metrics for relevant entities, by using the `execute_dql` tool with the following DQL statement: "metrics | filter dt.entity.<entity-type> == <entity-id> | limit 20"\n' +
             '4. Find out whether any problems exist for this entity using the `list_problems` or `list_vulnerabilities` tool, and the provided DQL-Filter\n';
 
           return resp;
@@ -698,7 +698,7 @@ const main = async () => {
           dqlStatement: z
             .string()
             .describe(
-              'DQL Statement (Ex: "fetch [logs, spans, events, metric.series, ...], from: now()-4h, to: now() [| filter <some-filter>] [| summarize count(), by:{some-fields}]", or for metrics: "timeseries { avg(<metric-name>), value.A = avg(<metric-name>, scalar: true) }", or for entities via smartscape: "smartscapeNodes \\"[*, HOST, PROCESS, ...]\\" [| filter id == \\"<ENTITY-ID>\\"]"). ' +
+              'DQL Statement (Ex: "fetch [logs, spans, events, ...], from: now()-4h, to: now() [| filter <some-filter>] [| summarize count(), by:{some-fields}]", or for metrics: "metrics [filter: {<filter>}] [from: now()-4h] [to: now()]" or "timeseries { avg(<metric-name>), value.A = avg(<metric-name>, scalar: true) }", or for entities via smartscape: "smartscapeNodes \\"[*, HOST, PROCESS, ...]\\" [| filter id == \\"<ENTITY-ID>\\"]"). ' +
                 'When querying data for a specific entity, call the `find_entity_by_name` tool first to get an appropriate filter like `dt.entity.service == "SERVICE-1234"` or `dt.entity.host == "HOST-1234"` to be used in the DQL statement. ' +
                 'Note: `dt.entity.*` filters only work in `fetch` queries (logs, metrics, spans, etc.). For `smartscapeNodes`, filter by `id == toSmartscapeId("<ENTITY-ID>")` or simply `id == "<ENTITY-ID>"` (raw string). For `smartscapeEdges`, use `source_id == toSmartscapeId("<ENTITY-ID>")` or `target_id == toSmartscapeId("<ENTITY-ID>")`. String functions like `contains()` or `startsWith()` do NOT work on smartscape `id` fields. ',
             ),
