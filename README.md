@@ -81,60 +81,13 @@ Once you are done, we recommend looking into [example prompts](#-example-prompts
 
 ## Capabilities
 
-### Observability & Problem Management
-
-| Tool | Description |
-|------|-------------|
-| `list_problems` | List all [Davis problems](https://www.dynatrace.com/hub/detail/problems/) (active or closed), optionally filtered by status and timeframe |
-| `list_vulnerabilities` | Retrieve all active (non-muted) [security vulnerabilities](https://www.dynatrace.com/hub/detail/vulnerabilities/), with optional DQL filter |
-| `list_exceptions` | List the most recent application exceptions across your monitored services |
-| `get_kubernetes_events` | Get all events from a specific Kubernetes cluster |
-
-### Data Querying (DQL / Grail)
-
-| Tool | Description |
-|------|-------------|
-| `execute_dql` | Execute a [Dynatrace Query Language (DQL)](https://docs.dynatrace.com/docs/discover-dynatrace/references/dynatrace-query-language) statement against Grail to retrieve logs, metrics, spans, events, entity data, and more |
-| `verify_dql` | Syntactically verify a DQL statement before executing it |
-| `generate_dql_from_natural_language` | Convert a plain-English question into a DQL statement using Davis CoPilot AI |
-| `explain_dql_in_natural_language` | Get a plain-English explanation of any DQL statement using Davis CoPilot AI |
-
-### Entity Discovery
-
-| Tool | Description |
-|------|-------------|
-| `find_entity_by_name` | Find the entity ID and type of a monitored entity (service, host, process group, application, Kubernetes node, …) by name |
-
-### AI-Powered Analysis
-
-| Tool | Description |
-|------|-------------|
-| `chat_with_davis_copilot` | Ask any Dynatrace-related question using [Davis CoPilot](https://docs.dynatrace.com/docs/discover-dynatrace/platform/davis-ai/davis-copilot) when no other specific tool applies |
-| `list_davis_analyzers` | List all available [Davis Analyzers](https://docs.dynatrace.com/docs/discover-dynatrace/platform/davis-ai) (forecast, anomaly detection, correlation analyzers, and more) |
-| `execute_davis_analyzer` | Execute a Davis Analyzer with custom input parameters and timeframe configuration for advanced forecasting and anomaly detection |
-
-### Automation & Notifications
-
-| Tool | Description |
-|------|-------------|
-| `create_workflow_for_notification` | Create a notification [Workflow](https://docs.dynatrace.com/docs/discover-dynatrace/platform/automationengine) for a team based on a problem type |
-| `make_workflow_public` | Make an existing workflow publicly available to everyone on the Dynatrace environment |
-| `send_slack_message` | Send a Slack message to a channel via the [Slack Connector](https://docs.dynatrace.com/docs/deliver/slack) configured in Dynatrace |
-| `send_email` | Send an email using the Dynatrace Email API (from `no-reply@apps.dynatrace.com`) |
-| `send_event` | Ingest a custom event into Dynatrace via the Events API v2 (deployments, configuration changes, custom business events, …) |
-
-### Content Creation
-
-| Tool | Description |
-|------|-------------|
-| `create_dynatrace_notebook` | Create a new [Dynatrace Notebook](https://docs.dynatrace.com/docs/observe/dashboards-and-notebooks/notebooks) to share analysis and findings with colleagues |
-
-### Environment & Utilities
-
-| Tool | Description |
-|------|-------------|
-| `get_environment_info` | Get information about the connected Dynatrace environment and verify the connection and authentication |
-| `reset_grail_budget` | Reset the session-level Grail query budget after it has been exhausted |
+- Observability & Problem Management (e.g., `list_problems`, `list_vulnerabilities`, `list_exceptions`, `get_kubernetes_events`)
+- Querying Data from Grail (e.g., `execute_dql`, `verify_dql`, `generate_dql_from_natural_language`, `explain_dql_in_natural_language`)
+- Entity Discovery (e.g., `find_entity_by_name`)
+- [Dynatrace Intelligence](https://www.dynatrace.com/platform/artificial-intelligence/) (e.g., `chat_with_davis_copilot`, `list_davis_analyzers`, `execute_davis_analyzer`)
+- Automation & Notifications (e.g., `create_workflow_for_notification`, `send_slack_message`, `send_email`, `send_event`)
+- Content Creation (e.g., `create_dynatrace_notebook`)
+- Environment & Utilities (e.g., `get_environment_info`, `reset_grail_budget`)
 
 ### Costs
 
@@ -171,7 +124,7 @@ fetch dt.system.events
 | maketimeSeries sum(scanned_bytes), by: { user.email, user.id, table }
 ```
 
-> **Note (AI tools):** While Davis CoPilot AI is generally available (GA), the Davis CoPilot APIs are currently in preview. For more information, visit the [Davis CoPilot Preview Community](https://dt-url.net/copilot-community).
+> **Note (AI tools):** While [Dynatrace Intelligence](https://www.dynatrace.com/platform/artificial-intelligence/) is generally available (GA), the underlying APIs used by some AI tools are currently in preview. For more information, visit the [Dynatrace Intelligence Community](https://dt-url.net/copilot-community).
 
 ## Configuration
 
