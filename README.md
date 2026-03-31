@@ -87,7 +87,6 @@ Once you are done, we recommend looking into [example prompts](#-example-prompts
 - [Dynatrace Intelligence](https://www.dynatrace.com/platform/artificial-intelligence/) (e.g., `chat_with_davis_copilot`, `list_davis_analyzers`, `execute_davis_analyzer`)
 - Automation & Notifications (e.g., `create_workflow_for_notification`, `send_slack_message`, `send_email`, `send_event`)
 - Share results (e.g., `create_dynatrace_notebook`)
-- Environment & Utilities (e.g., `get_environment_info`, `reset_grail_budget`)
 
 ### Costs
 
@@ -124,7 +123,9 @@ fetch dt.system.events
 | maketimeSeries sum(scanned_bytes), by: { user.email, user.id, table }
 ```
 
-> **Note (AI tools):** While [Dynatrace Intelligence](https://www.dynatrace.com/platform/artificial-intelligence/) is generally available (GA), the underlying APIs used by some AI tools are currently in preview. For more information, visit the [Dynatrace Intelligence Community](https://dt-url.net/copilot-community).
+### AI-Powered Assistance
+
+> **Note:** [Dynatrace Intelligence](https://www.dynatrace.com/platform/artificial-intelligence/) tools are generally available (GA).
 
 ## Configuration
 
