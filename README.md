@@ -125,6 +125,10 @@ fetch dt.system.events
 
 ### AI-Powered Assistance
 
+- **Natural Language to DQL** - Convert plain English queries to Dynatrace Query Language
+- **DQL Explanation** - Get plain English explanations of complex DQL queries
+- **AI Chat Assistant** - Get contextual help and guidance for Dynatrace questions
+
 > **Note:** [Dynatrace Intelligence](https://www.dynatrace.com/platform/artificial-intelligence/) tools are generally available (GA).
 
 ## Configuration
