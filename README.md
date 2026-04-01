@@ -129,7 +129,6 @@ fetch dt.system.events
 - **DQL Explanation** - Get plain English explanations of complex DQL queries
 - **AI Chat Assistant** - Get contextual help and guidance for Dynatrace questions
 
-
 ## Configuration
 
 You can add this MCP server (using STDIO) to your MCP Client like VS Code, Claude, Cursor, Amazon Q Developer CLI, Windsurf Github Copilot via the package `@dynatrace-oss/dynatrace-mcp-server`.
