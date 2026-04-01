@@ -21,10 +21,10 @@ jobs:
 
       - name: Get package.json changes
         id: package-changes
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          HEAD_BRANCH: ${{ github.event.pull_request.head.sha }}
         run: |
-          # Get the base branch (usually main)
-          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
-          HEAD_BRANCH="${{ github.event.pull_request.head.sha }}"
 
           # Get the diff for package.json
           git diff origin/${BASE_BRANCH}...${HEAD_BRANCH} -- package.json > package_diff.txt
