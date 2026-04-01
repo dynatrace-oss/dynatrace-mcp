@@ -81,14 +81,12 @@ Once you are done, we recommend looking into [example prompts](#-example-prompts
 
 ## Capabilities
 
-- List and get [problem](https://www.dynatrace.com/hub/detail/problems/) details from your services (for example Kubernetes)
-- List and get security problems / [vulnerability](https://www.dynatrace.com/hub/detail/vulnerabilities/) details
-- Execute DQL (Dynatrace Query Language) and retrieve logs, events, spans and metrics
-- Send Slack messages (via Slack Connector)
-- Set up notification Workflow (via Dynatrace [AutomationEngine](https://docs.dynatrace.com/docs/discover-dynatrace/platform/automationengine))
-- Get more information about a monitored entity
-- Get Ownership of an entity
-- Create, list, and read documents (Notebooks, Dashboards, Launchpads, and other Dynatrace documents)
+- Observability & Problem Management (e.g., `list_problems`, `list_vulnerabilities`, `list_exceptions`, `get_kubernetes_events`)
+- Querying Data from Grail (e.g., `execute_dql`, `verify_dql`, `generate_dql_from_natural_language`, `explain_dql_in_natural_language`)
+- Entity Discovery (e.g., `find_entity_by_name`)
+- [Dynatrace Intelligence](https://www.dynatrace.com/platform/artificial-intelligence/) (e.g., `chat_with_davis_copilot`, `list_davis_analyzers`, `execute_davis_analyzer`)
+- Automation & Notifications (e.g., `create_workflow_for_notification`, `send_slack_message`, `send_email`, `send_event`)
+- Share results (e.g., `create_dynatrace_notebook`)
 
 ### Costs
 
@@ -125,14 +123,11 @@ fetch dt.system.events
 | maketimeSeries sum(scanned_bytes), by: { user.email, user.id, table }
 ```
 
-### AI-Powered Assistance (Preview)
+### AI-Powered Assistance
 
 - **Natural Language to DQL** - Convert plain English queries to Dynatrace Query Language
 - **DQL Explanation** - Get plain English explanations of complex DQL queries
 - **AI Chat Assistant** - Get contextual help and guidance for Dynatrace questions
-- **Feedback System** - Provide feedback to improve AI responses over time
-
-> **Note:** While Davis CoPilot AI is generally available (GA), the Davis CoPilot APIs are currently in preview. For more information, visit the [Davis CoPilot Preview Community](https://dt-url.net/copilot-community).
 
 ## Configuration
 
