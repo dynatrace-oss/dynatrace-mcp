@@ -1142,7 +1142,7 @@ const main = async () => {
           ),
         eventType: z
           .enum([
-            'OMPLIANCE_FINDING',
+            'COMPLIANCE_FINDING',
             'COMPLIANCE_SCAN_COMPLETED',
             'CUSTOM_INFO',
             'DETECTION_FINDING',
