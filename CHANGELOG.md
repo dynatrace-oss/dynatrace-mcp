@@ -2,6 +2,11 @@
 
 ## Unreleased Changes
 
+## 1.7.6
+
+- Fixed: Corrected event type spelling from `OMPLIANCE_FINDING` to `COMPLIANCE_FINDING` in the `send_event` tool, ensuring this event type is now accepted correctly.
+- Updated `lodash` (4.17.23 → 4.18.1), `@dynatrace/strato-components` (3.1.1 → 3.1.3), and `@dynatrace/strato-components-preview` (3.1.1 → 3.1.3).
+
 ## 1.7.5
 
 - Fixed: Replaced deprecated `fetch metric.series` DQL command with the `metrics` command.
