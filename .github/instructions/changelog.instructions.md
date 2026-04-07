@@ -13,6 +13,7 @@ Only include changes that are **relevant to end-users**:
 - Authentication or scope changes
 - Breaking changes or migration guidance
 - Dependency updates that fix security vulnerabilities
+- Routine dependency updates (non-dev dependencies), summarized in a single line listing all updated packages with their old and new versions
 
 Do **not** add entries for internal/technical changes that have no user-visible impact, such as:
 
@@ -20,6 +21,7 @@ Do **not** add entries for internal/technical changes that have no user-visible 
 - Test additions or updates
 - Documentation or instruction file updates
 - Tooling and build configuration changes
+- Dev-only dependency updates (e.g., `vite`, `@types/*`, test frameworks)
 
 # Style guidelines
 
@@ -47,3 +49,4 @@ Do **not** add entries for internal/technical changes that have no user-visible 
 - **Bug fixes**: "Fixed [issue description]" or "Fixed: [specific problem]"
 - **Removals**: "Removed [item] [reason if relevant]"
 - **Technical changes**: Include scope changes, API modifications, and architectural improvements
+- **Dependency updates**: "Updated `pkg-a` (1.0.0 → 1.1.0), `pkg-b` (2.3.0 → 2.4.0), and `pkg-c` (0.5.1 → 0.6.0)." — all non-dev dependency updates in a single bullet point
