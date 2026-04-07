@@ -29,4 +29,5 @@ COPY --from=build --chown=node:node /app/dist /app/dist
 USER node
 
 # Start the application
-CMD ["node", "dist/index.js"]
+# Use ENTRYPOINT so users can pass additional arguments (e.g. --http) when running the container
+ENTRYPOINT ["node", "dist/index.js"]

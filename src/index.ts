@@ -173,42 +173,52 @@ const main = async () => {
   console.error(`Testing connection to Dynatrace environment: ${dtEnvironment}...`);
   // First, we will try a simple "fetch" to connect to dtEnvironment, without authentication
   // This should help to see if DNS lookup works, TCP connection can be established, and TLS handshake works
+  let connectionTestPassed = false;
   try {
     const response = await fetch(`${dtEnvironment}`).then((response) => response.text());
     // check response
     if (response && response.length > 0) {
       if (response.includes('Authentication required')) {
         // all good - we reached the environment and authentication is required, which is going to be the next step
+        connectionTestPassed = true;
       } else {
         console.error(`⚠️ Tried to contact ${dtEnvironment}, got the following response: ${response}`);
-        // Note: We won't error out yet, but this information could already be helpful for troubleshooting
+        // The environment returned a response (even if unexpected) - we consider the connectivity test passed.
+        // The second test (authenticated) will validate proper Dynatrace access.
+        connectionTestPassed = true;
       }
     } else {
       throw new Error('No response received');
     }
   } catch (error: any) {
-    console.error(`❌ Failed to connect to Dynatrace environment ${dtEnvironment}:`, error.message);
-    console.error(error);
-    process.exit(3);
+    console.error(`⚠️ Could not reach Dynatrace environment ${dtEnvironment}:`, error.message);
+    console.error('The server will start anyway. Tool calls will fail if the environment is not reachable.');
   }
 
-  // Second, we will try with proper authentication
-  try {
-    const dtClient = await createAuthenticatedHttpClient(scopesBase);
-    const environmentInformationClient = new EnvironmentInformationClient(dtClient);
+  // Second, we will try with proper authentication (only if the first test passed)
+  if (connectionTestPassed) {
+    try {
+      const dtClient = await createAuthenticatedHttpClient(scopesBase);
+      const environmentInformationClient = new EnvironmentInformationClient(dtClient);
 
-    await environmentInformationClient.getEnvironmentInformation();
+      await environmentInformationClient.getEnvironmentInformation();
 
-    console.error(`✅ Successfully connected to the Dynatrace environment at ${dtEnvironment}.`);
-  } catch (error: any) {
-    if (isClientRequestError(error)) {
-      console.error(`❌ Failed to connect to Dynatrace environment ${dtEnvironment}:`, handleClientRequestError(error));
-    } else {
-      console.error(`❌ Failed to connect to Dynatrace environment ${dtEnvironment}:`, error.message);
-      // Logging more exhaustive error details for troubleshooting
-      console.error(error);
+      console.error(`✅ Successfully connected to the Dynatrace environment at ${dtEnvironment}.`);
+    } catch (error: any) {
+      if (isClientRequestError(error)) {
+        console.error(
+          `⚠️ Could not authenticate to Dynatrace environment ${dtEnvironment}:`,
+          handleClientRequestError(error),
+        );
+      } else {
+        console.error(`⚠️ Could not authenticate to Dynatrace environment ${dtEnvironment}:`, error.message);
+        // Logging more exhaustive error details for troubleshooting
+        console.error(error);
+      }
+      console.error(
+        'The server will start anyway. Tool calls will fail if authentication is not configured correctly.',
+      );
     }
-    process.exit(2);
   }
 
   // Ready to start the server
