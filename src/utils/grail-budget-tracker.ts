@@ -93,12 +93,12 @@ let globalBudgetTracker: GrailBudgetTrackerImpl | null = null;
 
 /**
  * Initialize or get the global Grail budget tracker
- * @param budgetLimitGB Budget limit in GB (base 1000). If not provided and tracker doesn't exist, defaults to 1000 GB
+ * @param budgetLimitGB Budget limit in GB (base 1000). If not provided and tracker doesn't exist, defaults to 5000 GB
  * @returns Grail budget tracker instance
  */
 export function getGrailBudgetTracker(budgetLimitGB?: number): GrailBudgetTrackerImpl {
   if (!globalBudgetTracker) {
-    const defaultBudget = budgetLimitGB ?? 1000; // Default to 1000 GB if not specified
+    const defaultBudget = budgetLimitGB ?? 5000; // Default to 5000 GB if not specified
     globalBudgetTracker = new GrailBudgetTrackerImpl(defaultBudget);
   }
   return globalBudgetTracker;
