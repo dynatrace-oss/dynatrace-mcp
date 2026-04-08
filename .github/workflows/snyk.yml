@@ -14,8 +14,11 @@ jobs:
   snyk:
     name: Snyk Security Scan
     runs-on: ubuntu-latest
-    # Skip Snyk if the token is not present (e.g., PRs from forks where secrets are unavailable)
-    if: secrets.SNYK_API_TOKEN != ''
+    # Skip Snyk for fork PRs and Dependabot where SNYK_API_TOKEN is unavailable
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.fork == false &&
+       github.actor != 'dependabot[bot]')
     permissions:
       # Required to fetch internal or private CodeCommits
       contents: read
