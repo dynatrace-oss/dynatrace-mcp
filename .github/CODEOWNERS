@@ -3,7 +3,7 @@
 # Each line is a file pattern followed by one or more owners.
 
 # core maintainers
-* @christian-kreuzberger-dtx @MrManny @raphael-wigoutschnigg-dt @christian-konnaris-dynatrace @roman-khazankin-dtx @stefaneberl
+* @christian-kreuzberger-dtx @MrManny @raphael-wigoutschnigg-dt @christian-konnaris-dynatrace @roman-khazankin-dtx
 
 # allow updates for markdown files and server.json
 *.md @krisdyna @dt-benedict
