@@ -26,4 +26,4 @@ Pinning exact versions ensures reproducible installs and prevents unexpected bre
 
 ## No `overrides`
 
-Do **not** add entries to the `"overrides"` section of `package.json` to force transitive dependency versions. Instead, update `package-lock.json` directly by running `npm install` — once the lock file pins a version, subsequent installs will respect it without needing an override.
+Do **not** add entries to the `"overrides"` section of `package.json` to force transitive dependency versions. Instead, update `package-lock.json` directly by running `npm install`.
