@@ -31,7 +31,7 @@ export function getDynatraceEnv(env: NodeJS.ProcessEnv = process.env): Dynatrace
   const dtPlatformToken = normalizeOptionalEnvVar('DT_PLATFORM_TOKEN', env.DT_PLATFORM_TOKEN);
   const dtEnvironment = env.DT_ENVIRONMENT;
   const slackConnectionId = env.SLACK_CONNECTION_ID || 'fake-slack-connection-id';
-  let grailBudgetGB = parseFloat(env.DT_GRAIL_QUERY_BUDGET_GB || '1000'); // Default to 1000 GB
+  let grailBudgetGB = parseFloat(env.DT_GRAIL_QUERY_BUDGET_GB || '5000'); // Default to 5000 GB
 
   if (!dtEnvironment) {
     throw new Error('Please set DT_ENVIRONMENT environment variable to your Dynatrace Platform Environment');

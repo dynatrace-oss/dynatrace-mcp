@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Increased the default Grail query budget from 1000 GB to 5000 GB per session. The budget can still be overridden via the `DT_GRAIL_QUERY_BUDGET_GB` environment variable.
+
 ## 1.7.6
 
 - Fixed: Corrected event type spelling from `OMPLIANCE_FINDING` to `COMPLIANCE_FINDING` in the `send_event` tool, ensuring this event type is now accepted correctly.

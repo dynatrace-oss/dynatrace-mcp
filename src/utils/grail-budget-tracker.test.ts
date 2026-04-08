@@ -93,7 +93,7 @@ describe('Grail Budget Tracker', () => {
       const tracker = getGrailBudgetTracker();
       const state = tracker.getState();
 
-      expect(state.budgetLimitGB).toBe(1000); // Default budget
+      expect(state.budgetLimitGB).toBe(5000); // Default budget
     });
 
     it('should create a global tracker with specified budget when called first time', () => {

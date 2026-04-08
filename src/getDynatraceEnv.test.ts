@@ -26,7 +26,7 @@ describe('getDynatraceEnv', () => {
       dtEnvironment: env.DT_ENVIRONMENT,
       dtPlatformToken: env.DT_PLATFORM_TOKEN,
       slackConnectionId: env.SLACK_CONNECTION_ID,
-      grailBudgetGB: 1000, // Default value
+      grailBudgetGB: 5000, // Default value
     });
   });
 
@@ -153,7 +153,7 @@ describe('getDynatraceEnv', () => {
     expect(() => getDynatraceEnv(env)).not.toThrow();
   });
 
-  it('Defaults the Grail Budget to 1000', () => {
+  it('Defaults the Grail Budget to 5000', () => {
     const env = {
       ...baseEnv,
       GRAIL_BUDGET_GB: undefined,
@@ -166,7 +166,7 @@ describe('getDynatraceEnv', () => {
       dtEnvironment: env.DT_ENVIRONMENT,
       dtPlatformToken: env.DT_PLATFORM_TOKEN,
       slackConnectionId: env.SLACK_CONNECTION_ID,
-      grailBudgetGB: 1000, // Default value
+      grailBudgetGB: 5000, // Default value
     });
   });
 
