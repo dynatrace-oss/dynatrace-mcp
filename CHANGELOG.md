@@ -3,6 +3,7 @@
 ## Unreleased Changes
 
 - Increased the default Grail query budget from 1000 GB to 5000 GB per session. The budget can still be overridden via the `DT_GRAIL_QUERY_BUDGET_GB` environment variable.
+- Updated `@dynatrace/strato-components` (3.1.1 → 3.2.0), `@dynatrace/strato-components-preview` (3.1.1 → 3.2.0), and `lodash-es` (4.17.23 → 4.18.1).
 
 ## 1.7.6
 
