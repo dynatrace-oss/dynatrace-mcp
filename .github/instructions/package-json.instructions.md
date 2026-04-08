@@ -23,3 +23,7 @@ Always use **exact version numbers** for all entries in `dependencies` and `devD
 ```
 
 Pinning exact versions ensures reproducible installs and prevents unexpected breakage from transitive upgrades. Dependency updates are managed deliberately via Dependabot, which opens dedicated PRs for each version bump.
+
+## No `overrides`
+
+Do **not** add entries to the `"overrides"` section of `package.json` to force transitive dependency versions. Instead, update `package-lock.json` directly by running `npm install`.
