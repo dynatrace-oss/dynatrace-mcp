@@ -96,7 +96,6 @@
     "vite-plugin-singlefile": "^2.3.0"
   },
   "overrides": {
-    "lodash-es": "4.18.1",
     "ajv": "8.18.0",
     "eslint": {
       "ajv": "^6.12.6"
