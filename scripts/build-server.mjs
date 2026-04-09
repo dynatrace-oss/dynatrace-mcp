@@ -11,8 +11,9 @@ const esbuildOptions = {
   target: ['node18'],
   format: 'cjs',
   outfile: 'dist/index.js',
-  // Only native .node addons must stay external
-  external: ['*.node'],
+  // Only native .node addons must stay external; `open` is kept external so its
+  // bundled xdg-open script (node_modules/open/xdg-open) remains resolvable at runtime
+  external: ['*.node', 'open'],
 };
 
 if (watchMode) {
@@ -37,7 +38,9 @@ if (watchMode) {
     license: pkg.license,
     repository: pkg.repository,
     bugs: pkg.bugs,
-    dependencies: {},
+    dependencies: {
+      open: pkg.dependencies.open,
+    },
   };
 
   writeFileSync('./dist/package.json', JSON.stringify(distPkg, null, 2) + '\n');
@@ -47,12 +50,6 @@ if (watchMode) {
     copyFileSync(`./${file}`, `./dist/${file}`);
   }
 
-  // The `open` package (v8) includes a bundled `xdg-open` shell script that it uses on Linux
-  // instead of relying on the system `xdg-open`. When esbuild bundles the code, __dirname
-  // resolves to dist/ rather than node_modules/open/, so we copy the script there so that
-  // the bundled code can still find and use it.
-  copyFileSync('./node_modules/open/xdg-open', './dist/xdg-open');
-
   // Create dist-bundle/ staging directory for mcpb pack
   // Layout: dist-bundle/dist/index.js + dist-bundle/dist/ui/ so that __dirname resolves correctly
   const bundleDir = './dist-bundle';
@@ -60,7 +57,6 @@ if (watchMode) {
   mkdirSync(`${bundleDir}/dist`, { recursive: true });
 
   copyFileSync('./dist/index.js', `${bundleDir}/dist/index.js`);
-  copyFileSync('./dist/xdg-open', `${bundleDir}/dist/xdg-open`);
   cpSync('./dist/ui', `${bundleDir}/dist/ui`, { recursive: true });
 
   // Copy source manifest.json unchanged — it already references dist/index.js

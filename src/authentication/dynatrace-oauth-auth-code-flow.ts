@@ -222,15 +222,14 @@ export async function performOAuthAuthorizationCodeFlow(
 
     // Open the authorization URL in the default browser
     console.error('Trying to open the authorization URL in your default browser...');
-    open(authorizationUrl)
-      .then((subprocess) => {
-        subprocess.on('error', (error) => {
-          console.error('Failed to open browser automatically:', error.message);
-        });
-      })
-      .catch((error: any) => {
-        console.error('Failed to open browser automatically:', error.message);
-      });
+    try {
+      open(authorizationUrl);
+    } catch (error: any) {
+      console.error(
+        'Failed to open browser automatically. Please click on the following URL to authorize the application:',
+        error.message,
+      );
+    }
 
     console.error('');
     console.error('👉 ' + authorizationUrl);
