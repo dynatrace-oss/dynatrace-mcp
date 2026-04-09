@@ -5,7 +5,7 @@ import { OAuthAuthorizationConfig, OAuthAuthorizationResult, OAuthTokenResponse 
 import { requestOAuthToken } from './dynatrace-oauth-base';
 import { base64URLEncode, generateRandomState } from './utils';
 import open from 'open';
-import { getCodespacesForwardedUrl } from '../utils/environment-detection';
+import { getCodespacesForwardedUrl, isRunningInCodespaces } from '../utils/environment-detection';
 
 /**
  * Generates PKCE code verifier and challenge according to RFC 7636
@@ -220,15 +220,17 @@ export async function performOAuthAuthorizationCodeFlow(
     console.error('='.repeat(60));
     console.error('');
 
-    // Open the authorization URL in the default browser
+    // Open the authorization URL in the default browser (skip in headless environments like Codespaces)
     console.error('Trying to open the authorization URL in your default browser...');
-    try {
-      open(authorizationUrl);
-    } catch (error: any) {
-      console.error(
-        'Failed to open browser automatically. Please click on the following URL to authorize the application:',
-        error.message,
-      );
+    if (!isRunningInCodespaces()) {
+      try {
+        const subprocess = await open(authorizationUrl);
+        subprocess.on('error', (error) => {
+          console.error('Failed to open browser automatically:', error.message);
+        });
+      } catch (error: any) {
+        console.error('Failed to open browser automatically:', error.message);
+      }
     }
 
     console.error('');
