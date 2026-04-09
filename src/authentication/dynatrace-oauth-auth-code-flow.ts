@@ -223,14 +223,15 @@ export async function performOAuthAuthorizationCodeFlow(
     // Open the authorization URL in the default browser (skip in headless environments like Codespaces)
     console.error('Trying to open the authorization URL in your default browser...');
     if (!isRunningInCodespaces()) {
-      try {
-        const subprocess = await open(authorizationUrl);
-        subprocess.on('error', (error) => {
+      open(authorizationUrl)
+        .then((subprocess) => {
+          subprocess.on('error', (error) => {
+            console.error('Failed to open browser automatically:', error.message);
+          });
+        })
+        .catch((error: any) => {
           console.error('Failed to open browser automatically:', error.message);
         });
-      } catch (error: any) {
-        console.error('Failed to open browser automatically:', error.message);
-      }
     }
 
     console.error('');
