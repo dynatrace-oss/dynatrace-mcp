@@ -1,9 +1,10 @@
 import { context, build } from 'esbuild';
-import { readFileSync, writeFileSync, copyFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, copyFileSync, mkdirSync, cpSync, rmSync, existsSync } from 'node:fs';
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
 const watchMode = process.argv.includes('--watch');
 
+// npm distribution: `open` stays external so it is resolved from node_modules at runtime.
 const esbuildOptions = {
   entryPoints: ['src/index.ts'],
   bundle: true,
@@ -11,9 +12,20 @@ const esbuildOptions = {
   target: ['node18'],
   format: 'cjs',
   outfile: 'dist/index.js',
-  // Only native .node addons must stay external; `open` is kept external so its
-  // bundled xdg-open script (node_modules/open/xdg-open) remains resolvable at runtime
   external: ['*.node', 'open'],
+};
+
+// mcpb bundle: `open` is bundled directly because the .mcpb archive has no node_modules.
+// The xdg-open shell script (used by `open` on Linux) is copied alongside the bundle so
+// that path.join(__dirname, 'xdg-open') resolves correctly at runtime.
+const esbuildMcpbOptions = {
+  entryPoints: ['src/index.ts'],
+  bundle: true,
+  platform: 'node',
+  target: ['node18'],
+  format: 'cjs',
+  outfile: 'dist-bundle/dist/index.js',
+  external: ['*.node'],
 };
 
 if (watchMode) {
@@ -56,7 +68,16 @@ if (watchMode) {
   rmSync(bundleDir, { recursive: true, force: true });
   mkdirSync(`${bundleDir}/dist`, { recursive: true });
 
-  copyFileSync('./dist/index.js', `${bundleDir}/dist/index.js`);
+  // Build a separate bundle for mcpb with `open` included (no node_modules available inside .mcpb).
+  await build(esbuildMcpbOptions);
+
+  // Copy the xdg-open shell script next to the bundle so that `open` can find it on Linux
+  // via path.join(__dirname, 'xdg-open') at runtime.
+  const xdgOpenSrc = './node_modules/open/xdg-open';
+  if (existsSync(xdgOpenSrc)) {
+    copyFileSync(xdgOpenSrc, `${bundleDir}/dist/xdg-open`);
+  }
+
   cpSync('./dist/ui', `${bundleDir}/dist/ui`, { recursive: true });
 
   // Copy source manifest.json unchanged — it already references dist/index.js
