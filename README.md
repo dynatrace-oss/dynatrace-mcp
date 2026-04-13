@@ -288,7 +288,15 @@ npx -y @dynatrace-oss/dynatrace-mcp-server@latest --version
 
 ### MCP Bundle (MCPB)
 
-This repository includes an MCP Bundle-compatible [manifest.json](manifest.json) for local installation.
+Each release publishes a pre-built MCP Bundle file (`.mcpb`) that you can install directly in Claude Desktop without any manual JSON configuration.
+
+**Installing in Claude Desktop:**
+
+1. Go to the [GitHub Releases](https://github.com/dynatrace-oss/dynatrace-mcp/releases) page and download the latest `dynatrace-mcp-server-<version>.mcpb` file.
+2. Double-click the downloaded `.mcpb` file, or open Claude Desktop → **Settings** → **Developer** and drag the file into the MCP servers list.
+3. Follow the prompts to set your `DT_ENVIRONMENT` variable (e.g. `https://abc12345.apps.dynatrace.com`).
+
+This repository also includes an MCP Bundle-compatible [manifest.json](manifest.json) for local installation.
 The bundle runs the compiled local server entrypoint via stdio:
 
 - `server.type`: `node`
