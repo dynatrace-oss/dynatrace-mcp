@@ -59,6 +59,16 @@ Make sure to not just update the code, but also update README.md with those requ
 
 See [build.instructions.md](/.github/instructions/build.instructions.md) for instructions on how to build and run the MCP server.
 
+## Running Tests
+
+Telemetry is automatically disabled during all test runs via the Jest configuration (`jest.config.js`), so no extra setup is required when using `npm test`, `npm run test:unit`, or `npm run test:integration`.
+
+If you run tests outside of Jest (e.g. in a custom script or CI step that bypasses the Jest config), disable telemetry explicitly to avoid unnecessary network connections:
+
+```bash
+DT_MCP_DISABLE_TELEMETRY=true <your-test-command>
+```
+
 ## Commit Messages and PR Titles
 
 This project uses **[Conventional Commits](https://www.conventionalcommits.org/)** (semantic commits). All commit messages **and PR titles** must follow the format:
