@@ -266,6 +266,9 @@ npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --host 127.0.0.1 # reco
 npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --host 0.0.0.0 # recommended for container
 npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http -H 192.168.0.1 # recommended when sharing connection over a local network
 
+# Fix the OAuth callback port (useful in Docker/containers where ports must be exposed)
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --callback-port 5344
+
 # Check version
 npx -y @dynatrace-oss/dynatrace-mcp-server@latest --version
 ```

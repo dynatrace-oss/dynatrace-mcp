@@ -151,6 +151,10 @@ const main = async () => {
     };
   };
 
+  // OAuth callback port – set later from CLI arguments, but declared here so the
+  // createAuthenticatedHttpClient closure can capture it by reference.
+  let callbackPort: number | undefined;
+
   // Factory function: creates a new McpServer with all tools registered.
   // In HTTP mode, a fresh instance is created per request to support
   // concurrent connections without "Already connected to a transport" errors.
@@ -166,6 +170,7 @@ const main = async () => {
       oauthClientId,
       oauthClientSecret,
       dtPlatformToken,
+      callbackPort,
     );
   };
 
@@ -1600,6 +1605,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
     .option('--server', 'enable HTTP server mode (alias for --http)')
     .option('-p, --port <number>', 'port for HTTP server', '3000')
     .option('-H, --host <host>', 'host for HTTP server', '127.0.0.1')
+    .option('--callback-port <number>', 'fixed port for the OAuth callback server (useful in Docker/containers)')
     .allowUnknownOption() // Claude Desktop / Electron UtilityProcess may inject extra arguments
     .allowExcessArguments() // Avoid "too many arguments" when launched from .mcpb bundles
     .parse();
@@ -1608,6 +1614,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
   const httpMode = options.http || options.server;
   const httpPort = parseInt(options.port, 10);
   const host = options.host || '0.0.0.0';
+  callbackPort = options.callbackPort ? parseInt(options.callbackPort, 10) : undefined;
 
   // HTTP server mode (Stateless)
   if (httpMode) {
