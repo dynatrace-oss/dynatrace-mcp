@@ -36,6 +36,20 @@ Third, create a `.env` file in this repository (you can copy from `.env.template
 
 Finally, make changes to your code and compile it with `npm run build` or just run `npm run watch` and it auto-compiles.
 
+## Running Tests
+
+Unit tests can be run with:
+
+```bash
+npm run test:unit
+```
+
+Telemetry is automatically disabled during tests via the Jest configuration. If you run tests outside of Jest (or in a custom setup), disable telemetry explicitly:
+
+```bash
+DT_MCP_DISABLE_TELEMETRY=true npm test
+```
+
 ## Releasing
 
 When you are preparing for a release, you can use GitHub Copilot to guide you through the preparations.

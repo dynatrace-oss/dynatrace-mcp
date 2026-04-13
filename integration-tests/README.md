@@ -48,3 +48,4 @@ npm test -- integration-tests/send-email.integration.test.ts
 - **Real Environment**: These tests make actual API calls and may incur costs
 - **Email Testing**: Email tests send actual emails to test addresses
 - **Credentials**: Ensure your OAuth client has all required scopes enabled
+- **Telemetry**: Telemetry is automatically disabled during tests via the Jest configuration. If running tests outside of Jest, set `DT_MCP_DISABLE_TELEMETRY=true` explicitly to avoid sending telemetry data.
