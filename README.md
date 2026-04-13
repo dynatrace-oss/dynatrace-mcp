@@ -365,6 +365,7 @@ Depending on the features you are using, the following scopes are needed:
 **Available for both Platform Tokens and OAuth Clients:**
 
 - `app-engine:apps:run` - needed for almost all tools
+- `platform-management:environments:read` - needed for verifying the connection to the Dynatrace environment during startup and `get_environment_info` tool
 - `automation:workflows:read` - read Workflows
 - `automation:workflows:write` - create and update Workflows
 - `automation:workflows:run` - run Workflows
