@@ -11,9 +11,8 @@ const esbuildOptions = {
   target: ['node18'],
   format: 'cjs',
   outfile: 'dist/index.js',
-  // Only native .node addons must stay external; `open` is kept external so its
-  // bundled xdg-open script (node_modules/open/xdg-open) remains resolvable at runtime
-  external: ['*.node', 'open'],
+  // Only native .node addons must stay external; everything else is bundled
+  external: ['*.node'],
 };
 
 if (watchMode) {
@@ -38,9 +37,7 @@ if (watchMode) {
     license: pkg.license,
     repository: pkg.repository,
     bugs: pkg.bugs,
-    dependencies: {
-      open: pkg.dependencies.open,
-    },
+    dependencies: {},
   };
 
   writeFileSync('./dist/package.json', JSON.stringify(distPkg, null, 2) + '\n');

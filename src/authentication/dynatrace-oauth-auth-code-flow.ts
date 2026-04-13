@@ -4,7 +4,7 @@ import { URL, URLSearchParams } from 'node:url';
 import { OAuthAuthorizationConfig, OAuthAuthorizationResult, OAuthTokenResponse } from './types';
 import { requestOAuthToken } from './dynatrace-oauth-base';
 import { base64URLEncode, generateRandomState } from './utils';
-import open from 'open';
+import { openUrl } from '../utils/open-url';
 import { getCodespacesForwardedUrl } from '../utils/environment-detection';
 
 /**
@@ -223,7 +223,7 @@ export async function performOAuthAuthorizationCodeFlow(
     // Open the authorization URL in the default browser
     console.error('Trying to open the authorization URL in your default browser...');
     try {
-      open(authorizationUrl);
+      openUrl(authorizationUrl);
     } catch (error: any) {
       console.error(
         'Failed to open browser automatically. Please click on the following URL to authorize the application:',
