@@ -20,7 +20,7 @@ export function openUrl(url: string): void {
     args = [url];
   } else if (platform === 'win32') {
     command = 'cmd';
-    args = ['/c', 'start', '', url];
+    args = ['/c', 'start', 'url', url];
   } else {
     // Linux / other — rely on xdg-open being available on the system PATH.
     command = 'xdg-open';
