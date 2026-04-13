@@ -50,7 +50,7 @@ Dynatrace now offers an official **Remote MCP Server** that runs directly in you
 | Send event                                  | `send_event`                         | —                                    |
 | Create Dynatrace Notebook                   | `create_dynatrace_notebook`          | —                                    |
 
-> **Legend:** — = not available (as of the last documentation update). The remote MCP server is actively developed; check the [official documentation](https://docs.dynatrace.com/docs/dynatrace-intelligence/dynatrace-mcp) for the latest tool list.
+> **Legend:** — = not available (as of the 2026-04-13). The remote MCP server is actively developed; check the [official documentation](https://docs.dynatrace.com/docs/dynatrace-intelligence/dynatrace-mcp) for the latest tool list.
 
 ## Migration Steps
 
