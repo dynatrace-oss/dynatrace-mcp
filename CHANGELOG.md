@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Updated `@dynatrace-sdk/client-automation` (5.20.0 → 5.22.0).
+
 ## 1.8.0
 
 - Increased the default Grail query budget from 1,000 GB to 5,000 GB per session, enabling larger data exploration without configuration changes. The budget can still be overridden via the `DT_GRAIL_QUERY_BUDGET_GB` environment variable.
