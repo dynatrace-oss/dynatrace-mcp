@@ -2,7 +2,7 @@
 
 ## Unreleased Changes
 
-- Added `--oauth-redirect-port` CLI option to set a fixed port for the OAuth redirect server. This is particularly useful when running in Docker or other container environments where ports must be explicitly exposed.
+- Added `--oauth-redirect-port` CLI option to set a fixed port for the OAuth redirect server. This is particularly useful in containerized environments where ports must be explicitly exposed.
 
 ## 1.8.0
 
