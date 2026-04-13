@@ -4,7 +4,7 @@ This file is intended for contributors/developers of the dynatrace-mcp-server pa
 
 ## Local Development
 
-For local development purposes, you can use VS Code and GitHub Copilot in **Agent Mode**, 
+For local development purposes, you can use VS Code and GitHub Copilot in **Agent Mode**,
 with the following MCP config added to `.vscode/mcp.json`:
 
 ```json
