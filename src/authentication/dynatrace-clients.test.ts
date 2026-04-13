@@ -223,7 +223,7 @@ describe('dynatrace-clients', () => {
         expect(client2).toBeInstanceOf(PlatformHttpClient);
       });
 
-      it('should use the specified callbackPort for OAuth flow', async () => {
+      it('should use the specified oauthRedirectPort for OAuth flow', async () => {
         const mockTokenResponse: OAuthTokenResponse = {
           access_token: 'test-access-token',
           token_type: 'Bearer',
