@@ -22,6 +22,6 @@ echo "$response"
 if [[ "$response" == *"DT_ENVIRONMENT"* ]]; then
   echo "✅ Package test passed"
 else
-  echo "❌ Package test failed: unexpected output"
+  echo "❌ Package test failed: expected output to mention DT_ENVIRONMENT"
   exit 1
 fi
