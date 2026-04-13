@@ -50,7 +50,7 @@
   "author": "Dynatrace",
   "license": "MIT",
   "dependencies": {
-    "@dynatrace-sdk/client-automation": "^5.3.0",
+    "@dynatrace-sdk/client-automation": "5.22.0",
     "@dynatrace-sdk/client-classic-environment-v2": "^5.1.0",
     "@dynatrace-sdk/client-davis-analyzers": "^1.9.8",
     "@dynatrace-sdk/client-davis-copilot": "^1.0.0",
