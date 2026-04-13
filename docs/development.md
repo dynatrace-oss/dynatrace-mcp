@@ -20,6 +20,7 @@ with the following MCP config added to `.vscode/mcp.json`:
 ```
 
 Create a `.env` file in this repository (you can copy from `.env.template`) and configure environment variables:
+
 ```
 DT_ENVIRONMENT=https://<environment-id>.apps.dynatrace.com
 # OPTIONAL
