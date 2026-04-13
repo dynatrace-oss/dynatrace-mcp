@@ -8,14 +8,14 @@ Dynatrace now offers an official **Remote MCP Server** that runs directly in you
 
 ## Why Migrate?
 
-| Aspect             | Local MCP Server                                                                                                | Remote MCP Server                               |
-| ------------------ | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| **Hosting**        | Runs on your machine via `npx` / Node.js                                                                        | Hosted in your Dynatrace environment            |
-| **Setup**          | Requires Node.js, environment variables, and MCP client configuration                                           | Connect via URL — no local dependencies         |
-| **Authentication** | OAuth Authorization Code Flow (browser-based, no token management), Platform Token, or OAuth Client credentials | Platform Token only (OAuth support coming soon) |
-| **Updates**        | Manual (`@latest` tag or version pin)                                                                           | Automatically updated by Dynatrace              |
-| **Support**        | Community-supported (open-source, via [GitHub Issues](https://github.com/dynatrace-oss/dynatrace-mcp/issues))   | Officially supported by Dynatrace               |
-| **Transport**      | stdio (default) or HTTP                                                                                         | Streamable HTTP (remote URL)                    |
+| Aspect             | Local MCP Server                                                                                                | Remote MCP Server                       |
+| ------------------ | --------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| **Hosting**        | Runs on your machine via `npx` / Node.js                                                                        | Hosted in your Dynatrace environment    |
+| **Setup**          | Requires Node.js, environment variables, and MCP client configuration                                           | Connect via URL — no local dependencies |
+| **Authentication** | OAuth Authorization Code Flow (browser-based, no token management), Platform Token, or OAuth Client credentials | Platform Token only                     |
+| **Updates**        | Manual (`@latest` tag or version pin)                                                                           | Automatically updated by Dynatrace      |
+| **Support**        | Community-supported (open-source, via [GitHub Issues](https://github.com/dynatrace-oss/dynatrace-mcp/issues))   | Officially supported by Dynatrace       |
+| **Transport**      | stdio (default) or HTTP                                                                                         | Streamable HTTP (remote URL)            |
 
 ## Tool Comparison
 
@@ -56,7 +56,7 @@ Dynatrace now offers an official **Remote MCP Server** that runs directly in you
 
 ### 1. Obtain a Platform Token
 
-> **Authentication note:** The local MCP server offers a better authentication experience today — it supports the OAuth Authorization Code Flow, which opens a browser window so you never need to manage tokens manually. The remote MCP server currently requires a Platform Token. OAuth support for the remote server is coming soon.
+> **Authentication note:** The local MCP server offers a better authentication experience today — it supports the OAuth Authorization Code Flow, which opens a browser window so you never need to manage tokens manually. The remote MCP server currently requires a Platform Token.
 
 Create a Platform Token in your Dynatrace environment with the required scopes. In addition to tool-specific scopes, the remote MCP server requires:
 
