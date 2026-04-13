@@ -147,12 +147,10 @@ describe('OAuth Authorization Code Flow', () => {
       // Verify the warning was logged.
       expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Could not open browser automatically'));
 
-      // Clean up: trigger an error callback so the flow rejects and the server closes
-      try {
-        await fetch(`http://localhost:${port}/auth/login?error=test_cleanup&error_description=cleanup`);
-      } catch {
-        // ignore fetch errors
-      }
+      // Clean up: trigger an error callback so the flow rejects and the server closes.
+      // Let fetch errors surface so the test fails fast instead of timing out.
+      const response = await fetch(`http://localhost:${port}/auth/login?error=test_cleanup&error_description=cleanup`);
+      expect(response.status).toBe(400);
       await flowPromise;
     });
 
@@ -182,12 +180,10 @@ describe('OAuth Authorization Code Flow', () => {
       // Verify the warning was logged.
       expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Could not open browser automatically'));
 
-      // Clean up
-      try {
-        await fetch(`http://localhost:${port}/auth/login?error=test_cleanup&error_description=cleanup`);
-      } catch {
-        // ignore fetch errors
-      }
+      // Clean up: trigger an error callback so the flow rejects and the server closes.
+      // Let fetch errors surface so the test fails fast instead of timing out.
+      const response = await fetch(`http://localhost:${port}/auth/login?error=test_cleanup&error_description=cleanup`);
+      expect(response.status).toBe(400);
       await flowPromise;
     });
   });
