@@ -222,6 +222,28 @@ describe('dynatrace-clients', () => {
         expect(client1).toBeInstanceOf(PlatformHttpClient);
         expect(client2).toBeInstanceOf(PlatformHttpClient);
       });
+
+      it('should use the specified oauthRedirectPort for OAuth flow', async () => {
+        const mockTokenResponse: OAuthTokenResponse = {
+          access_token: 'test-access-token',
+          token_type: 'Bearer',
+          expires_in: 3600,
+          scope: 'scope1 scope2',
+        };
+
+        mockPerformOAuthAuthorizationCodeFlow.mockResolvedValueOnce(mockTokenResponse);
+
+        const fixedPort = 9876;
+        await createDtHttpClient(environmentUrl, scopes, clientId, undefined, undefined, fixedPort);
+
+        expect(mockPerformOAuthAuthorizationCodeFlow).toHaveBeenCalledWith(
+          'https://sso.dynatrace.com',
+          expect.objectContaining({
+            redirectUri: `http://localhost:${fixedPort}/auth/login`,
+          }),
+          fixedPort,
+        );
+      });
     });
   });
 

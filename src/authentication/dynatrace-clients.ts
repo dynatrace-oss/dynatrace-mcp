@@ -23,6 +23,7 @@ export const createDtHttpClient = async (
   clientId?: string,
   clientSecret?: string,
   dtPlatformToken?: string,
+  oauthRedirectPort?: number,
 ): Promise<HttpClient> => {
   /** Logic:
    * * if a platform token is provided, use it
@@ -38,7 +39,7 @@ export const createDtHttpClient = async (
     return createOAuthClientCredentialsHttpClient(environmentUrl, scopes, clientId, clientSecret);
   } else if (clientId) {
     // create an OAuth client using authorization code flow (interactive)
-    return createOAuthAuthCodeFlowHttpClient(environmentUrl, scopes, clientId);
+    return createOAuthAuthCodeFlowHttpClient(environmentUrl, scopes, clientId, oauthRedirectPort);
   }
 
   throw new Error(
@@ -122,6 +123,7 @@ const createOAuthAuthCodeFlowHttpClient = async (
   environmentUrl: string,
   scopes: string[],
   clientId: string,
+  oauthRedirectPort?: number,
 ): Promise<HttpClient> => {
   // Get SSO Base URL
   const ssoBaseURL = await getSSOUrl(environmentUrl);
@@ -183,13 +185,13 @@ const createOAuthAuthCodeFlowHttpClient = async (
   console.error(`Using SSO base URL ${ssoBaseURL}`);
 
   // Try to start OAuth server with retry logic for port conflicts
-  const maxAttempts = 3;
+  const maxAttempts = oauthRedirectPort ? 1 : 3;
   let lastError: Error | null = null;
-  const alreadyUsedPorts = [];
+  const alreadyUsedPorts: number[] = [];
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    // Randomly select a port for the OAuth redirect URL (e.g., 5344)
-    const port = getRandomPort(undefined, undefined, alreadyUsedPorts);
+    // Use the specified callback port, or randomly select one (e.g., 5344)
+    const port = oauthRedirectPort ?? getRandomPort(undefined, undefined, alreadyUsedPorts);
     alreadyUsedPorts.push(port);
 
     try {
