@@ -1,6 +1,16 @@
 import { randomBytes } from 'crypto';
-import { createAuthorizationUrl, startOAuthRedirectServer } from './dynatrace-oauth-auth-code-flow';
+import { EventEmitter } from 'events';
+import {
+  createAuthorizationUrl,
+  startOAuthRedirectServer,
+  performOAuthAuthorizationCodeFlow,
+} from './dynatrace-oauth-auth-code-flow';
 import { OAuthAuthorizationConfig } from './types';
+
+// Mock the 'open' module
+jest.mock('open');
+import open from 'open';
+const mockedOpen = jest.mocked(open);
 
 describe('OAuth Authorization Code Flow', () => {
   const mockConfig: OAuthAuthorizationConfig = {
@@ -102,5 +112,79 @@ describe('OAuth Authorization Code Flow', () => {
       // Restore original environment
       process.env = originalEnv;
     }
+  });
+
+  describe('performOAuthAuthorizationCodeFlow - open() error handling', () => {
+    // Use a unique port range for these tests to avoid conflicts
+    let port: number;
+
+    beforeEach(() => {
+      port = (randomBytes(2).readUInt16BE(0) % 10000) + 15000;
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    test('does not crash when open() rejects with an error', async () => {
+      mockedOpen.mockRejectedValue(new Error('spawn powershell.exe ENOENT'));
+
+      // Start the flow; it will hang waiting for auth code, but shouldn't crash.
+      // Immediately attach .catch to prevent unhandled rejection.
+      const flowPromise = performOAuthAuthorizationCodeFlow(
+        'https://sso.dynatrace.com',
+        { clientId: 'test', redirectUri: '', scopes: ['test:scope'] },
+        port,
+      ).catch(() => {
+        // Expected: the flow will eventually reject when we trigger cleanup below
+      });
+
+      // Give it time to pass the open() call
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      // The process should still be alive (not crashed).
+      // Verify the warning was logged.
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Could not open browser automatically'));
+
+      // Clean up: trigger an error callback so the flow rejects and the server closes.
+      // Let fetch errors surface so the test fails fast instead of timing out.
+      const response = await fetch(`http://localhost:${port}/auth/login?error=test_cleanup&error_description=cleanup`);
+      expect(response.status).toBe(400);
+      await flowPromise;
+    });
+
+    test('does not crash when child process emits an error event after open() resolves', async () => {
+      const fakeProcess = new EventEmitter();
+      mockedOpen.mockResolvedValue(fakeProcess as any);
+
+      // Start the flow; immediately attach .catch to prevent unhandled rejection.
+      const flowPromise = performOAuthAuthorizationCodeFlow(
+        'https://sso.dynatrace.com',
+        { clientId: 'test', redirectUri: '', scopes: ['test:scope'] },
+        port,
+      ).catch(() => {
+        // Expected: the flow will eventually reject when we trigger cleanup below
+      });
+
+      // Give it time to pass the open() call and attach the error handler
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      // Simulate the child process emitting an error (as in the WSL ENOENT scenario)
+      fakeProcess.emit('error', new Error('spawn powershell.exe ENOENT'));
+
+      // Give it a tick to process the error handler
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // The process should still be alive (not crashed).
+      // Verify the warning was logged.
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Could not open browser automatically'));
+
+      // Clean up: trigger an error callback so the flow rejects and the server closes.
+      // Let fetch errors surface so the test fails fast instead of timing out.
+      const response = await fetch(`http://localhost:${port}/auth/login?error=test_cleanup&error_description=cleanup`);
+      expect(response.status).toBe(400);
+      await flowPromise;
+    });
   });
 });
