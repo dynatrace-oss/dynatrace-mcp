@@ -19,57 +19,23 @@ Dynatrace now offers an official **Remote MCP Server** that runs directly in you
 
 ## Tool Comparison
 
-The table below compares the tools available in the **local** (open-source) MCP server with the capabilities documented for the **remote** Dynatrace MCP server.
-
-### Querying & Data Access
-
 | Capability | Local MCP Tool | Remote MCP |
 | --- | --- | --- |
 | Execute DQL queries | `execute_dql` | ✅ |
 | Verify DQL syntax | `verify_dql` | — |
 | Reset Grail query budget | `reset_grail_budget` | — |
-
-### AI-Powered Assistance (Davis CoPilot)
-
-| Capability | Local MCP Tool | Remote MCP |
-| --- | --- | --- |
 | Generate DQL from natural language | `generate_dql_from_natural_language` | ✅ |
 | Explain DQL in natural language | `explain_dql_in_natural_language` | ✅ |
 | Chat with Davis CoPilot | `chat_with_davis_copilot` | ✅ |
-
-### Observability & Problem Management
-
-| Capability | Local MCP Tool | Remote MCP |
-| --- | --- | --- |
 | List problems | `list_problems` | ✅ |
 | List vulnerabilities | `list_vulnerabilities` | ✅ |
 | List exceptions | `list_exceptions` | — |
 | Get Kubernetes events | `get_kubernetes_events` | ✅ |
-
-### Entity & Topology
-
-| Capability | Local MCP Tool | Remote MCP |
-| --- | --- | --- |
 | Find entity by name | `find_entity_by_name` | ✅ |
 | Get environment info | `get_environment_info` | — |
-
-### Davis Analyzers (Forecasting & Anomaly Detection)
-
-| Capability | Local MCP Tool | Remote MCP |
-| --- | --- | --- |
 | List Davis analyzers | `list_davis_analyzers` | ✅ |
 | Execute Davis analyzer | `execute_davis_analyzer` | ✅ |
-
-### Documents
-
-| Capability | Local MCP Tool | Remote MCP |
-| --- | --- | --- |
 | Find documents & troubleshooting guides | — | ✅ |
-
-### Automation & Notifications (Local-only)
-
-| Capability | Local MCP Tool | Remote MCP |
-| --- | --- | --- |
 | Create workflow for notification | `create_workflow_for_notification` | — |
 | Make workflow public | `make_workflow_public` | — |
 | Send Slack message | `send_slack_message` | — |
@@ -77,9 +43,7 @@ The table below compares the tools available in the **local** (open-source) MCP 
 | Send event | `send_event` | — |
 | Create Dynatrace Notebook | `create_dynatrace_notebook` | — |
 
-> **Legend:** ✅ = available, — = not available (as of the last documentation update).
->
-> The remote MCP server is actively developed by Dynatrace. Check the [official documentation](https://docs.dynatrace.com/docs/dynatrace-intelligence/dynatrace-mcp) for the latest tool list.
+> **Legend:** ✅ = available, — = not available (as of the last documentation update). The remote MCP server is actively developed; check the [official documentation](https://docs.dynatrace.com/docs/dynatrace-intelligence/dynatrace-mcp) for the latest tool list.
 
 ## Migration Steps
 
@@ -139,33 +103,4 @@ Replace `abc12345` with your Dynatrace tenant identifier and `<YOUR_PLATFORM_TOK
 
 ### 4. Handle Local-Only Tools
 
-If you rely on tools that are **only available in the local MCP server** (such as `send_slack_message`, `send_email`, `create_workflow_for_notification`, or `create_dynatrace_notebook`), you have two options:
-
-- **Keep both servers running** — use the remote MCP for querying and AI-assisted features, and keep the local MCP for automation and notification tools.
-- **Wait for remote parity** — the remote MCP server is actively developed; these tools may be added in future updates.
-
-## Running Both Servers Side by Side
-
-You can configure your MCP client to connect to both servers simultaneously:
-
-```json
-{
-  "servers": {
-    "dynatrace-remote": {
-      "url": "https://abc12345.apps.dynatrace.com/platform-reserved/mcp-gateway/v0.1/servers/dynatrace-mcp/mcp",
-      "headers": {
-        "Authorization": "Bearer <YOUR_PLATFORM_TOKEN>"
-      }
-    },
-    "dynatrace-local": {
-      "command": "npx",
-      "args": ["-y", "@dynatrace-oss/dynatrace-mcp-server@latest"],
-      "env": {
-        "DT_ENVIRONMENT": "https://abc12345.apps.dynatrace.com"
-      }
-    }
-  }
-}
-```
-
-This lets you use the remote server for core observability queries while keeping local-only tools available.
+If you rely on tools only available in the local server (such as `send_slack_message`, `send_email`, `create_workflow_for_notification`, or `create_dynatrace_notebook`), you can keep the local MCP server running alongside the remote one, or wait for the remote server to add parity.
