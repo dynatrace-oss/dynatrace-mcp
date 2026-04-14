@@ -223,12 +223,15 @@ export async function performOAuthAuthorizationCodeFlow(
     // Open the authorization URL in the default browser
     console.error('Trying to open the authorization URL in your default browser...');
     try {
-      open(authorizationUrl);
-    } catch (error: any) {
-      console.error(
-        'Failed to open browser automatically. Please click on the following URL to authorize the application:',
-        error.message,
-      );
+      const subprocess = await open(authorizationUrl);
+      subprocess.on('error', (err: Error) => {
+        console.error(`⚠️ Could not open browser automatically: ${err.message}`);
+        console.error('Please open the URL below manually in your browser.');
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`⚠️ Could not open browser automatically: ${message}`);
+      console.error('Please open the URL below manually in your browser.');
     }
 
     console.error('');

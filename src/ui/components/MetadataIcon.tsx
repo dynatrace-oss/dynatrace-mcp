@@ -1,4 +1,4 @@
-import { Tooltip } from '@dynatrace/strato-components-preview/overlays';
+import { Tooltip } from '@dynatrace/strato-components/overlays';
 
 interface MetadataIconProps {
   icon: React.ReactNode;

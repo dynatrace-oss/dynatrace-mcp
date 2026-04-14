@@ -1,6 +1,14 @@
 import { getDynatraceEnv, DynatraceEnv } from './getDynatraceEnv';
 
 describe('getDynatraceEnv', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   const baseEnv = {
     OAUTH_CLIENT_ID: 'dt0s02.SAMPLE',
     OAUTH_CLIENT_SECRET: 'dt0s02.SAMPLE.abcd1234',
@@ -18,7 +26,7 @@ describe('getDynatraceEnv', () => {
       dtEnvironment: env.DT_ENVIRONMENT,
       dtPlatformToken: env.DT_PLATFORM_TOKEN,
       slackConnectionId: env.SLACK_CONNECTION_ID,
-      grailBudgetGB: 1000, // Default value
+      grailBudgetGB: 5000, // Default value
     });
   });
 
@@ -40,6 +48,43 @@ describe('getDynatraceEnv', () => {
     expect(result.oauthClientId).toBeUndefined();
     expect(result.oauthClientSecret).toBeUndefined();
     expect(result.dtPlatformToken).toBeUndefined();
+  });
+
+  it('treats empty string OAUTH_CLIENT_ID as unset and warns', () => {
+    const env = { ...baseEnv, OAUTH_CLIENT_ID: '' };
+    const result = getDynatraceEnv(env);
+    expect(result.oauthClientId).toBeUndefined();
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('OAUTH_CLIENT_ID is set to an empty string'));
+  });
+
+  it('treats empty string OAUTH_CLIENT_SECRET as unset and warns', () => {
+    const env = { ...baseEnv, OAUTH_CLIENT_SECRET: '' };
+    const result = getDynatraceEnv(env);
+    expect(result.oauthClientSecret).toBeUndefined();
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('OAUTH_CLIENT_SECRET is set to an empty string'));
+  });
+
+  it('treats empty string DT_PLATFORM_TOKEN as unset and warns', () => {
+    const env = { ...baseEnv, DT_PLATFORM_TOKEN: '' };
+    const result = getDynatraceEnv(env);
+    expect(result.dtPlatformToken).toBeUndefined();
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('DT_PLATFORM_TOKEN is set to an empty string'));
+  });
+
+  it('treats all empty string auth credentials as unset and warns for each', () => {
+    const env = {
+      ...baseEnv,
+      OAUTH_CLIENT_ID: '',
+      OAUTH_CLIENT_SECRET: '',
+      DT_PLATFORM_TOKEN: '',
+    };
+    const result = getDynatraceEnv(env);
+    expect(result.oauthClientId).toBeUndefined();
+    expect(result.oauthClientSecret).toBeUndefined();
+    expect(result.dtPlatformToken).toBeUndefined();
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('OAUTH_CLIENT_ID is set to an empty string'));
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('OAUTH_CLIENT_SECRET is set to an empty string'));
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('DT_PLATFORM_TOKEN is set to an empty string'));
   });
 
   it('throws if DT_ENVIRONMENT is missing', () => {
@@ -108,7 +153,7 @@ describe('getDynatraceEnv', () => {
     expect(() => getDynatraceEnv(env)).not.toThrow();
   });
 
-  it('Defaults the Grail Budget to 1000', () => {
+  it('Defaults the Grail Budget to 5000', () => {
     const env = {
       ...baseEnv,
       GRAIL_BUDGET_GB: undefined,
@@ -121,7 +166,7 @@ describe('getDynatraceEnv', () => {
       dtEnvironment: env.DT_ENVIRONMENT,
       dtPlatformToken: env.DT_PLATFORM_TOKEN,
       slackConnectionId: env.SLACK_CONNECTION_ID,
-      grailBudgetGB: 1000, // Default value
+      grailBudgetGB: 5000, // Default value
     });
   });
 

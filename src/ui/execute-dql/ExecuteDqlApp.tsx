@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { App } from '@modelcontextprotocol/ext-apps';
+import { useDocumentTheme } from '@modelcontextprotocol/ext-apps/react';
 import type { RangedFieldTypes, ResultRecord } from '@dynatrace-sdk/client-query';
 import { Flex } from '@dynatrace/strato-components/layouts';
 import { Button } from '@dynatrace/strato-components/buttons';
 import { Text, Code } from '@dynatrace/strato-components/typography';
-import { DataTable, type DataTableColumnDef } from '@dynatrace/strato-components-preview/tables';
-import { TimeseriesChart, type Timeseries } from '@dynatrace/strato-components-preview/charts';
-import { ToggleButtonGroup } from '@dynatrace/strato-components-preview/forms';
-import { Tooltip } from '@dynatrace/strato-components-preview/overlays';
+import { DataTable, type DataTableColumnDef } from '@dynatrace/strato-components/tables';
+import { TimeseriesChart, type Timeseries } from '@dynatrace/strato-components/charts';
+import { ToggleButtonGroup } from '@dynatrace/strato-components/forms';
+import { Tooltip } from '@dynatrace/strato-components/overlays';
 import {
   DataTableIcon,
   DocumentStackIcon,
@@ -21,7 +22,7 @@ import { createNotebooksURL } from '../../utils/environment-url-parser';
 import { safeConvertToTimeseries } from './dql-chart-helpers';
 
 // Constants
-const RECORD_COUNT_TEXT_OPACITY = 0.5;
+const SUBDUED_TEXT_COLOR = 'var(--dt-colors-text-neutral-subdued)';
 const EMPTY_STATE_TEXT_OPACITY = 0.6;
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -55,6 +56,12 @@ interface ExecuteDqlMeta {
   recordLimitReached?: boolean;
 }
 
+type HostTheme = 'light' | 'dark';
+
+function isValidHostTheme(theme: unknown): theme is HostTheme {
+  return theme === 'light' || theme === 'dark';
+}
+
 /** Type guard for text content in tool results */
 function isTextContent(content: unknown): content is { type: 'text'; text: string } {
   return (
@@ -84,19 +91,6 @@ function buildColumns(columns: string[]): DataTableColumnDef<ResultRecord>[] {
     header: col,
     accessor: (row: ResultRecord) => row[col],
     width: 'auto' as const,
-    cell: ({ value }: { value: unknown }) => {
-      if (value === null || value === undefined) {
-        return (
-          <Text textStyle='small'>
-            <em>null</em>
-          </Text>
-        );
-      }
-      if (typeof value === 'object') {
-        return <Code>{JSON.stringify(value)}</Code>;
-      }
-      return <Text textStyle='small'>{String(value)}</Text>;
-    },
   }));
 }
 
@@ -172,6 +166,11 @@ export function processToolResult(text: string | undefined, meta: ExecuteDqlMeta
 }
 
 export function ExecuteDqlApp() {
+  // MCP Host Theme Detection
+  const documentTheme = useDocumentTheme();
+  // local theme
+  const [hostTheme, setHostTheme] = useState<'light' | 'dark' | null>(null);
+
   const [state, setState] = useState<ToolResultState>({
     status: 'loading',
     metadata: { warnings: [] },
@@ -193,7 +192,6 @@ export function ExecuteDqlApp() {
   useEffect(() => {
     const app = new App({ name: 'DQL Results Viewer', version: '1.0.0' });
     appRef.current = app;
-    app.connect();
 
     app.ontoolinput = (params) => {
       setToolArguments(params.arguments ?? null);
@@ -205,9 +203,30 @@ export function ExecuteDqlApp() {
       setState(processToolResult(textContent?.text, meta));
     };
 
+    // Listen on Host Context Changes in order to update the current theme
+    app.onhostcontextchanged = (context) => {
+      if (isValidHostTheme(context.theme)) {
+        setHostTheme(context.theme);
+      }
+    };
+
+    void (async () => {
+      try {
+        await app.connect();
+
+        const initialHostTheme = app.getHostContext()?.theme;
+        if (isValidHostTheme(initialHostTheme)) {
+          setHostTheme(initialHostTheme);
+        }
+      } catch (error) {
+        console.warn('Failed to connect MCP app for host context', error);
+      }
+    })();
+
     return () => {
       app.ontoolinput = undefined;
       app.ontoolresult = undefined;
+      app.onhostcontextchanged = undefined;
       app.close();
       appRef.current = null;
     };
@@ -302,6 +321,20 @@ export function ExecuteDqlApp() {
     hasInitializedViewModeRef.current = true;
   }, [canChart, state.status]);
 
+  // Keep Strato theme in sync with MCP host theme once available.
+  useEffect(() => {
+    if (!hostTheme) {
+      return;
+    }
+
+    document.documentElement.setAttribute('data-theme', hostTheme);
+
+    const appRootElement = document.querySelector('[data-dt-component="AppRoot"]');
+    if (appRootElement instanceof HTMLElement) {
+      appRootElement.setAttribute('data-theme', hostTheme);
+    }
+  }, [hostTheme]);
+
   if (state.status === 'loading') {
     return <LoadingState message='Loading query results...' />;
   }
@@ -313,64 +346,66 @@ export function ExecuteDqlApp() {
   const { metadata } = state;
 
   return (
-    <Flex flexDirection='column' gap={4} className='execute-dql-app'>
-      {/* Compact metadata toolbar */}
-      <Flex
-        flexDirection='row'
-        gap={12}
-        alignItems='center'
-        padding={4}
-        style={{ paddingLeft: 8 }}
-        className='execute-dql-toolbar'
-      >
-        <Text textStyle='small' className='execute-dql-record-count'>
-          {state.records.length} {state.records.length === 1 ? 'record' : 'records'}
-        </Text>
-        {metadataText && (
-          <Text textStyle='small' style={{ opacity: RECORD_COUNT_TEXT_OPACITY }} className='execute-dql-metadata-text'>
-            {metadataText}
-          </Text>
-        )}
-        {metadata.warnings.length > 0 && (
-          <Flex flexDirection='row' gap={8} alignItems='center' className='execute-dql-warnings'>
-            {metadata.warnings.map((warning, i) => (
-              <MetadataIcon key={`${warning}-${i}`} icon={<WarningIcon />} tooltip={warning} warning />
-            ))}
-          </Flex>
-        )}
-        <Flex
-          flexDirection='row'
-          gap={4}
-          alignItems='center'
-          style={{ marginLeft: 'auto' }}
-          className='execute-dql-toolbar-actions'
-        >
-          <ToggleButtonGroup
-            value={toggleValue}
-            onChange={(val) => setToggleValue(val as CombinedChartVariantToggleValue)}
+    <div className='execute-dql-results-surface'>
+      <Flex flexDirection='column' gap={8} className='execute-dql-app'>
+        {/* Compact metadata toolbar */}
+        <Flex flexDirection='row' gap={12} alignItems='center' className='execute-dql-toolbar'>
+          <Text
+            textStyle='small'
+            style={{ color: 'var(--dt-colors-text-neutral-default)' }}
+            className='execute-dql-record-count'
           >
-            <Tooltip text='Table'>
-              <ToggleButtonGroup.Item value='table' aria-label='Switch to table view'>
-                <DataTableIcon />
-              </ToggleButtonGroup.Item>
-            </Tooltip>
-            <Tooltip text='Line'>
-              <ToggleButtonGroup.Item value='line' disabled={!canChart} aria-label='Switch to line chart view'>
-                <LineChartIcon />
-              </ToggleButtonGroup.Item>
-            </Tooltip>
-            <Tooltip text='Area'>
-              <ToggleButtonGroup.Item value='area' disabled={!canChart} aria-label='Switch to area chart view'>
-                <StackedAreaChartIcon />
-              </ToggleButtonGroup.Item>
-            </Tooltip>
-          </ToggleButtonGroup>
+            {state.records.length} {state.records.length === 1 ? 'record' : 'records'}
+          </Text>
+          {metadataText && (
+            <Text textStyle='small' style={{ color: SUBDUED_TEXT_COLOR }} className='execute-dql-metadata-text'>
+              {metadataText}
+            </Text>
+          )}
+          {metadata.warnings.length > 0 && (
+            <Flex flexDirection='row' gap={8} alignItems='center' className='execute-dql-warnings'>
+              {metadata.warnings.map((warning, i) => (
+                <MetadataIcon key={`${warning}-${i}`} icon={<WarningIcon />} tooltip={warning} warning />
+              ))}
+            </Flex>
+          )}
+          <Flex
+            flexDirection='row'
+            gap={4}
+            alignItems='center'
+            style={{ marginLeft: 'auto' }}
+            className='execute-dql-toolbar-actions'
+          >
+            <ToggleButtonGroup
+              value={toggleValue}
+              onChange={(val) => setToggleValue(val as CombinedChartVariantToggleValue)}
+            >
+              <Tooltip text='Table'>
+                <ToggleButtonGroup.Item value='table' aria-label='Switch to table view'>
+                  <ToggleButtonGroup.Prefix>
+                    <DataTableIcon />
+                  </ToggleButtonGroup.Prefix>
+                </ToggleButtonGroup.Item>
+              </Tooltip>
+              <Tooltip text='Line'>
+                <ToggleButtonGroup.Item value='line' disabled={!canChart} aria-label='Switch to line chart view'>
+                  <ToggleButtonGroup.Prefix>
+                    <LineChartIcon />
+                  </ToggleButtonGroup.Prefix>
+                </ToggleButtonGroup.Item>
+              </Tooltip>
+              <Tooltip text='Area'>
+                <ToggleButtonGroup.Item value='area' disabled={!canChart} aria-label='Switch to area chart view'>
+                  <ToggleButtonGroup.Prefix>
+                    <StackedAreaChartIcon />
+                  </ToggleButtonGroup.Prefix>
+                </ToggleButtonGroup.Item>
+              </Tooltip>
+            </ToggleButtonGroup>
 
-          <Flex flexDirection='row' gap={4} alignItems='center' className='execute-dql-primary-actions'>
             <Tooltip text='Open in Notebooks'>
               <Button
                 variant='default'
-                size='condensed'
                 onClick={handleOpenInNotebooks}
                 aria-label='Open query in Dynatrace Notebooks'
                 className='execute-dql-open-button'
@@ -378,11 +413,11 @@ export function ExecuteDqlApp() {
                 <Button.Prefix>
                   <DocumentStackIcon />
                 </Button.Prefix>
-                <span className='execute-dql-open-button-label'>Open in Notebooks</span>
+                <Button.Label className='execute-dql-open-button-label'>Open in Notebooks</Button.Label>
               </Button>
             </Tooltip>
             <Tooltip text='Refresh'>
-              <Button variant='default' size='condensed' onClick={handleRefresh} aria-label='Refresh query results'>
+              <Button variant='default' onClick={handleRefresh} aria-label='Refresh query results'>
                 <Button.Prefix>
                   <RefreshIcon />
                 </Button.Prefix>
@@ -390,25 +425,32 @@ export function ExecuteDqlApp() {
             </Tooltip>
           </Flex>
         </Flex>
-      </Flex>
 
-      {state.records.length === 0 ? (
-        <Flex flexDirection='column' alignItems='center' justifyContent='center' padding={32}>
-          <Text textStyle='base-emphasized'>No records returned</Text>
-          <Text textStyle='small' style={{ opacity: EMPTY_STATE_TEXT_OPACITY }}>
-            The query executed successfully but returned no data. Try adjusting your query or timeframe.
-          </Text>
-        </Flex>
-      ) : viewMode === 'table' ? (
-        <DataTable data={tableData} columns={tableColumns} sortable resizable fullWidth>
-          <DataTable.Pagination defaultPageSize={DEFAULT_PAGE_SIZE} />
-        </DataTable>
-      ) : (
-        <TimeseriesChart data={timeseriesData} variant={chartVariant}>
-          <TimeseriesChart.Legend />
-          <TimeseriesChart.YAxis label='Value' />
-        </TimeseriesChart>
-      )}
-    </Flex>
+        {state.records.length === 0 ? (
+          <Flex flexDirection='column' alignItems='center' justifyContent='center' padding={32}>
+            <Text textStyle='base-emphasized'>No records returned</Text>
+            <Text textStyle='small' style={{ opacity: EMPTY_STATE_TEXT_OPACITY }}>
+              The query executed successfully but returned no data. Try adjusting your query or timeframe.
+            </Text>
+          </Flex>
+        ) : viewMode === 'table' ? (
+          <DataTable
+            data={tableData}
+            columns={tableColumns}
+            sortable
+            resizable
+            fullWidth
+            variant={{ rowDensity: 'condensed' }}
+          >
+            <DataTable.Pagination defaultPageSize={DEFAULT_PAGE_SIZE} />
+          </DataTable>
+        ) : (
+          <TimeseriesChart data={timeseriesData} variant={chartVariant}>
+            <TimeseriesChart.Legend />
+            <TimeseriesChart.YAxis label='Value' />
+          </TimeseriesChart>
+        )}
+      </Flex>
+    </div>
   );
 }

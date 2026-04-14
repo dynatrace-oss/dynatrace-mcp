@@ -22,17 +22,33 @@ jobs:
       - name: Prettier
         run: npm run prettier
 
+      - name: Lint
+        run: npm run lint
+
       - name: Run tests with coverage
         run: npm run test:unit -- --coverage
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: coverage/
 
       - name: Build
         run: npm run build
+
+      - name: Validate MCPB manifest
+        run: npm run mcpb:validate
+
+      - name: Pack MCPB bundle
+        run: npm run mcpb:pack
+
+      - name: Upload MCPB bundle artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: dynatrace-mcp-mcpb
+          path: ./*.mcpb
+          if-no-files-found: error
 
       - name: Test npm pack
         run: ./scripts/test-npm-pack.sh

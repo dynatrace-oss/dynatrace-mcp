@@ -2,21 +2,79 @@
 
 ## Unreleased Changes
 
-- Removed redundant question echo from `chat_with_davis_copilot` response to reduce token usage
-- Fixed `execute_dql` tool to include query records in the text output, enabling LLMs to process the results directly
+- Updated `@dynatrace-sdk/client-automation` (5.20.0 → 5.22.0).
+- Added `--oauth-redirect-port` CLI option to set a fixed port for the OAuth redirect server. This is particularly useful in containerized environments where ports must be explicitly exposed.
 
-## 1.5.0-beta.3
+## 1.8.0
 
-- Updated dependencies including `@dynatrace-sdk/client-classic-environment-v2`
+- Increased the default Grail query budget from 1,000 GB to 5,000 GB per session, enabling larger data exploration without configuration changes. The budget can still be overridden via the `DT_GRAIL_QUERY_BUDGET_GB` environment variable.
+- Fixed browser opening in Codespaces and other headless environments by keeping `open` as an external dependency instead of bundling it, ensuring the OAuth flow works correctly in those environments.
+- Updated `@dynatrace/strato-components` (3.1.1 → 3.2.0), `@dynatrace/strato-components-preview` (3.1.1 → 3.2.0), and `lodash-es` (4.17.23 → 4.18.1).
 
-## 1.5.0-beta.2
+## 1.7.6
 
-- Small incremental improvements to the MCP App for `execute_dql`
+- Fixed: Corrected event type spelling from `OMPLIANCE_FINDING` to `COMPLIANCE_FINDING` in the `send_event` tool, ensuring this event type is now accepted correctly.
+- Updated `lodash` (4.17.23 → 4.18.1), `@dynatrace/strato-components` (3.1.1 → 3.1.3), and `@dynatrace/strato-components-preview` (3.1.1 → 3.1.3).
 
-## 1.5.0-beta.1
+## 1.7.5
 
-- Added UI (MCP App) for `execute_dql` to render an interactive `TimeseriesChart` as well as `AreaChart` for chart-worthy results (timeseries/metric data with timeframe and numeric fields). For plain tabular results (logs, entities, etc.) the app auto-hides, keeping the UI clean.
-- Fixed DT_ENVIRONMENT setting in gemini-extension
+- Fixed: Replaced deprecated `fetch metric.series` DQL command with the `metrics` command.
+
+## 1.7.4
+
+- Updated `@dynatrace/strato-components` (1.17.0 → 3.1.1), `@dynatrace/strato-components-preview` (2.16.0 → 3.1.1), and `@dynatrace/strato-icons` (1.12.0 → 2.1.0).
+- Updated dependencies including `picomatch` (2.3.1 → 2.3.2), `yaml` (1.10.2 → 1.10.3), and `handlebars` (4.7.8 → 4.7.9).
+
+## 1.7.3
+
+- Fixed: Set default values (empty string) for several environment variables in Claude Desktop to avoid `${user_config.VARIABLE_NAME}` being set as a value
+
+## 1.7.2
+
+- Fixed: Empty string values for `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRET`, and `DT_PLATFORM_TOKEN` environment variables are now treated as unset, preventing authentication failures when tools like Claude Desktop set blank fields to `""`. A warning is logged when an empty string is detected.
+
+## 1.7.1
+
+- Fixed MCPB bundle file not working on Claude Desktop
+
+## 1.7.0
+
+- Added MCP-Bundle (`.mcpb`) for the Anthropics MCP Connectors marketplace, making the server directly installable from the marketplace.
+- Added `esbuild` to create a self-contained NPM package, improving install and startup time of the MCP server.
+
+## 1.6.1
+
+- Improved `execute_dql` MCP App UI styling using Strato design tokens, condensed table row density, and a refined toolbar layout.
+- Updated dependencies including `undici` (6.23.0 → 6.24.0).
+
+## 1.6.0
+
+- Fixed an `"Already connected to a transport"` error in HTTP mode (`--http` flag) that caused all requests after the first concurrent connection to fail. Each incoming HTTP request now gets its own `McpServer` instance, matching the stateless server pattern recommended by the MCP SDK.
+- Fixed DQL `load` statements (e.g., `load "/lookups/http_status_codes"`) failing with an insufficient permissions error by adding the `storage:files:read` scope to the `execute_dql` tool. This enables lookup data joins in DQL queries, such as enriching span data with HTTP status code descriptions.
+- Updated dependencies including `hono` (4.12.5 → 4.12.7), which includes security hardening against prototype pollution in `parseBody`.
+
+## 1.5.3
+
+- Fixed the `mcp-server-dynatrace` bin path in `package.json` to resolve an npm publish warning.
+- Updated dependencies including `@dynatrace-sdk/client-query` (1.21.2 → 1.22.1), `hono` (4.12.2 → 4.12.5), `@hono/node-server` (1.19.9 → 1.19.10), and `express-rate-limit` (8.2.1 → 8.3.0).
+- Refined instructions for DQL statements (related to `smartscapeNodes` and `smartscapeEdges`) to use `toSmartscapeId()`, ensuring correct type casting when querying Smartscape topology data.
+
+## 1.5.2
+
+- Fixed a race condition in the OAuth Authorization Code Flow token refresh that caused browser windows to open unexpectedly during server operation. Concurrent token refresh attempts now share a single in-flight refresh request, preventing the refresh token from being consumed multiple times.
+- Improved MCP App table rendering to make cells less dense.
+- Updated dependencies including `@dynatrace-sdk/client-classic-environment-v2` (5.1.0 → 5.2.2), `@dynatrace/strato-components` (1.16.0 → 1.17.0), `@dynatrace/strato-components-preview` (2.14.1 → 2.16.0), `rollup` (4.57.1 → 4.59.0), and `minimatch` (3.1.2 → 3.1.5).
+
+## 1.5.1
+
+- Fixed MCP App theme handling, such that the MCP host theme is applied correctly.
+
+## 1.5.0
+
+- Introduced an interactive MCP App for `execute_dql` that renders a Chart (`TimeSeriesChart` and `AreaChart`) for timeseries and metric data, as well as tabular results (logs, entities, etc.)
+- Removed redundant question echo from `chat_with_davis_copilot` responses, reducing unnecessary token consumption
+- Fixed the `DT_ENVIRONMENT` setting in the Gemini extension configuration
+- Updated dependencies including `@dynatrace-sdk/client-classic-environment-v2` and `hono`
 
 ## 1.4.0
 

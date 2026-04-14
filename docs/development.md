@@ -4,21 +4,8 @@ This file is intended for contributors/developers of the dynatrace-mcp-server pa
 
 ## Local Development
 
-For local development purposes, you can use VSCode and GitHub Copilot.
-
-First, enable Copilot for your Workspace `.vscode/settings.json`:
-
-```json
-{
-  "github.copilot.enable": {
-    "*": true
-  }
-}
-```
-
-and make sure that you are using Agent Mode in Copilot.
-
-Second, add the MCP to `.vscode/mcp.json`:
+For local development purposes, you can use VS Code and GitHub Copilot in **Agent Mode**,
+with the following MCP config added to `.vscode/mcp.json`:
 
 ```json
 {
@@ -32,9 +19,29 @@ Second, add the MCP to `.vscode/mcp.json`:
 }
 ```
 
-Third, create a `.env` file in this repository (you can copy from `.env.template`) and configure environment variables as [described above](#environment-variables).
+Create a `.env` file in this repository (you can copy from `.env.template`) and configure environment variables:
+
+```
+DT_ENVIRONMENT=https://<environment-id>.apps.dynatrace.com
+# OPTIONAL
+# DT_PLATFORM_TOKEN=...
+```
 
 Finally, make changes to your code and compile it with `npm run build` or just run `npm run watch` and it auto-compiles.
+
+## Running Tests
+
+Unit tests can be run with:
+
+```bash
+npm run test:unit
+```
+
+Telemetry is automatically disabled during tests via the Jest configuration. If you run tests outside of Jest (or in a custom setup), disable telemetry explicitly:
+
+```bash
+DT_MCP_DISABLE_TELEMETRY=true npm test
+```
 
 ## Releasing
 

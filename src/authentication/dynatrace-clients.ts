@@ -5,6 +5,7 @@ import { globalTokenCache } from './token-cache';
 import { getRandomPort } from './utils';
 import { requestTokenForClientCredentials } from './dynatrace-oauth-client-credentials';
 import { getSSOUrl } from './get-sso-url';
+import { OAuthTokenResponse } from './types';
 
 /**
  * Create a Dynatrace Http Client (from the http-client SDK) based on the provided authentication credentials
@@ -22,6 +23,7 @@ export const createDtHttpClient = async (
   clientId?: string,
   clientSecret?: string,
   dtPlatformToken?: string,
+  oauthRedirectPort?: number,
 ): Promise<HttpClient> => {
   /** Logic:
    * * if a platform token is provided, use it
@@ -37,7 +39,7 @@ export const createDtHttpClient = async (
     return createOAuthClientCredentialsHttpClient(environmentUrl, scopes, clientId, clientSecret);
   } else if (clientId) {
     // create an OAuth client using authorization code flow (interactive)
-    return createOAuthAuthCodeFlowHttpClient(environmentUrl, scopes, clientId);
+    return createOAuthAuthCodeFlowHttpClient(environmentUrl, scopes, clientId, oauthRedirectPort);
   }
 
   throw new Error(
@@ -101,6 +103,16 @@ const createOAuthClientCredentialsHttpClient = async (
   return createBearerTokenHttpClient(environmentUrl, tokenResponse.access_token);
 };
 
+/**
+ * Shared promise for an in-progress token refresh (prevents concurrent refresh races).
+ * When multiple callers find an expired token simultaneously, only the first starts a refresh;
+ * all others await the same promise so the refresh token is only consumed once.
+ *
+ * Note: this relies on Node.js's single-threaded event loop — no concurrent synchronous
+ * access can occur between the null-check and the assignment below.
+ */
+let ongoingRefreshPromise: Promise<OAuthTokenResponse> | null = null;
+
 /** Create an OAuth Client using authorization code flow (interactive authentication)
  * This starts a local HTTP server to handle the OAuth redirect and requires user interaction.
  * Implements an in-memory token cache (not persisted to disk). After every server restart a new
@@ -111,6 +123,7 @@ const createOAuthAuthCodeFlowHttpClient = async (
   environmentUrl: string,
   scopes: string[],
   clientId: string,
+  oauthRedirectPort?: number,
 ): Promise<HttpClient> => {
   // Get SSO Base URL
   const ssoBaseURL = await getSSOUrl(environmentUrl);
@@ -128,13 +141,25 @@ const createOAuthAuthCodeFlowHttpClient = async (
     return createBearerTokenHttpClient(environmentUrl, cachedToken.access_token);
   }
 
-  // If we have an expired token that can be refreshed, refresh it
+  // If we have an expired token that can be refreshed, refresh it.
+  // Use a single shared promise to deduplicate concurrent refresh attempts so the refresh token
+  // is only consumed once (OAuth refresh tokens are rotated/invalidated on use).
   if (cachedToken && cachedToken.refresh_token && !isValid) {
     const expiresIn = cachedToken.expires_at ? Math.round((cachedToken.expires_at - Date.now()) / 1000) : 'never';
-    console.error(`🔍 Auth-Code-Flow: Found expired cached token (expires in ${expiresIn}s), attempting refresh...`);
+
+    if (!ongoingRefreshPromise) {
+      console.error(`🔍 Auth-Code-Flow: Found expired cached token (expires in ${expiresIn}s), attempting refresh...`);
+      ongoingRefreshPromise = refreshAccessToken(ssoBaseURL, clientId, cachedToken.refresh_token, scopes).finally(
+        () => {
+          ongoingRefreshPromise = null;
+        },
+      );
+    } else {
+      console.error(`🔄 Token refresh already in progress, waiting for it to complete...`);
+    }
+
     try {
-      console.error(`🔄 Attempting to refresh expired access token...`);
-      const tokenResponse = await refreshAccessToken(ssoBaseURL, clientId, cachedToken.refresh_token, scopes);
+      const tokenResponse = await ongoingRefreshPromise;
 
       if (tokenResponse.access_token && !tokenResponse.error) {
         console.error(`✅ Successfully refreshed access token!`);
@@ -160,13 +185,13 @@ const createOAuthAuthCodeFlowHttpClient = async (
   console.error(`Using SSO base URL ${ssoBaseURL}`);
 
   // Try to start OAuth server with retry logic for port conflicts
-  const maxAttempts = 3;
+  const maxAttempts = oauthRedirectPort ? 1 : 3;
   let lastError: Error | null = null;
-  const alreadyUsedPorts = [];
+  const alreadyUsedPorts: number[] = [];
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    // Randomly select a port for the OAuth redirect URL (e.g., 5344)
-    const port = getRandomPort(undefined, undefined, alreadyUsedPorts);
+    // Use the specified callback port, or randomly select one (e.g., 5344)
+    const port = oauthRedirectPort ?? getRandomPort(undefined, undefined, alreadyUsedPorts);
     alreadyUsedPorts.push(port);
 
     try {

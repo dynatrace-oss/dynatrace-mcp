@@ -1,3 +1,6 @@
+// Disable telemetry during tests to prevent network connections and unwanted data collection
+process.env.DT_MCP_DISABLE_TELEMETRY = 'true';
+
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',

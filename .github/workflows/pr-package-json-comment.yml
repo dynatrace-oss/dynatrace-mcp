@@ -21,10 +21,10 @@ jobs:
 
       - name: Get package.json changes
         id: package-changes
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          HEAD_BRANCH: ${{ github.event.pull_request.head.sha }}
         run: |
-          # Get the base branch (usually main)
-          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
-          HEAD_BRANCH="${{ github.event.pull_request.head.sha }}"
 
           # Get the diff for package.json
           git diff origin/${BASE_BRANCH}...${HEAD_BRANCH} -- package.json > package_diff.txt
@@ -40,7 +40,7 @@ jobs:
 
       - name: Comment on PR
         if: steps.package-changes.outputs.changes_detected == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');

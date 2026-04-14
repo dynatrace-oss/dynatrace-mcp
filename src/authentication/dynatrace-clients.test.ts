@@ -2,7 +2,7 @@ import { createDtHttpClient } from './dynatrace-clients';
 import { PlatformHttpClient } from '@dynatrace-sdk/http-client';
 import { getSSOUrl } from './get-sso-url';
 import { OAuthTokenResponse } from './types';
-import { performOAuthAuthorizationCodeFlow } from './dynatrace-oauth-auth-code-flow';
+import { performOAuthAuthorizationCodeFlow, refreshAccessToken } from './dynatrace-oauth-auth-code-flow';
 import { globalTokenCache } from './token-cache';
 
 // Mock external dependencies
@@ -22,6 +22,7 @@ const mockGetSSOUrl = getSSOUrl as jest.MockedFunction<typeof getSSOUrl>;
 const mockPerformOAuthAuthorizationCodeFlow = performOAuthAuthorizationCodeFlow as jest.MockedFunction<
   typeof performOAuthAuthorizationCodeFlow
 >;
+const mockRefreshAccessToken = refreshAccessToken as jest.MockedFunction<typeof refreshAccessToken>;
 const mockGlobalTokenCache = globalTokenCache as jest.Mocked<typeof globalTokenCache>;
 const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
 
@@ -181,6 +182,67 @@ describe('dynatrace-clients', () => {
           },
         });
         expect(result).toBeInstanceOf(PlatformHttpClient);
+      });
+    });
+
+    describe('with OAuth auth code flow (clientId only)', () => {
+      const clientId = 'test-client-id';
+
+      it('should deduplicate concurrent token refresh attempts', async () => {
+        const expiredCachedToken = {
+          access_token: 'expired-access-token',
+          refresh_token: 'valid-refresh-token',
+          expires_at: Date.now() - 60000, // expired 1 minute ago
+          scopes,
+        };
+
+        const newTokenResponse: OAuthTokenResponse = {
+          access_token: 'new-access-token',
+          token_type: 'Bearer',
+          expires_in: 3600,
+          refresh_token: 'new-refresh-token',
+        };
+
+        mockGlobalTokenCache.getToken.mockReturnValue(expiredCachedToken);
+        mockGlobalTokenCache.isTokenValid.mockReturnValue(false);
+
+        // Simulate a slow refresh (10ms) so concurrent callers have time to pile up
+        mockRefreshAccessToken.mockImplementation(
+          () => new Promise((resolve) => setTimeout(() => resolve(newTokenResponse), 10)),
+        );
+
+        // Initiate two concurrent calls – both see the same expired token
+        const [client1, client2] = await Promise.all([
+          createDtHttpClient(environmentUrl, scopes, clientId),
+          createDtHttpClient(environmentUrl, scopes, clientId),
+        ]);
+
+        // The refresh must only have been attempted once (no race on the refresh token)
+        expect(mockRefreshAccessToken).toHaveBeenCalledTimes(1);
+        expect(client1).toBeInstanceOf(PlatformHttpClient);
+        expect(client2).toBeInstanceOf(PlatformHttpClient);
+      });
+
+      it('should use the specified oauthRedirectPort for OAuth flow', async () => {
+        const mockTokenResponse: OAuthTokenResponse = {
+          access_token: 'test-access-token',
+          token_type: 'Bearer',
+          expires_in: 3600,
+          scope: 'scope1 scope2',
+        };
+
+        mockPerformOAuthAuthorizationCodeFlow.mockResolvedValueOnce(mockTokenResponse);
+
+        const fixedPort = 9876;
+        await createDtHttpClient(environmentUrl, scopes, clientId, undefined, undefined, fixedPort);
+
+        expect(mockPerformOAuthAuthorizationCodeFlow).toHaveBeenCalledWith(
+          'https://sso.dynatrace.com',
+          expect.objectContaining({
+            redirectUri: `http://localhost:${fixedPort}/auth/login`,
+          }),
+          fixedPort,
+        );
       });
     });
   });

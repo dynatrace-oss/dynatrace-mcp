@@ -13,6 +13,13 @@ body,
   margin: 0 !important;
 }
 
+.execute-dql-results-surface {
+  background-color: var(--dt-colors-background-surface-default);
+  border: 1px solid var(--dt-colors-border-neutral-default);
+  border-radius: var(--dt-borders-radius-surface-default);
+  padding: 8px;
+}
+
 .execute-dql-toolbar {
   flex-wrap: wrap;
 }
@@ -26,19 +33,10 @@ body,
   flex-wrap: wrap;
 }
 
-.execute-dql-primary-actions {
-  margin-left: auto;
-}
-
 @media (max-width: 760px) {
   .execute-dql-toolbar-actions {
     margin-left: 0 !important;
     width: 100%;
-  }
-
-  .execute-dql-primary-actions {
-    margin-left: auto;
-    justify-content: flex-end;
   }
 }
 
