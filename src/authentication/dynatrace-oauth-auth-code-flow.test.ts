@@ -186,5 +186,59 @@ describe('OAuth Authorization Code Flow', () => {
       expect(response.status).toBe(400);
       await flowPromise;
     });
+
+    test('exits cleanly when SIGINT is received while waiting for authorization code', async () => {
+      // Mock process.exit to prevent the test runner from actually exiting
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
+      const fakeProcess = new EventEmitter();
+      mockedOpen.mockResolvedValue(fakeProcess as any);
+
+      const flowPromise = performOAuthAuthorizationCodeFlow(
+        'https://sso.dynatrace.com',
+        { clientId: 'test', redirectUri: '', scopes: ['test:scope'] },
+        port,
+      ).catch(() => {
+        // process.exit is mocked, so the promise remains pending; ignore any rejection
+      });
+
+      // Give it time to reach the waitForAuthorizationCode() await
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      // Simulate CTRL+C / SIGINT
+      process.emit('SIGINT');
+
+      // Give the handler time to run
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // process.exit(0) should have been called, indicating a clean shutdown
+      expect(mockExit).toHaveBeenCalledWith(0);
+
+      mockExit.mockRestore();
+      // flowPromise remains pending because process.exit was mocked, which is expected
+      void flowPromise;
+    });
+
+    test('exits cleanly when SIGTERM is received while waiting for authorization code', async () => {
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
+      const fakeProcess = new EventEmitter();
+      mockedOpen.mockResolvedValue(fakeProcess as any);
+
+      const flowPromise = performOAuthAuthorizationCodeFlow(
+        'https://sso.dynatrace.com',
+        { clientId: 'test', redirectUri: '', scopes: ['test:scope'] },
+        port,
+      ).catch(() => {});
+
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      process.emit('SIGTERM');
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(mockExit).toHaveBeenCalledWith(0);
+
+      mockExit.mockRestore();
+      void flowPromise;
+    });
   });
 });

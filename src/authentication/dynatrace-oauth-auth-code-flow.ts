@@ -241,8 +241,31 @@ export async function performOAuthAuthorizationCodeFlow(
     console.error('');
     console.error('='.repeat(60) + '\n');
 
-    // Wait for the authorization code
-    const { code, state: receivedState } = await waitForAuthorizationCode();
+    // Wait for the authorization code, with clean shutdown support on SIGINT/SIGTERM.
+    // Without these handlers, CTRL+C may not reliably exit the process while it is blocked
+    // waiting for the OAuth callback – particularly when Node.js is running as PID 1 inside
+    // a Docker container and no other signal handlers have been registered yet.
+    const { code, state: receivedState } = await new Promise<{ code: string; state: string }>((resolve, reject) => {
+      const handleShutdown = () => {
+        server.close();
+        process.exit(0);
+      };
+
+      process.once('SIGINT', handleShutdown);
+      process.once('SIGTERM', handleShutdown);
+
+      waitForAuthorizationCode()
+        .then((result) => {
+          process.off('SIGINT', handleShutdown);
+          process.off('SIGTERM', handleShutdown);
+          resolve(result);
+        })
+        .catch((err: unknown) => {
+          process.off('SIGINT', handleShutdown);
+          process.off('SIGTERM', handleShutdown);
+          reject(err);
+        });
+    });
 
     // Validate state parameter
     if (receivedState !== state) {

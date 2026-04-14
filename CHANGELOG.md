@@ -2,6 +2,7 @@
 
 ## Unreleased Changes
 
+- Fixed: Pressing CTRL+C while the OAuth authorization code flow is waiting for a browser callback (e.g. in Docker or headless environments where the browser cannot be opened automatically) now cleanly stops the server instead of leaving it blocked indefinitely.
 - Updated `@dynatrace-sdk/client-automation` (5.20.0 → 5.22.0).
 - Added `--oauth-redirect-port` CLI option to set a fixed port for the OAuth redirect server. This is particularly useful in containerized environments where ports must be explicitly exposed.
 
