@@ -1,6 +1,6 @@
 # Migrating from Local to Remote Dynatrace MCP Server
 
-Dynatrace now offers an official **Remote MCP Server** that runs directly in your Dynatrace environment — no local setup, no Node.js, and no `npx` required.
+Dynatrace now offers an official **Remote MCP Server** that runs directly in your Dynatrace SaaS environment — no local setup, no Node.js, and no `npx` required.
 
 👉 **[Dynatrace Remote MCP Server Documentation](https://docs.dynatrace.com/docs/dynatrace-intelligence/dynatrace-mcp)**
 
