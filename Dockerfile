@@ -12,17 +12,17 @@ RUN npm ci
 # Build the application
 RUN npm run build
 
+# Install only the runtime dependencies declared in dist/package.json (solely `open`)
+# Everything else is already bundled into dist/index.js by esbuild
+RUN cd dist && npm install --ignore-scripts && npm cache clean --force
+
 # RUNTIME STAGE
 FROM node:22.21.1-alpine3.22
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files and install production dependencies
-COPY --from=build --chown=node:node /app/package.json /app/package-lock.json /app/
-RUN npm ci --only=production --ignore-scripts && npm cache clean --force
-
-# Copy the built application
+# Copy the bundled application along with its minimal runtime node_modules
 COPY --from=build --chown=node:node /app/dist /app/dist
 
 # Run image as non-root user

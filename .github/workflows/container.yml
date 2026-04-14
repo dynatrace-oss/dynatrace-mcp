@@ -19,4 +19,21 @@ jobs:
         with:
           context: .
           push: false
+          load: true
           tags: dynatrace-mcp:latest
+
+      - name: Start container
+        run: |
+          docker run -d --name mcp-smoke \
+            -e DT_MCP_DISABLE_TELEMETRY=true \
+            -e DT_ENVIRONMENT=https://abc12345.apps.dynatrace.com \
+            dynatrace-mcp:latest --http --host 0.0.0.0
+
+      - name: Print container logs
+        run: |
+          sleep 3
+          docker logs mcp-smoke
+
+      - name: Remove container
+        if: always()
+        run: docker rm -f mcp-smoke || true
