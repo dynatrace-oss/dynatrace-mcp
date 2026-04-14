@@ -17,3 +17,6 @@ tsconfig.tsbuildinfo
 
 # Jest coverage output
 coverage/
+
+# local tarballs
+dynatrace-oss-dynatrace-mcp-server-*.tgz

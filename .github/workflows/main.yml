@@ -49,3 +49,6 @@ jobs:
           name: dynatrace-mcp-mcpb
           path: ./*.mcpb
           if-no-files-found: error
+
+      - name: Test npm pack
+        run: ./scripts/test-npm-pack.sh
