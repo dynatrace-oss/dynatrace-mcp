@@ -56,7 +56,7 @@ Dynatrace now offers an official **Remote MCP Server** that runs directly in you
 
 ### 1. Obtain a Platform Token
 
-> **Authentication note:** The local MCP server offers a better authentication experience today — it supports the OAuth Authorization Code Flow, which opens a browser window so you never need to manage tokens manually. The remote MCP server currently requires a Platform Token.
+> **Note:** The local MCP server currently offers a better authentication experience via OAuth Authorization Code Flow (via your logged in Browser session). The remote MCP server currently requires a Platform Token.
 
 Create a Platform Token in your Dynatrace environment with the required scopes. In addition to tool-specific scopes, the remote MCP server requires:
 
