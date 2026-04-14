@@ -22,14 +22,19 @@ jobs:
           load: true
           tags: dynatrace-mcp:latest
 
-      - name: Smoke-test container startup
+      - name: Start container
         run: |
           docker run --rm -d --name mcp-smoke \
             -e DT_MCP_DISABLE_TELEMETRY=true \
             -e DT_ENVIRONMENT=https://abc12345.apps.dynatrace.com \
             dynatrace-mcp:latest --http --host 0.0.0.0
-          # Wait up to 30s for the HTTP server to log that it started
-          timeout 30 sh -c 'until docker logs mcp-smoke 2>&1 | grep -q "running on HTTP"; do sleep 1; done'
-          # Verify the container is still running (process has not crashed after startup)
-          docker inspect --format='{{.State.Running}}' mcp-smoke | grep -q true
-          docker stop mcp-smoke
+
+      - name: Wait for HTTP server to start
+        run: timeout 30 sh -c 'until docker logs mcp-smoke 2>&1 | grep -q "running on HTTP"; do sleep 1; done'
+
+      - name: Verify container is still running
+        run: docker inspect --format='{{.State.Running}}' mcp-smoke | grep -q true
+
+      - name: Stop container
+        if: always()
+        run: docker stop mcp-smoke || true
