@@ -190,8 +190,7 @@ describe('OAuth Authorization Code Flow', () => {
     test('exits cleanly when SIGINT is received while waiting for authorization code', async () => {
       // Mock process.exit to prevent the test runner from actually exiting
       const mockExit = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
-      const fakeProcess = new EventEmitter();
-      mockedOpen.mockResolvedValue(fakeProcess as any);
+      mockedOpen.mockResolvedValue(new EventEmitter() as any);
 
       const flowPromise = performOAuthAuthorizationCodeFlow(
         'https://sso.dynatrace.com',
@@ -220,8 +219,7 @@ describe('OAuth Authorization Code Flow', () => {
 
     test('exits cleanly when SIGTERM is received while waiting for authorization code', async () => {
       const mockExit = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
-      const fakeProcess = new EventEmitter();
-      mockedOpen.mockResolvedValue(fakeProcess as any);
+      mockedOpen.mockResolvedValue(new EventEmitter() as any);
 
       const flowPromise = performOAuthAuthorizationCodeFlow(
         'https://sso.dynatrace.com',
