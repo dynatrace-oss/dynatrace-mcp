@@ -10,7 +10,7 @@ export DT_MCP_DISABLE_TELEMETRY=true
 
 npm run build --prefix "$REPO_ROOT"
 
-PACK_OUTPUT=$(npm pack --pack-destination "$TMP_DIR" 2>&1)
+PACK_OUTPUT=$(npm pack "$REPO_ROOT/dist" --pack-destination "$TMP_DIR" 2>&1)
 TARBALL="$TMP_DIR/$(echo "$PACK_OUTPUT" | tail -n 1)"
 
 echo "==> Created tarball: $TARBALL"
