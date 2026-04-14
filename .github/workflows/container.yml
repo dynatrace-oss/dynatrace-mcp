@@ -19,4 +19,16 @@ jobs:
         with:
           context: .
           push: false
+          load: true
           tags: dynatrace-mcp:latest
+
+      - name: Smoke-test container startup
+        run: |
+          docker run --rm -d --name mcp-smoke -p 3000:3000 \
+            -e DT_MCP_DISABLE_TELEMETRY=true \
+            dynatrace-mcp:latest --http --host 0.0.0.0
+          # Wait up to 15s for the HTTP server to accept connections
+          timeout 15 sh -c 'until curl -s http://localhost:3000/ >/dev/null 2>&1; do sleep 1; done'
+          # Verify the container is still running (process has not crashed after startup)
+          docker inspect --format='{{.State.Running}}' mcp-smoke | grep -q true
+          docker stop mcp-smoke
