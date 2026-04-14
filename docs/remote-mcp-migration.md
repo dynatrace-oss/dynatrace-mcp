@@ -63,6 +63,13 @@ Create a Platform Token in your Dynatrace environment with the required scopes. 
 - `mcp-gateway:servers:invoke`
 - `mcp-gateway:servers:read`
 
+as well as tool-specific scopes (see [Server and server tools](https://docs.dynatrace.com/docs/dynatrace-intelligence/dynatrace-mcp#server)):
+
+- `storage:buckets:read` as well as `storage:events:read`, `storage:logs:read`, ... - see [Grail permissions table](https://docs.dynatrace.com/docs/platform/grail/organize-data/assign-permissions-in-grail#grail-permissions-table)
+- `davis:analyzers:read`, `davis:analyzers:execute`
+- `document:documents:read`
+- `davis-copilot:nl2dql:execute`, `davis-copilot:dql2nl:execute` and `davis-copilot:conversations:execute`
+
 See [Platform Tokens documentation](https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens) for details.
 
 ### 2. Update Your MCP Client Configuration
