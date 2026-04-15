@@ -2,8 +2,10 @@
 
 ## Unreleased Changes
 
+## 1.8.1
+
+- Added `--oauth-redirect-port` CLI option to set a fixed port for the OAuth redirect server, particularly useful in containerized environments where ports must be explicitly exposed.
 - Updated `@dynatrace-sdk/client-automation` (5.20.0 → 5.22.0).
-- Added `--oauth-redirect-port` CLI option to set a fixed port for the OAuth redirect server. This is particularly useful in containerized environments where ports must be explicitly exposed.
 
 ## 1.8.0
 
