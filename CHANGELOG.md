@@ -2,6 +2,7 @@
 
 ## Unreleased Changes
 
+- Added `--oauth-redirect-host` CLI option to set the bind host for the OAuth redirect server (e.g., `0.0.0.0` to listen on all interfaces). This complements `--oauth-redirect-port` and is particularly useful in containerized environments.
 - Updated `@dynatrace-sdk/client-automation` (5.20.0 → 5.22.0).
 - Added `--oauth-redirect-port` CLI option to set a fixed port for the OAuth redirect server. This is particularly useful in containerized environments where ports must be explicitly exposed.
 

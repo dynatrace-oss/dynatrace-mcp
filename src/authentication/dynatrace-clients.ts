@@ -24,6 +24,7 @@ export const createDtHttpClient = async (
   clientSecret?: string,
   dtPlatformToken?: string,
   oauthRedirectPort?: number,
+  oauthRedirectHost?: string,
 ): Promise<HttpClient> => {
   /** Logic:
    * * if a platform token is provided, use it
@@ -39,7 +40,7 @@ export const createDtHttpClient = async (
     return createOAuthClientCredentialsHttpClient(environmentUrl, scopes, clientId, clientSecret);
   } else if (clientId) {
     // create an OAuth client using authorization code flow (interactive)
-    return createOAuthAuthCodeFlowHttpClient(environmentUrl, scopes, clientId, oauthRedirectPort);
+    return createOAuthAuthCodeFlowHttpClient(environmentUrl, scopes, clientId, oauthRedirectPort, oauthRedirectHost);
   }
 
   throw new Error(
@@ -124,6 +125,7 @@ const createOAuthAuthCodeFlowHttpClient = async (
   scopes: string[],
   clientId: string,
   oauthRedirectPort?: number,
+  oauthRedirectHost?: string,
 ): Promise<HttpClient> => {
   // Get SSO Base URL
   const ssoBaseURL = await getSSOUrl(environmentUrl);
@@ -207,6 +209,7 @@ const createOAuthAuthCodeFlowHttpClient = async (
           scopes: scopes, // Request all scopes upfront
         },
         port,
+        oauthRedirectHost,
       );
 
       // Check if we got a valid token

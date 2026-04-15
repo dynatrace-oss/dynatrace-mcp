@@ -242,6 +242,30 @@ describe('dynatrace-clients', () => {
             redirectUri: `http://localhost:${fixedPort}/auth/login`,
           }),
           fixedPort,
+          undefined,
+        );
+      });
+
+      it('should use the specified oauthRedirectHost for OAuth flow', async () => {
+        const mockTokenResponse: OAuthTokenResponse = {
+          access_token: 'test-access-token',
+          token_type: 'Bearer',
+          expires_in: 3600,
+          scope: 'scope1 scope2',
+        };
+
+        mockPerformOAuthAuthorizationCodeFlow.mockResolvedValueOnce(mockTokenResponse);
+
+        const fixedHost = '0.0.0.0';
+        await createDtHttpClient(environmentUrl, scopes, clientId, undefined, undefined, undefined, fixedHost);
+
+        expect(mockPerformOAuthAuthorizationCodeFlow).toHaveBeenCalledWith(
+          'https://sso.dynatrace.com',
+          expect.objectContaining({
+            redirectUri: expect.stringContaining('/auth/login'),
+          }),
+          expect.any(Number),
+          fixedHost,
         );
       });
     });
