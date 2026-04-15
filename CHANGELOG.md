@@ -5,6 +5,7 @@
 ## 1.8.1
 
 - Added `--oauth-redirect-port` CLI option to set a fixed port for the OAuth redirect server, particularly useful in containerized environments where ports must be explicitly exposed.
+- Fixed: OAuth flow now handles `open()` failures gracefully, preventing unhandled errors when the browser cannot be launched automatically.
 - Updated `@dynatrace-sdk/client-automation` (5.20.0 → 5.22.0).
 
 ## 1.8.0
