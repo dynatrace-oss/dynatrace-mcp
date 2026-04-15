@@ -185,7 +185,7 @@ export async function startOAuthRedirectServer(
 
   return new Promise((resolve, reject) => {
     server.listen(port, host, () => {
-      console.error(`🌐 OAuth redirect server listening on ${host}:${port} (redirect URI: ${redirectUri})`);
+      console.error(`🌐 OAuth redirect server listening on ${redirectUri}`);
       resolve({
         server,
         redirectUri,
