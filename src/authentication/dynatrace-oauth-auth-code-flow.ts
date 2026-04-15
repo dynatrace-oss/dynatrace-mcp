@@ -97,7 +97,10 @@ export async function refreshAccessToken(
 /**
  * Starts a temporary HTTP server to handle the OAuth redirect
  */
-export async function startOAuthRedirectServer(port: number = 5344): Promise<{
+export async function startOAuthRedirectServer(
+  port: number = 5344,
+  host: string = 'localhost',
+): Promise<{
   server: ReturnType<typeof createServer>;
   redirectUri: string;
   waitForAuthorizationCode: () => Promise<{ code: string; state: string }>;
@@ -181,7 +184,7 @@ export async function startOAuthRedirectServer(port: number = 5344): Promise<{
   });
 
   return new Promise((resolve, reject) => {
-    server.listen(port, 'localhost', () => {
+    server.listen(port, host, () => {
       console.error(`🌐 OAuth redirect server listening on ${redirectUri}`);
       resolve({
         server,
@@ -201,11 +204,12 @@ export async function performOAuthAuthorizationCodeFlow(
   ssoBaseURL: string,
   config: OAuthAuthorizationConfig,
   serverPort: number = 5344,
+  serverHost: string = 'localhost',
 ): Promise<OAuthTokenResponse> {
   console.error('🚀 Starting OAuth Authorization Code Flow with local redirect/callback...');
 
   // Start the redirect server
-  const { server, redirectUri, waitForAuthorizationCode } = await startOAuthRedirectServer(serverPort);
+  const { server, redirectUri, waitForAuthorizationCode } = await startOAuthRedirectServer(serverPort, serverHost);
 
   try {
     // Update config with the actual redirect URI

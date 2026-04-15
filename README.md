@@ -269,6 +269,10 @@ npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http -H 192.168.0.1 # recomm
 # Static OAuth callback port (useful when the port must be exposed, e.g., when running the MCP in a container)
 npx -y @dynatrace-oss/dynatrace-mcp-server@latest --oauth-redirect-port 5344
 
+# Static OAuth callback host (useful for containers where the redirect server must bind to all interfaces)
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --oauth-redirect-host 0.0.0.0
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --oauth-redirect-port 5344 --oauth-redirect-host 0.0.0.0
+
 # Check version
 npx -y @dynatrace-oss/dynatrace-mcp-server@latest --version
 ```

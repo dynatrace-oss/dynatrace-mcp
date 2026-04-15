@@ -154,6 +154,7 @@ const main = async () => {
   // OAuth redirect port – set later from CLI arguments, but declared here so the
   // createAuthenticatedHttpClient closure can capture it by reference.
   let oauthRedirectPort: number | undefined;
+  let oauthRedirectHost: string | undefined;
 
   // Factory function: creates a new McpServer with all tools registered.
   // In HTTP mode, a fresh instance is created per request to support
@@ -171,6 +172,7 @@ const main = async () => {
       oauthClientSecret,
       dtPlatformToken,
       oauthRedirectPort,
+      oauthRedirectHost,
     );
   };
 
@@ -1606,6 +1608,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
     .option('-p, --port <number>', 'port for HTTP server', '3000')
     .option('-H, --host <host>', 'host for HTTP server', '127.0.0.1')
     .option('--oauth-redirect-port <number>', 'fixed port for the OAuth redirect server')
+    .option('--oauth-redirect-host <host>', 'host for the OAuth redirect server (e.g., 0.0.0.0 for containers)')
     .allowUnknownOption() // Claude Desktop / Electron UtilityProcess may inject extra arguments
     .allowExcessArguments() // Avoid "too many arguments" when launched from .mcpb bundles
     .parse();
@@ -1615,6 +1618,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
   const httpPort = parseInt(options.port, 10);
   const host = options.host || '0.0.0.0';
   oauthRedirectPort = options.oauthRedirectPort ? parseInt(options.oauthRedirectPort, 10) : undefined;
+  oauthRedirectHost = options.oauthRedirectHost ?? undefined;
 
   // HTTP server mode (Stateless)
   if (httpMode) {
