@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Updated `undici` (6.21.0 → 8.1.0).
+
 ## 1.8.1
 
 - Added `--oauth-redirect-port` CLI option to set a fixed port for the OAuth redirect server, particularly useful in containerized environments where ports must be explicitly exposed.
