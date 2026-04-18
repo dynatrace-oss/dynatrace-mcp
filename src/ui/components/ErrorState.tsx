@@ -8,7 +8,7 @@ interface ErrorStateProps {
 export function ErrorState({ message }: ErrorStateProps) {
   return (
     <Surface padding={16}>
-      <Text textStyle='base' style={{ color: 'var(--dt-colors-text-critical-default, #c41425)' }}>
+      <Text textStyle='base' style={{ color: 'var(--dt-colors-text-critical-default)' }}>
         {message}
       </Text>
     </Surface>

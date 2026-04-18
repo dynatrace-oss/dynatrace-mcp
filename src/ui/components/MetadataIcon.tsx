@@ -47,7 +47,7 @@ export function MetadataIcon({ icon, tooltip, warning = false }: MetadataIconPro
           alignItems: 'center',
           cursor: 'default',
           opacity: METADATA_ICON_OPACITY,
-          color: warning ? 'var(--dt-colors-text-warning-default, #e5be01)' : 'inherit',
+          color: warning ? 'var(--dt-colors-text-warning-default)' : 'inherit',
         }}
       >
         {icon}
