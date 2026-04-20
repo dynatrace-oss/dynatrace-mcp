@@ -11,6 +11,9 @@ jobs:
     name: Verify MCPB bundle runs with Node.js
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
@@ -35,32 +38,5 @@ jobs:
           fi
           unzip -q "${MCPB_FILES[0]}" -d /tmp/mcpb/extracted
 
-      - name: Verify entry point exists
-        run: test -f /tmp/mcpb/extracted/dist/index.js
-
       - name: Run bundle and verify output
-        run: |
-          set +e
-          DT_MCP_DISABLE_TELEMETRY=true node /tmp/mcpb/extracted/dist/index.js > /tmp/mcpb/output.txt 2>&1
-          EXIT_CODE=$?
-          set -e
-
-          OUTPUT=$(cat /tmp/mcpb/output.txt)
-          echo "$OUTPUT"
-
-          if echo "$OUTPUT" | grep -q "Cannot find module"; then
-            echo "FAIL: bundle is missing a required Node.js module – the bundle is incomplete"
-            exit 1
-          fi
-
-          if ! echo "$OUTPUT" | grep -q "DT_ENVIRONMENT"; then
-            echo "FAIL: expected startup output to mention DT_ENVIRONMENT"
-            exit 1
-          fi
-
-          if [ "$EXIT_CODE" -ne 1 ]; then
-            echo "FAIL: expected exit code 1, got $EXIT_CODE"
-            exit 1
-          fi
-
-          echo "PASS: MCPB bundle started correctly"
+        run: ./scripts/e2e-verify-mcpb-bundle.sh /tmp/mcpb/extracted
