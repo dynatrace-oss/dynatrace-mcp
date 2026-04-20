@@ -20,6 +20,7 @@ import { execSync, spawnSync } from 'child_process';
 
 const GITHUB_REPO = 'dynatrace-oss/dynatrace-mcp';
 const USER_AGENT = 'dynatrace-mcp-e2e-test';
+const PROCESS_SPAWN_TIMEOUT_MS = 10_000;
 
 interface GitHubReleaseAsset {
   name: string;
@@ -146,7 +147,7 @@ describe('MCPB bundle (GitHub Release)', () => {
     // is incomplete and must be treated as a test failure.
     const result = spawnSync(process.execPath, [entryPoint], {
       env: { ...process.env, DT_MCP_DISABLE_TELEMETRY: 'true' },
-      timeout: 10_000,
+      timeout: PROCESS_SPAWN_TIMEOUT_MS,
       encoding: 'utf8',
     });
 
@@ -156,5 +157,5 @@ describe('MCPB bundle (GitHub Release)', () => {
     expect(combinedOutput).not.toContain('Cannot find module');
     expect(combinedOutput).toContain('DT_ENVIRONMENT');
     expect(result.status).toBe(1);
-  }, 60_000);
+  });
 });
