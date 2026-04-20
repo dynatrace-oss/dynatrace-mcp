@@ -29,14 +29,25 @@ jobs:
             --dir /tmp/mcpb
 
       - name: Extract bundle
-        run: unzip /tmp/mcpb/*.mcpb -d /tmp/mcpb/extracted
+        run: |
+          MCPB_FILES=(/tmp/mcpb/*.mcpb)
+          if [ ${#MCPB_FILES[@]} -ne 1 ]; then
+            echo "FAIL: expected exactly one .mcpb file, found ${#MCPB_FILES[@]}"
+            exit 1
+          fi
+          unzip -q "${MCPB_FILES[0]}" -d /tmp/mcpb/extracted
 
       - name: Verify entry point exists
         run: test -f /tmp/mcpb/extracted/dist/index.js
 
       - name: Run bundle and verify output
         run: |
-          OUTPUT=$(DT_MCP_DISABLE_TELEMETRY=true node /tmp/mcpb/extracted/dist/index.js 2>&1 || true)
+          set +e
+          DT_MCP_DISABLE_TELEMETRY=true node /tmp/mcpb/extracted/dist/index.js > /tmp/mcpb/output.txt 2>&1
+          EXIT_CODE=$?
+          set -e
+
+          OUTPUT=$(cat /tmp/mcpb/output.txt)
           echo "$OUTPUT"
 
           if echo "$OUTPUT" | grep -q "Cannot find module"; then
@@ -46,6 +57,11 @@ jobs:
 
           if ! echo "$OUTPUT" | grep -q "DT_ENVIRONMENT"; then
             echo "FAIL: expected startup output to mention DT_ENVIRONMENT"
+            exit 1
+          fi
+
+          if [ "$EXIT_CODE" -ne 1 ]; then
+            echo "FAIL: expected exit code 1, got $EXIT_CODE"
             exit 1
           fi
 
