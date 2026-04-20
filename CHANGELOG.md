@@ -2,7 +2,7 @@
 
 ## Unreleased Changes
 
-- Fixed: MCPB bundles now include the `open` package and its dependencies, resolving the "Cannot find module 'open'" startup error when running an extracted MCPB bundle.
+- Fixed a "Cannot find module 'open'" startup error that occurred when running extracted MCPB bundles.
 - Updated `undici` (6.21.0 → 8.1.0).
 
 ## 1.8.1
