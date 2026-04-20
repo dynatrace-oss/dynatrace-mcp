@@ -59,6 +59,13 @@ if (watchMode) {
   copyFileSync('./dist/index.js', `${bundleDir}/dist/index.js`);
   cpSync('./dist/ui', `${bundleDir}/dist/ui`, { recursive: true });
 
+  // `open` is kept external in esbuild (so its xdg-open script resolves via __dirname at runtime).
+  // The MCPB bundle has no node_modules, so we vendor `open` and its transitive deps directly.
+  mkdirSync(`${bundleDir}/node_modules`, { recursive: true });
+  for (const dep of ['open', 'is-wsl', 'is-docker', 'define-lazy-prop']) {
+    cpSync(`./node_modules/${dep}`, `${bundleDir}/node_modules/${dep}`, { recursive: true });
+  }
+
   // Copy source manifest.json unchanged — it already references dist/index.js
   copyFileSync('./manifest.json', `${bundleDir}/manifest.json`);
 
