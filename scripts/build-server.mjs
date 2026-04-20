@@ -56,7 +56,15 @@ if (watchMode) {
   rmSync(bundleDir, { recursive: true, force: true });
   mkdirSync(`${bundleDir}/dist`, { recursive: true });
 
-  copyFileSync('./dist/index.js', `${bundleDir}/dist/index.js`);
+  // Build a separate bundle for MCPB: `open` is bundled in (no node_modules at runtime in MCPB).
+  // `open` resolves its xdg-open shell script via __dirname, so copy it alongside the bundle.
+  await build({
+    ...esbuildOptions,
+    outfile: `${bundleDir}/dist/index.js`,
+    external: ['*.node'],
+  });
+  copyFileSync('./node_modules/open/xdg-open', `${bundleDir}/dist/xdg-open`);
+
   cpSync('./dist/ui', `${bundleDir}/dist/ui`, { recursive: true });
 
   // Copy source manifest.json unchanged — it already references dist/index.js
