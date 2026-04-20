@@ -1,0 +1,42 @@
+name: E2E – MCPB Bundle
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mcpb-bundle:
+    name: Verify MCPB bundle runs with Node.js
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Download latest MCPB bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/mcpb
+          gh release download \
+            --repo dynatrace-oss/dynatrace-mcp \
+            --pattern '*.mcpb' \
+            --dir /tmp/mcpb
+
+      - name: Extract bundle
+        run: |
+          MCPB_FILES=(/tmp/mcpb/*.mcpb)
+          if [ ${#MCPB_FILES[@]} -ne 1 ]; then
+            echo "FAIL: expected exactly one .mcpb file, found ${#MCPB_FILES[@]}"
+            exit 1
+          fi
+          unzip -q "${MCPB_FILES[0]}" -d /tmp/mcpb/extracted
+
+      - name: Run bundle and verify output
+        run: ./scripts/e2e-verify-mcpb-bundle.sh /tmp/mcpb/extracted
