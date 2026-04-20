@@ -11,8 +11,8 @@ const esbuildOptions = {
   target: ['node18'],
   format: 'cjs',
   outfile: 'dist/index.js',
-  // Only native .node addons must stay external; `open` is kept external so its
-  // bundled xdg-open script (node_modules/open/xdg-open) remains resolvable at runtime
+  // Keep `open` external so npm manages it as a runtime dependency.
+  // This lets `open` resolve xdg-open from its own node_modules/open/ directory on Linux.
   external: ['*.node', 'open'],
 };
 
@@ -39,6 +39,7 @@ if (watchMode) {
     repository: pkg.repository,
     bugs: pkg.bugs,
     dependencies: {
+      // `open` is kept external and must be present in node_modules at runtime.
       open: pkg.dependencies.open,
     },
   };
@@ -50,21 +51,22 @@ if (watchMode) {
     copyFileSync(`./${file}`, `./dist/${file}`);
   }
 
-  // Create dist-bundle/ staging directory for mcpb pack
-  // Layout: dist-bundle/dist/index.js + dist-bundle/dist/ui/ so that __dirname resolves correctly
-  const bundleDir = './dist-bundle';
+  // Create dist-mcpb/ staging directory for mcpb pack
+  // Layout: dist-mcpb/dist/index.js + dist-mcpb/dist/ui/ so that __dirname resolves correctly
+  const bundleDir = './dist-mcpb';
   rmSync(bundleDir, { recursive: true, force: true });
   mkdirSync(`${bundleDir}/dist`, { recursive: true });
 
-  copyFileSync('./dist/index.js', `${bundleDir}/dist/index.js`);
-  cpSync('./dist/ui', `${bundleDir}/dist/ui`, { recursive: true });
+  // Build MCPB bundle: bundle `open` in since there is no node_modules at MCPB runtime.
+  // xdg-open is NOT copied: MCPB only runs on macOS and Windows,
+  // where `open` uses native `open` / `start` commands, not xdg-open.
+  await build({
+    ...esbuildOptions,
+    outfile: `${bundleDir}/dist/index.js`,
+    external: ['*.node'],
+  });
 
-  // `open` is kept external in esbuild (so its xdg-open script resolves via __dirname at runtime).
-  // The MCPB bundle has no node_modules, so we vendor `open` and its transitive deps directly.
-  mkdirSync(`${bundleDir}/node_modules`, { recursive: true });
-  for (const dep of ['open', 'is-wsl', 'is-docker', 'define-lazy-prop']) {
-    cpSync(`./node_modules/${dep}`, `${bundleDir}/node_modules/${dep}`, { recursive: true });
-  }
+  cpSync('./dist/ui', `${bundleDir}/dist/ui`, { recursive: true });
 
   // Copy source manifest.json unchanged — it already references dist/index.js
   copyFileSync('./manifest.json', `${bundleDir}/manifest.json`);

@@ -1,6 +1,7 @@
 .env
 dist/*
 dist-bundle/
+dist-mcpb/
 node_modules/
 /.vscode/*
 !/.vscode/mcp.json
