@@ -41,7 +41,6 @@
     "test": "jest",
     "test:unit": "jest --selectProjects unit",
     "test:integration": "jest --selectProjects integration --runInBand",
-    "test:e2e": "jest --selectProjects e2e --runInBand",
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",
     "lint": "eslint src",

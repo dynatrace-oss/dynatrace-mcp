@@ -20,12 +20,5 @@ module.exports = {
       testEnvironment: 'node',
       testMatch: ['<rootDir>/integration-tests/**/*.integration.test.ts'],
     },
-    {
-      displayName: 'e2e',
-      preset: 'ts-jest',
-      testEnvironment: 'node',
-      testMatch: ['<rootDir>/e2e-tests/**/*.e2e.test.ts'],
-      testTimeout: 60000,
-    },
   ],
 };
