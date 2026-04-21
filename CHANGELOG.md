@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+- Removed unused `@dynatrace/strato-components-preview` dependency.
+
 ## 1.8.2
 
 - Fixed a "Cannot find module 'open'" startup error that occurred when running extracted MCPB bundles.
