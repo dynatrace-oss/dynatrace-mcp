@@ -2,8 +2,10 @@
 
 ## Unreleased Changes
 
+## 1.8.2
+
 - Fixed a "Cannot find module 'open'" startup error that occurred when running extracted MCPB bundles.
-- Updated `undici` (6.21.0 → 8.1.0).
+- Updated `undici` (6.21.0 → 8.1.0), `@dynatrace/strato-components` (3.2.0 → 3.2.1), and `@dynatrace/strato-components-preview` (3.2.0 → 3.2.1).
 
 ## 1.8.1
 
