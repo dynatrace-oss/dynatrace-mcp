@@ -2,6 +2,7 @@
 
 ## Unreleased Changes
 
+- OAuth Authorization Code Flow tokens are now persisted to the OS keychain (macOS Keychain, Windows Credential Manager, or Linux Secret Service), so the browser authentication window only opens once per token lifetime instead of on every server restart.
 - Removed unused `@dynatrace/strato-components-preview` dependency.
 
 ## 1.8.2

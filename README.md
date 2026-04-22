@@ -47,7 +47,7 @@ Furthermore, you need to configure the URL to a Dynatrace environment:
 
 - `DT_ENVIRONMENT` (string, e.g., `https://abc12345.apps.dynatrace.com`) - URL to your Dynatrace Platform (do not use Dynatrace classic URLs like `abc12345.live.dynatrace.com`)
 
-Authentication will be handled via Authorization Code Flow in your browser, you don't need to define a Platform Token nor an OAuth Client to get started.
+Authentication will be handled via Authorization Code Flow in your browser, you don't need to define a Platform Token nor an OAuth Client to get started. After the initial authentication, your token is securely stored in the **OS keychain** (macOS Keychain, Windows Credential Manager, or Linux Secret Service) and reused on subsequent server starts, so the browser only opens once per token lifetime.
 
 Once you are done, we recommend looking into [example prompts](#-example-prompts-), like `Get all details of the entity 'my-service'` or `Show me error logs`. Please mind that these prompts lead to executing DQL statements which may incur [costs](#costs) in accordance to your licence.
 

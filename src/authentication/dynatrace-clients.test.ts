@@ -1,9 +1,9 @@
 import { createDtHttpClient } from './dynatrace-clients';
 import { PlatformHttpClient } from '@dynatrace-sdk/http-client';
 import { getSSOUrl } from './get-sso-url';
-import { OAuthTokenResponse } from './types';
+import { OAuthTokenResponse, TokenCache } from './types';
 import { performOAuthAuthorizationCodeFlow, refreshAccessToken } from './dynatrace-oauth-auth-code-flow';
-import { globalTokenCache } from './token-cache';
+import { getOrCreateKeychainCache, KeychainTokenCache } from './token-cache';
 
 // Mock external dependencies
 jest.mock('@dynatrace-sdk/http-client');
@@ -23,8 +23,17 @@ const mockPerformOAuthAuthorizationCodeFlow = performOAuthAuthorizationCodeFlow 
   typeof performOAuthAuthorizationCodeFlow
 >;
 const mockRefreshAccessToken = refreshAccessToken as jest.MockedFunction<typeof refreshAccessToken>;
-const mockGlobalTokenCache = globalTokenCache as jest.Mocked<typeof globalTokenCache>;
+const mockGetOrCreateKeychainCache = getOrCreateKeychainCache as jest.MockedFunction<typeof getOrCreateKeychainCache>;
 const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
+
+// Shared mock token cache instance returned by getOrCreateKeychainCache.
+// Typed as jest.Mocked<TokenCache> since dynatrace-clients only uses the TokenCache interface methods.
+const mockTokenCacheInstance: jest.Mocked<TokenCache> = {
+  getToken: jest.fn(),
+  setToken: jest.fn(),
+  clearToken: jest.fn(),
+  isTokenValid: jest.fn(),
+};
 
 describe('dynatrace-clients', () => {
   beforeEach(() => {
@@ -32,11 +41,16 @@ describe('dynatrace-clients', () => {
     // Reset console.error mock
     jest.spyOn(console, 'error').mockImplementation(() => {});
 
+    // Mock getOrCreateKeychainCache to return the shared mock cache instance.
+    // The cast is intentional: the mock only needs to satisfy the TokenCache interface
+    // methods used by the code under test.
+    mockGetOrCreateKeychainCache.mockResolvedValue(mockTokenCacheInstance as unknown as KeychainTokenCache);
+
     // Mock token cache methods
-    mockGlobalTokenCache.getToken.mockReturnValue(null);
-    mockGlobalTokenCache.isTokenValid.mockReturnValue(false);
-    mockGlobalTokenCache.setToken.mockImplementation(() => {});
-    mockGlobalTokenCache.clearToken.mockImplementation(() => {});
+    mockTokenCacheInstance.getToken.mockReturnValue(null);
+    mockTokenCacheInstance.isTokenValid.mockReturnValue(false);
+    mockTokenCacheInstance.setToken.mockImplementation(() => {});
+    mockTokenCacheInstance.clearToken.mockImplementation(() => {});
 
     // Mock getSSOUrl
     mockGetSSOUrl.mockResolvedValue('https://sso.dynatrace.com');
@@ -203,8 +217,8 @@ describe('dynatrace-clients', () => {
           refresh_token: 'new-refresh-token',
         };
 
-        mockGlobalTokenCache.getToken.mockReturnValue(expiredCachedToken);
-        mockGlobalTokenCache.isTokenValid.mockReturnValue(false);
+        mockTokenCacheInstance.getToken.mockReturnValue(expiredCachedToken);
+        mockTokenCacheInstance.isTokenValid.mockReturnValue(false);
 
         // Simulate a slow refresh (10ms) so concurrent callers have time to pile up
         mockRefreshAccessToken.mockImplementation(
