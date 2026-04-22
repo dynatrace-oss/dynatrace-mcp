@@ -66,6 +66,7 @@
     "@dynatrace/strato-icons": "^2.1.0",
     "@modelcontextprotocol/ext-apps": "^1.0.1",
     "@modelcontextprotocol/sdk": "^1.26.0",
+    "@napi-rs/keyring": "1.2.0",
     "commander": "^14.0.0",
     "open": "^8.4.2",
     "react": "^18.3.1",
