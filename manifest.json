@@ -121,7 +121,7 @@
     "claude_desktop": ">=0.10.0",
     "platforms": ["darwin", "win32", "linux"],
     "runtimes": {
-      "node": ">=20.0.0"
+      "node": ">=22.10.0"
     }
   },
   "privacy_policies": ["https://www.dynatrace.com/company/trust-center/privacy-notice/"],

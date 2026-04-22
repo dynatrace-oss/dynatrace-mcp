@@ -49,6 +49,9 @@
   },
   "author": "Dynatrace",
   "license": "MIT",
+  "engines": {
+    "node": ">=22.10.0"
+  },
   "dependencies": {
     "@dynatrace-sdk/client-automation": "5.22.0",
     "@dynatrace-sdk/client-classic-environment-v2": "^5.1.0",
