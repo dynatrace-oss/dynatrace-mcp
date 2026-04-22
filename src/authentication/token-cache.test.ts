@@ -187,36 +187,24 @@ describe('KeychainTokenCache', () => {
 });
 
 describe('getOrCreateKeychainCache', () => {
-  // We need a fresh module for each test to avoid shared state in the module-level Map.
-  // We use jest.isolateModules for this.
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockGetPassword.mockResolvedValue(null);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 
   it('returns the same instance for the same account', async () => {
-    jest.isolateModules(async () => {
-      jest.mock('keytar', () => ({
-        getPassword: jest.fn().mockResolvedValue(null),
-        setPassword: jest.fn(),
-        deletePassword: jest.fn(),
-      }));
-
-      const { getOrCreateKeychainCache: getCache } = await import('./token-cache');
-      const cache1 = await getCache('my-account');
-      const cache2 = await getCache('my-account');
-      expect(cache1).toBe(cache2);
-    });
+    // Both calls with the same account should resolve to the same object
+    const [cache1, cache2] = await Promise.all([getOrCreateKeychainCache('same-account'), getOrCreateKeychainCache('same-account')]);
+    expect(cache1).toBe(cache2);
   });
 
   it('returns different instances for different accounts', async () => {
-    jest.isolateModules(async () => {
-      jest.mock('keytar', () => ({
-        getPassword: jest.fn().mockResolvedValue(null),
-        setPassword: jest.fn(),
-        deletePassword: jest.fn(),
-      }));
-
-      const { getOrCreateKeychainCache: getCache } = await import('./token-cache');
-      const cacheA = await getCache('account-a');
-      const cacheB = await getCache('account-b');
-      expect(cacheA).not.toBe(cacheB);
-    });
+    const cacheA = await getOrCreateKeychainCache('unique-account-a');
+    const cacheB = await getOrCreateKeychainCache('unique-account-b');
+    expect(cacheA).not.toBe(cacheB);
   });
 });
