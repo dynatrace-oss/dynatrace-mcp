@@ -9,19 +9,19 @@ type KeytarModule = {
   setPassword(service: string, account: string, password: string): Promise<void>;
   deletePassword(service: string, account: string): Promise<boolean>;
 };
-let keytarModule: KeytarModule | null | undefined = undefined;
+let lazyKeytarModule: KeytarModule | null | undefined = undefined;
 
 function tryGetKeytar(): KeytarModule | null {
-  if (keytarModule !== undefined) {
-    return keytarModule;
+  if (lazyKeytarModule !== undefined) {
+    return lazyKeytarModule;
   }
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    keytarModule = require('keytar') as KeytarModule;
+    lazyKeytarModule = require('keytar') as KeytarModule;
   } catch {
-    keytarModule = null;
+    lazyKeytarModule = null;
   }
-  return keytarModule;
+  return lazyKeytarModule;
 }
 
 /**

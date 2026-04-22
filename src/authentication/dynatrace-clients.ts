@@ -112,7 +112,7 @@ const createOAuthClientCredentialsHttpClient = async (
  * Note: this relies on Node.js's single-threaded event loop — no concurrent synchronous
  * access can occur between the null-check and the assignment below.
  */
-const ongoingRefreshPromises = new Map<string, Promise<OAuthTokenResponse> | null>();
+const clientRefreshPromises = new Map<string, Promise<OAuthTokenResponse> | null>();
 
 /** Create an OAuth Client using authorization code flow (interactive authentication)
  * This starts a local HTTP server to handle the OAuth redirect and requires user interaction.
@@ -150,20 +150,20 @@ const createOAuthAuthCodeFlowHttpClient = async (
   if (cachedToken && cachedToken.refresh_token && !isValid) {
     const expiresIn = cachedToken.expires_at ? Math.round((cachedToken.expires_at - Date.now()) / 1000) : 'never';
 
-    if (!ongoingRefreshPromises.get(clientId)) {
+    if (!clientRefreshPromises.get(clientId)) {
       console.error(`🔍 Auth-Code-Flow: Found expired cached token (expires in ${expiresIn}s), attempting refresh...`);
       const refreshPromise = refreshAccessToken(ssoBaseURL, clientId, cachedToken.refresh_token, scopes).finally(
         () => {
-          ongoingRefreshPromises.set(clientId, null);
+          clientRefreshPromises.set(clientId, null);
         },
       );
-      ongoingRefreshPromises.set(clientId, refreshPromise);
+      clientRefreshPromises.set(clientId, refreshPromise);
     } else {
       console.error(`🔄 Token refresh already in progress, waiting for it to complete...`);
     }
 
     try {
-      const tokenResponse = await ongoingRefreshPromises.get(clientId)!;
+      const tokenResponse = await clientRefreshPromises.get(clientId)!;
 
       if (tokenResponse.access_token && !tokenResponse.error) {
         console.error(`✅ Successfully refreshed access token!`);
