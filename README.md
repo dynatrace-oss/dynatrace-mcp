@@ -35,6 +35,10 @@ If you need help, please contact us via [GitHub Issues](https://github.com/dynat
 
 https://github.com/user-attachments/assets/25c05db1-8e09-4a7f-add2-ed486ffd4b5a
 
+## Prerequisites
+
+- **Node.js v22.10 or newer** is required to run the Dynatrace MCP Server.
+
 ## Quickstart
 
 You can add this MCP server to your MCP Client like VSCode, Claude, Cursor, Amazon Q, Windsurf, ChatGPT, or Github Copilot via the command is `npx -y @dynatrace-oss/dynatrace-mcp-server` (type: `stdio`). For more details, please refer to the [configuration section below](#configuration).
