@@ -1,17 +1,17 @@
 import { InMemoryTokenCache, KeychainTokenCache, getOrCreateKeychainCache } from './token-cache';
 import { OAuthTokenResponse } from './types';
 
-// Mock keytar to avoid needing the native module in tests
-jest.mock('keytar', () => ({
+// Mock @napi-rs/keyring/keytar (the keytar-compatible shim) to avoid needing the native module in tests
+jest.mock('@napi-rs/keyring/keytar', () => ({
   getPassword: jest.fn(),
   setPassword: jest.fn(),
   deletePassword: jest.fn(),
 }));
 
-import * as keytar from 'keytar';
-const mockGetPassword = keytar.getPassword as jest.MockedFunction<typeof keytar.getPassword>;
-const mockSetPassword = keytar.setPassword as jest.MockedFunction<typeof keytar.setPassword>;
-const mockDeletePassword = keytar.deletePassword as jest.MockedFunction<typeof keytar.deletePassword>;
+import * as keyring from '@napi-rs/keyring/keytar';
+const mockGetPassword = keyring.getPassword as jest.MockedFunction<typeof keyring.getPassword>;
+const mockSetPassword = keyring.setPassword as jest.MockedFunction<typeof keyring.setPassword>;
+const mockDeletePassword = keyring.deletePassword as jest.MockedFunction<typeof keyring.deletePassword>;
 
 const mockTokenResponse: OAuthTokenResponse = {
   access_token: 'test-access-token',

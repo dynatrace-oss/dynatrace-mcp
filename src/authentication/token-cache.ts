@@ -2,26 +2,26 @@ import { CachedToken, TokenCache, OAuthTokenResponse } from './types';
 
 const KEYCHAIN_SERVICE = 'dynatrace-mcp';
 
-// Lazily-loaded keytar module.
+// Lazily-loaded keyring module.
 // Three-state: `undefined` = require() not yet attempted; `null` = not available; otherwise the module.
-type KeytarModule = {
+type KeyringModule = {
   getPassword(service: string, account: string): Promise<string | null>;
   setPassword(service: string, account: string, password: string): Promise<void>;
   deletePassword(service: string, account: string): Promise<boolean>;
 };
-let lazyKeytarModule: KeytarModule | null | undefined = undefined;
+let lazyKeyringModule: KeyringModule | null | undefined = undefined;
 
-function tryGetKeytar(): KeytarModule | null {
-  if (lazyKeytarModule !== undefined) {
-    return lazyKeytarModule;
+function tryGetKeyring(): KeyringModule | null {
+  if (lazyKeyringModule !== undefined) {
+    return lazyKeyringModule;
   }
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    lazyKeytarModule = require('keytar') as KeytarModule;
+    lazyKeyringModule = require('@napi-rs/keyring/keytar') as KeyringModule;
   } catch {
-    lazyKeytarModule = null;
+    lazyKeyringModule = null;
   }
-  return lazyKeytarModule;
+  return lazyKeyringModule;
 }
 
 /**
@@ -91,14 +91,14 @@ export class KeychainTokenCache implements TokenCache {
    * Must be called once before using the cache.
    */
   async initialize(): Promise<void> {
-    const keytar = tryGetKeytar();
-    if (!keytar) {
-      console.error('⚠️ OS keychain (keytar) not available – auth tokens will not be persisted across restarts.');
+    const keyring = tryGetKeyring();
+    if (!keyring) {
+      console.error('⚠️ OS keychain not available – auth tokens will not be persisted across restarts.');
       return;
     }
     this.keychainAvailable = true;
     try {
-      const stored = await keytar.getPassword(KEYCHAIN_SERVICE, this.account);
+      const stored = await keyring.getPassword(KEYCHAIN_SERVICE, this.account);
       if (stored) {
         const parsed = JSON.parse(stored) as CachedToken;
         this.token = parsed;
@@ -137,10 +137,10 @@ export class KeychainTokenCache implements TokenCache {
 
   private async persistToKeychain(): Promise<void> {
     if (!this.keychainAvailable || !this.token) return;
-    const keytar = tryGetKeytar();
-    if (!keytar) return;
+    const keyring = tryGetKeyring();
+    if (!keyring) return;
     try {
-      await keytar.setPassword(KEYCHAIN_SERVICE, this.account, JSON.stringify(this.token));
+      await keyring.setPassword(KEYCHAIN_SERVICE, this.account, JSON.stringify(this.token));
       console.error(`🔑 Auth token saved to OS keychain.`);
     } catch (e) {
       console.error(`⚠️ Failed to save token to OS keychain: ${e instanceof Error ? e.message : String(e)}`);
@@ -149,10 +149,10 @@ export class KeychainTokenCache implements TokenCache {
 
   private async deleteFromKeychain(): Promise<void> {
     if (!this.keychainAvailable) return;
-    const keytar = tryGetKeytar();
-    if (!keytar) return;
+    const keyring = tryGetKeyring();
+    if (!keyring) return;
     try {
-      await keytar.deletePassword(KEYCHAIN_SERVICE, this.account);
+      await keyring.deletePassword(KEYCHAIN_SERVICE, this.account);
     } catch {
       // Ignore errors when deleting from keychain
     }
