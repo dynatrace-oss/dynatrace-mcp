@@ -1,7 +1,7 @@
 import { HttpClient, PlatformHttpClient } from '@dynatrace-sdk/http-client';
 import { getUserAgent } from '../utils/user-agent';
 import { performOAuthAuthorizationCodeFlow, refreshAccessToken } from './dynatrace-oauth-auth-code-flow';
-import { globalTokenCache } from './token-cache';
+import { getOrCreateKeychainCache } from './token-cache';
 import { getRandomPort } from './utils';
 import { requestTokenForClientCredentials } from './dynatrace-oauth-client-credentials';
 import { getSSOUrl } from './get-sso-url';
@@ -104,19 +104,19 @@ const createOAuthClientCredentialsHttpClient = async (
 };
 
 /**
- * Shared promise for an in-progress token refresh (prevents concurrent refresh races).
- * When multiple callers find an expired token simultaneously, only the first starts a refresh;
- * all others await the same promise so the refresh token is only consumed once.
+ * Per-clientId map of in-progress token refresh promises (prevents concurrent refresh races).
+ * When multiple callers find an expired token simultaneously for the same clientId, only the
+ * first starts a refresh; all others await the same promise so the refresh token is only
+ * consumed once (OAuth refresh tokens are rotated/invalidated on use).
  *
  * Note: this relies on Node.js's single-threaded event loop — no concurrent synchronous
  * access can occur between the null-check and the assignment below.
  */
-let ongoingRefreshPromise: Promise<OAuthTokenResponse> | null = null;
+const ongoingRefreshPromises = new Map<string, Promise<OAuthTokenResponse> | null>();
 
 /** Create an OAuth Client using authorization code flow (interactive authentication)
  * This starts a local HTTP server to handle the OAuth redirect and requires user interaction.
- * Implements an in-memory token cache (not persisted to disk). After every server restart a new
- * authentication flow (or token refresh) may be required.
+ * Tokens are persisted to the OS keychain so re-authentication is not required after a restart.
  * Note: Always requests a complete set of scopes for maximum token reusability. Else the user will end up having to approve multiple requests.
  */
 const createOAuthAuthCodeFlowHttpClient = async (
@@ -128,9 +128,12 @@ const createOAuthAuthCodeFlowHttpClient = async (
   // Get SSO Base URL
   const ssoBaseURL = await getSSOUrl(environmentUrl);
 
+  // Get (or lazily create) the keychain-backed cache for this clientId
+  const tokenCache = await getOrCreateKeychainCache(clientId);
+
   // Fast Track: Fetch cached token and check if it is still valid
-  const cachedToken = globalTokenCache.getToken(scopes);
-  const isValid = globalTokenCache.isTokenValid(scopes);
+  const cachedToken = tokenCache.getToken(scopes);
+  const isValid = tokenCache.isTokenValid(scopes);
 
   // If we have a valid cached token, we can use it
   if (isValid && cachedToken) {
@@ -142,41 +145,42 @@ const createOAuthAuthCodeFlowHttpClient = async (
   }
 
   // If we have an expired token that can be refreshed, refresh it.
-  // Use a single shared promise to deduplicate concurrent refresh attempts so the refresh token
-  // is only consumed once (OAuth refresh tokens are rotated/invalidated on use).
+  // Use a single shared promise (per clientId) to deduplicate concurrent refresh attempts so the
+  // refresh token is only consumed once (OAuth refresh tokens are rotated/invalidated on use).
   if (cachedToken && cachedToken.refresh_token && !isValid) {
     const expiresIn = cachedToken.expires_at ? Math.round((cachedToken.expires_at - Date.now()) / 1000) : 'never';
 
-    if (!ongoingRefreshPromise) {
+    if (!ongoingRefreshPromises.get(clientId)) {
       console.error(`🔍 Auth-Code-Flow: Found expired cached token (expires in ${expiresIn}s), attempting refresh...`);
-      ongoingRefreshPromise = refreshAccessToken(ssoBaseURL, clientId, cachedToken.refresh_token, scopes).finally(
+      const refreshPromise = refreshAccessToken(ssoBaseURL, clientId, cachedToken.refresh_token, scopes).finally(
         () => {
-          ongoingRefreshPromise = null;
+          ongoingRefreshPromises.set(clientId, null);
         },
       );
+      ongoingRefreshPromises.set(clientId, refreshPromise);
     } else {
       console.error(`🔄 Token refresh already in progress, waiting for it to complete...`);
     }
 
     try {
-      const tokenResponse = await ongoingRefreshPromise;
+      const tokenResponse = await ongoingRefreshPromises.get(clientId)!;
 
       if (tokenResponse.access_token && !tokenResponse.error) {
         console.error(`✅ Successfully refreshed access token!`);
         // Update the cache with the new token
-        globalTokenCache.setToken(scopes, tokenResponse);
+        tokenCache.setToken(scopes, tokenResponse);
 
         // now use the updated token as a bearer token
         return createBearerTokenHttpClient(environmentUrl, tokenResponse.access_token);
       } else {
         console.error(`❌ Token refresh failed: ${tokenResponse.error} - ${tokenResponse.error_description}`);
         // Clear the invalid token from cache
-        globalTokenCache.clearToken();
+        tokenCache.clearToken();
       }
     } catch (error) {
       console.error(`❌ Token refresh failed with error: ${error instanceof Error ? error.message : String(error)}`);
       // Clear the invalid token from cache
-      globalTokenCache.clearToken();
+      tokenCache.clearToken();
     }
   }
 
@@ -222,7 +226,7 @@ const createOAuthAuthCodeFlowHttpClient = async (
       }
 
       // Cache the new token with all scopes
-      globalTokenCache.setToken(scopes, tokenResponse);
+      tokenCache.setToken(scopes, tokenResponse);
       console.error(
         `✅ Successfully retrieved token from SSO! Token cached for future use with scopes: ${scopes.join(', ')}`,
       );
