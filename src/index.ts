@@ -14,6 +14,7 @@ import { z, ZodRawShape, ZodTypeAny } from 'zod';
 
 import { getPackageJsonVersion } from './utils/version';
 import { createDtHttpClient } from './authentication/dynatrace-clients';
+import { FileTokenCache, DEFAULT_TOKEN_FILE_PATH } from './authentication/file-token-cache';
 import { listVulnerabilities } from './capabilities/list-vulnerabilities';
 import { listProblems } from './capabilities/list-problems';
 import { getEventsForCluster } from './capabilities/get-events-for-cluster';
@@ -155,6 +156,11 @@ const main = async () => {
   // createAuthenticatedHttpClient closure can capture it by reference.
   let oauthRedirectPort: number | undefined;
 
+  // Token cache – set later from CLI arguments. When --remember-me is active and the
+  // auth code flow is used, this is a FileTokenCache that persists tokens across restarts.
+  // For all other auth flows this value is ignored.
+  let fileTokenCache: FileTokenCache | undefined;
+
   // Factory function: creates a new McpServer with all tools registered.
   // In HTTP mode, a fresh instance is created per request to support
   // concurrent connections without "Already connected to a transport" errors.
@@ -171,6 +177,7 @@ const main = async () => {
       oauthClientSecret,
       dtPlatformToken,
       oauthRedirectPort,
+      fileTokenCache,
     );
   };
 
@@ -1606,6 +1613,10 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
     .option('-p, --port <number>', 'port for HTTP server', '3000')
     .option('-H, --host <host>', 'host for HTTP server', '127.0.0.1')
     .option('--oauth-redirect-port <number>', 'fixed port for the OAuth redirect server')
+    .option(
+      '--remember-me',
+      `[Experimental] Persist OAuth tokens to disk (${DEFAULT_TOKEN_FILE_PATH}) so they survive server restarts. Only applies to the OAuth Authorization Code Flow; has no effect when using a Platform Token or Client Credentials flow.`,
+    )
     .allowUnknownOption() // Claude Desktop / Electron UtilityProcess may inject extra arguments
     .allowExcessArguments() // Avoid "too many arguments" when launched from .mcpb bundles
     .parse();
@@ -1615,6 +1626,20 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
   const httpPort = parseInt(options.port, 10);
   const host = options.host || '0.0.0.0';
   oauthRedirectPort = options.oauthRedirectPort ? parseInt(options.oauthRedirectPort, 10) : undefined;
+
+  // Only create the file-based token cache when --remember-me is set AND we are actually
+  // using the OAuth Authorization Code Flow (no platform token, no client secret).
+  const isAuthCodeFlow = !dtPlatformToken && oauthClientId && !oauthClientSecret;
+  if (options.rememberMe) {
+    if (isAuthCodeFlow) {
+      fileTokenCache = new FileTokenCache();
+      console.error(`🔑 --remember-me: OAuth tokens will be persisted to ${DEFAULT_TOKEN_FILE_PATH}`);
+    } else {
+      console.error(
+        `⚠️ --remember-me is only applicable to the OAuth Authorization Code Flow and will be ignored for the current authentication method.`,
+      );
+    }
+  }
 
   // HTTP server mode (Stateless)
   if (httpMode) {
