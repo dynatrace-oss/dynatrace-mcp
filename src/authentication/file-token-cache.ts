@@ -1,7 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
 import { CachedToken, TokenCache, OAuthTokenResponse } from './types';
 
 /** Default path where tokens are persisted when --remember-me is enabled. */
@@ -115,9 +114,12 @@ export class FileTokenCache implements TokenCache {
         mkdirSync(dir, { recursive: true });
       }
       const data: TokenFile = { tokens: this.token ? [this.token] : [] };
-      writeFileSync(this.filePath, JSON.stringify(data, null, 2), 'utf-8');
-    } catch {
-      // Silently ignore write errors
+      // mode 0o600: owner read/write only — tokens must not be world-readable
+      writeFileSync(this.filePath, JSON.stringify(data, null, 2), { encoding: 'utf-8', mode: 0o600 });
+    } catch (err) {
+      console.error(
+        `⚠️ Warning: Failed to persist token to ${this.filePath}: ${err instanceof Error ? err.message : String(err)}. You may need to re-authenticate after the next server restart.`,
+      );
     }
   }
 }

@@ -119,6 +119,9 @@ describe('FileTokenCache', () => {
       const writtenContent = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
       expect(writtenContent.tokens).toHaveLength(1);
       expect(writtenContent.tokens[0].access_token).toBe('at-123');
+      // Verify that restricted (owner-only) permissions are used
+      const writeOptions = mockWriteFileSync.mock.calls[0][2] as { mode?: number };
+      expect(writeOptions.mode).toBe(0o600);
     });
 
     it('sets expires_at to undefined when expires_in is absent', () => {
@@ -140,7 +143,7 @@ describe('FileTokenCache', () => {
       expect(mockMkdirSync).toHaveBeenCalledWith(expect.any(String), { recursive: true });
     });
 
-    it('does not throw when writeFileSync fails', () => {
+    it('does not throw when writeFileSync fails and logs a warning', () => {
       mockExistsSync.mockReturnValue(false);
       mockWriteFileSync.mockImplementation(() => {
         throw new Error('EACCES: permission denied');
@@ -148,6 +151,7 @@ describe('FileTokenCache', () => {
 
       const cache = new FileTokenCache(TEST_FILE_PATH);
       expect(() => cache.setToken(SAMPLE_SCOPES, SAMPLE_TOKEN_RESPONSE)).not.toThrow();
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Warning'));
     });
   });
 
