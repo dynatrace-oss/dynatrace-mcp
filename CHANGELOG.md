@@ -1,7 +1,8 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
-## Unreleased Changes
+## 1.8.3
 
+- Fixed privacy notice URL in MCPB manifest
 - Removed unused `@dynatrace/strato-components-preview` dependency.
 
 ## 1.8.2
