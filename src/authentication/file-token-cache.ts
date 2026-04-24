@@ -111,7 +111,7 @@ export class FileTokenCache implements TokenCache {
     try {
       const dir = dirname(this.filePath);
       if (!existsSync(dir)) {
-        mkdirSync(dir, { recursive: true });
+        mkdirSync(dir, { recursive: true, mode: 0o700 });
       }
       const data: TokenFile = { tokens: this.token ? [this.token] : [] };
       // mode 0o600: owner read/write only — tokens must not be world-readable
