@@ -15,6 +15,7 @@ import { z, ZodRawShape, ZodTypeAny } from 'zod';
 import { getPackageJsonVersion } from './utils/version';
 import { createDtHttpClient } from './authentication/dynatrace-clients';
 import { FileTokenCache, DEFAULT_TOKEN_FILE_PATH } from './authentication/file-token-cache';
+import { TokenCache } from './authentication/types';
 import { listVulnerabilities } from './capabilities/list-vulnerabilities';
 import { listProblems } from './capabilities/list-problems';
 import { getEventsForCluster } from './capabilities/get-events-for-cluster';
@@ -159,7 +160,7 @@ const main = async () => {
   // Token cache – set later from CLI arguments. When --remember-me is active and the
   // auth code flow is used, this is a FileTokenCache that persists tokens across restarts.
   // For all other auth flows this value is ignored.
-  let fileTokenCache: FileTokenCache | undefined;
+  let fileTokenCache: TokenCache | undefined;
 
   // Factory function: creates a new McpServer with all tools registered.
   // In HTTP mode, a fresh instance is created per request to support
