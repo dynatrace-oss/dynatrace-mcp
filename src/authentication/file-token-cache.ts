@@ -21,6 +21,10 @@ interface TokenFile {
  * { "tokens": [{ "access_token": "...", "refresh_token": "...", "expires_at": 1234567890, "scopes": ["..."] }] }
  * ```
  *
+ * The `tokens` array is intentionally kept as an array to match the documented format and allow
+ * future extension. The current implementation stores exactly one token (index 0), because the
+ * auth-code flow always requests all required scopes in a single token.
+ *
  * Design goals:
  * - Never throw an error (read/write failures are silently ignored, JSON parse issues emit a warning).
  * - Read tokens from disk on construction and keep an in-memory copy that is kept in sync.
@@ -36,10 +40,20 @@ export class FileTokenCache implements TokenCache {
   // TokenCache interface
   // ---------------------------------------------------------------------------
 
+  /**
+   * Returns the cached token, ignoring the `scopes` parameter.
+   * The auth-code flow always requests **all** scopes upfront, so a single global
+   * token covers every operation. This mirrors the behaviour of {@link InMemoryTokenCache}.
+   */
   getToken(_scopes: string[]): CachedToken | null {
     return this.token;
   }
 
+  /**
+   * Stores the token in memory and immediately persists it to disk.
+   * The `scopes` parameter is stored in the token but not used for lookup/validation,
+   * since the auth-code flow requests all required scopes in a single token.
+   */
   setToken(scopes: string[], tokenResponse: OAuthTokenResponse): void {
     this.token = {
       access_token: tokenResponse.access_token!,
@@ -55,6 +69,10 @@ export class FileTokenCache implements TokenCache {
     this.saveToDisk();
   }
 
+  /**
+   * Returns `true` if the token exists and is not within 30 seconds of expiry.
+   * Scopes are ignored; see {@link getToken} for rationale.
+   */
   isTokenValid(_scopes: string[]): boolean {
     if (!this.token) return false;
     if (!this.token.expires_at) return true; // treat as non-expiring
