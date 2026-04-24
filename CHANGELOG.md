@@ -1,5 +1,9 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## Unreleased
+
+- Added experimental `--remember-me` CLI flag that persists OAuth Authorization Code Flow tokens to `~/.dt-mcp/.tokens.json`, allowing the server to resume an authenticated session after a restart without requiring a new browser login. The flag has no effect when using Platform Token or Client Credentials authentication.
+
 ## 1.8.3
 
 - Fixed privacy notice URL in MCPB manifest
