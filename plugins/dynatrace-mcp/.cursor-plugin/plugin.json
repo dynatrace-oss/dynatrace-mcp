@@ -1,0 +1,13 @@
+{
+  "name": "dynatrace-mcp",
+  "displayName": "Dynatrace MCP Server",
+  "version": "1.0.0",
+  "description": "Connect Cursor to the Dynatrace observability platform. Query live production data, investigate problems, analyse vulnerabilities, search logs, and run DQL queries — all in natural language from your IDE.",
+  "author": {
+    "name": "Dynatrace",
+    "email": "opensource@dynatrace.com"
+  },
+  "license": "MIT",
+  "keywords": ["dynatrace", "observability", "mcp", "monitoring", "apm", "grail", "davis", "logs", "security"],
+  "logo": "assets/Dynatrace_Logo_color_positive.png"
+}

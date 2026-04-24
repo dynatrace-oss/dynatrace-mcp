@@ -1,0 +1,36 @@
+---
+description: Guidelines for using the Dynatrace MCP Server in Cursor to query live observability data, investigate production issues, and analyse application health.
+---
+
+# Dynatrace Observability
+
+This project is monitored by Dynatrace. Use the Dynatrace MCP tools to get real-time production context directly in your IDE.
+
+## Setup
+
+Ensure `DT_ENVIRONMENT` is set to your Dynatrace environment URL (e.g. `https://abc12345.apps.dynatrace.com`).
+
+Authentication is handled automatically via OAuth browser flow on first use, or via a Platform Token if `DT_PLATFORM_TOKEN` is set.
+
+## How to query data
+
+Use natural language queries. The MCP server will translate them into DQL and fetch results from Grail.
+
+### Getting started prompts
+
+- `Are there any active problems in my environment?`
+- `Show me error logs for the last hour`
+- `List open security vulnerabilities`
+- `Get all details for the entity 'my-service'`
+- `What exceptions occurred in the last 24 hours?`
+
+## DQL query guidance
+
+When writing DQL queries directly:
+- Use short time ranges (1h–24h) to control cost
+- Filter by `entity.name`, `container.name`, or `service.name` to narrow results
+- Start with `fetch logs`, `fetch dt.entity.service`, or `fetch events`
+
+## Cost awareness
+
+DQL queries against Grail incur consumption costs. Use `DT_GRAIL_QUERY_BUDGET_GB` to set a session budget limit (default: 1000 GB).
