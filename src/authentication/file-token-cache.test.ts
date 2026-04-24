@@ -140,7 +140,7 @@ describe('FileTokenCache', () => {
       const cache = new FileTokenCache(TEST_FILE_PATH);
       cache.setToken(SAMPLE_SCOPES, SAMPLE_TOKEN_RESPONSE);
 
-      expect(mockMkdirSync).toHaveBeenCalledWith(expect.any(String), { recursive: true });
+      expect(mockMkdirSync).toHaveBeenCalledWith(expect.any(String), { recursive: true, mode: 0o700 });
     });
 
     it('does not throw when writeFileSync fails and logs a warning', () => {
