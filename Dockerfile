@@ -1,4 +1,4 @@
-FROM node:22.21.1-alpine3.22 AS build
+FROM node:25.9.0-alpine3.22 AS build
 
 # Set working directory
 WORKDIR /app
@@ -17,7 +17,7 @@ RUN npm run build
 RUN cd dist && npm install --ignore-scripts && npm cache clean --force
 
 # RUNTIME STAGE
-FROM node:22.21.1-alpine3.22
+FROM node:25.9.0-alpine3.22
 
 # Set working directory
 WORKDIR /app
