@@ -9,7 +9,7 @@ Use this skill to systematically investigate production issues using live Dynatr
 
 ## Phase 1 — Triage
 
-1. List active problems: `list_problems` — filter by `OPEN` status
+1. List active problems: `list_problems` — filter by `ACTIVE` status
 2. Get problem details for the most critical issue
 3. Identify affected entities and services
 
