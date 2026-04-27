@@ -33,4 +33,4 @@ When writing DQL queries directly:
 
 ## Cost awareness
 
-DQL queries against Grail incur consumption costs. Use `DT_GRAIL_QUERY_BUDGET_GB` to set a session budget limit (default: 1000 GB).
+DQL queries against Grail incur consumption costs. Use `DT_GRAIL_QUERY_BUDGET_GB` to set a session budget limit (default: 5000 GB).
