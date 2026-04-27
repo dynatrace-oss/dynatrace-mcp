@@ -9,5 +9,5 @@
   },
   "license": "MIT",
   "keywords": ["dynatrace", "observability", "mcp", "monitoring", "apm", "grail", "davis", "logs", "security"],
-  "logo": "assets/Dynatrace_Logo_color_positive.png"
+  "logo": "../assets/Dynatrace_Logo_color_positive.png"
 }
