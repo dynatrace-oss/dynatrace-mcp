@@ -1,8 +1,7 @@
 name: Pre-release (next)
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   id-token: write # Required for npm publishing with provenance
