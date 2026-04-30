@@ -1,6 +1,6 @@
 {
   "name": "dynatrace-mcp-server",
-  "version": "1.8.3",
+  "version": "1.8.4",
   "mcpServers": {
     "dynatrace": {
       "command": "npx",

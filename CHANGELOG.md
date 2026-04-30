@@ -1,5 +1,11 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## 1.8.4
+
+- This repository is now in Maintenance Mode. Active development has moved to the [Remote Dynatrace MCP Server](https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/). See [#496](https://github.com/dynatrace-oss/dynatrace-mcp/issues/496) for details.
+- Added a Cursor Marketplace plugin under `plugins/dynatrace-mcp/`, enabling the Dynatrace MCP Server to be listed and installed directly from the Cursor Marketplace.
+- Updated `@dynatrace/strato-components` (3.2.1 → 3.3.0) and `@dynatrace/strato-icons` (2.1.1 → 2.2.0).
+
 ## 1.8.3
 
 - Fixed privacy notice URL in MCPB manifest
