@@ -5,7 +5,7 @@ import { globalTokenCache } from './token-cache';
 import { getRandomPort } from './utils';
 import { requestTokenForClientCredentials } from './dynatrace-oauth-client-credentials';
 import { getSSOUrl } from './get-sso-url';
-import { OAuthTokenResponse } from './types';
+import { OAuthTokenResponse, TokenCache } from './types';
 
 /**
  * Create a Dynatrace Http Client (from the http-client SDK) based on the provided authentication credentials
@@ -24,6 +24,7 @@ export const createDtHttpClient = async (
   clientSecret?: string,
   dtPlatformToken?: string,
   oauthRedirectPort?: number,
+  tokenCache?: TokenCache,
 ): Promise<HttpClient> => {
   /** Logic:
    * * if a platform token is provided, use it
@@ -39,7 +40,7 @@ export const createDtHttpClient = async (
     return createOAuthClientCredentialsHttpClient(environmentUrl, scopes, clientId, clientSecret);
   } else if (clientId) {
     // create an OAuth client using authorization code flow (interactive)
-    return createOAuthAuthCodeFlowHttpClient(environmentUrl, scopes, clientId, oauthRedirectPort);
+    return createOAuthAuthCodeFlowHttpClient(environmentUrl, scopes, clientId, oauthRedirectPort, tokenCache);
   }
 
   throw new Error(
@@ -115,8 +116,9 @@ let ongoingRefreshPromise: Promise<OAuthTokenResponse> | null = null;
 
 /** Create an OAuth Client using authorization code flow (interactive authentication)
  * This starts a local HTTP server to handle the OAuth redirect and requires user interaction.
- * Implements an in-memory token cache (not persisted to disk). After every server restart a new
- * authentication flow (or token refresh) may be required.
+ * Implements an in-memory token cache by default (not persisted to disk). After every server
+ * restart a new authentication flow (or token refresh) may be required, unless a persistent
+ * token cache (e.g. {@link FileTokenCache}) is provided via the `tokenCache` parameter.
  * Note: Always requests a complete set of scopes for maximum token reusability. Else the user will end up having to approve multiple requests.
  */
 const createOAuthAuthCodeFlowHttpClient = async (
@@ -124,13 +126,16 @@ const createOAuthAuthCodeFlowHttpClient = async (
   scopes: string[],
   clientId: string,
   oauthRedirectPort?: number,
+  tokenCache?: TokenCache,
 ): Promise<HttpClient> => {
+  // Use the provided token cache, or fall back to the global in-memory cache
+  const cache = tokenCache ?? globalTokenCache;
   // Get SSO Base URL
   const ssoBaseURL = await getSSOUrl(environmentUrl);
 
   // Fast Track: Fetch cached token and check if it is still valid
-  const cachedToken = globalTokenCache.getToken(scopes);
-  const isValid = globalTokenCache.isTokenValid(scopes);
+  const cachedToken = cache.getToken(scopes);
+  const isValid = cache.isTokenValid(scopes);
 
   // If we have a valid cached token, we can use it
   if (isValid && cachedToken) {
@@ -164,19 +169,19 @@ const createOAuthAuthCodeFlowHttpClient = async (
       if (tokenResponse.access_token && !tokenResponse.error) {
         console.error(`✅ Successfully refreshed access token!`);
         // Update the cache with the new token
-        globalTokenCache.setToken(scopes, tokenResponse);
+        cache.setToken(scopes, tokenResponse);
 
         // now use the updated token as a bearer token
         return createBearerTokenHttpClient(environmentUrl, tokenResponse.access_token);
       } else {
         console.error(`❌ Token refresh failed: ${tokenResponse.error} - ${tokenResponse.error_description}`);
         // Clear the invalid token from cache
-        globalTokenCache.clearToken();
+        cache.clearToken();
       }
     } catch (error) {
       console.error(`❌ Token refresh failed with error: ${error instanceof Error ? error.message : String(error)}`);
       // Clear the invalid token from cache
-      globalTokenCache.clearToken();
+      cache.clearToken();
     }
   }
 
@@ -222,7 +227,7 @@ const createOAuthAuthCodeFlowHttpClient = async (
       }
 
       // Cache the new token with all scopes
-      globalTokenCache.setToken(scopes, tokenResponse);
+      cache.setToken(scopes, tokenResponse);
       console.error(
         `✅ Successfully retrieved token from SSO! Token cached for future use with scopes: ${scopes.join(', ')}`,
       );

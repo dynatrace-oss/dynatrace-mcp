@@ -2,9 +2,8 @@ import { CachedToken, TokenCache, OAuthTokenResponse } from './types';
 
 /**
  * In-memory token cache implementation (no persistence across process restarts).
- * The previous implementation stored tokens on disk in `.dt-mcp/token.json` – this has been
- * intentionally removed to avoid writing credentials to the local filesystem. A new login /
- * OAuth authorization code flow (or token retrieval) will be required after every server restart.
+ * The default behaviour keeps tokens in memory only. Opt-in disk persistence is available
+ * via the `--remember-me` CLI flag, which uses {@link FileTokenCache} instead.
  */
 export class InMemoryTokenCache implements TokenCache {
   private token: CachedToken | null = null;
@@ -18,7 +17,7 @@ export class InMemoryTokenCache implements TokenCache {
   }
 
   /**
-   * Stores the global token in the cache and persists it to file
+   * Stores the global token in the cache (in-memory only)
    */
   setToken(scopes: string[], token: OAuthTokenResponse): void {
     this.token = {
@@ -30,7 +29,7 @@ export class InMemoryTokenCache implements TokenCache {
   }
 
   /**
-   * Removes the cached token and deletes the file
+   * Removes the cached token from memory
    */
   clearToken(scopes?: string[]): void {
     this.token = null;
