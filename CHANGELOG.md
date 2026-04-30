@@ -1,5 +1,9 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## 1.8.4
+
+- Updated `postcss` (8.5.6 → 8.5.12).
+
 ## 1.8.3
 
 - Fixed privacy notice URL in MCPB manifest
