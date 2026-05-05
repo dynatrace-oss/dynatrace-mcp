@@ -24,9 +24,13 @@
   </a>
 </h4>
 
-> 🚀 **Try out our brand new [Remote Dynatrace MCP Server](https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/)!** Now available - no local setup required, connect instantly to your Dynatrace environment from any MCP-compatible client. See our [migration guide](docs/remote-mcp-migration.md) for a comparison and step-by-step instructions.
+## 🛠️ MAINTENANCE MODE
 
-**MAINTENANCE MODE** - Please note, that this repository is currently in [_Maintenance Mode_](https://github.com/dynatrace-oss/dynatrace-mcp/issues/496).
+Please note, that this repository is currently in [_Maintenance Mode_](https://github.com/dynatrace-oss/dynatrace-mcp/issues/496).
+
+> 🚀 **Try out [Dynatrace-for-Ai](https://github.com/Dynatrace/dynatrace-for-ai/) and [`dtctl`](https://github.com/dynatrace-oss/dtctl)**
+
+> **Try out our new [Remote Dynatrace MCP Server](https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/)!** Now available - no local setup required, connect instantly to your Dynatrace environment from any MCP-compatible client. See our [migration guide](docs/remote-mcp-migration.md) for a comparison and step-by-step instructions.
 
 The local _Dynatrace MCP server_ allows AI Assistants to interact with the [Dynatrace](https://www.dynatrace.com/) observability platform,
 bringing real-time observability data directly into your development workflow.
