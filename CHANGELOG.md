@@ -1,5 +1,9 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## 1.8.5
+
+- Updated `@dynatrace-sdk/client-automation` (5.22.0 → 7.0.1) and `@dynatrace-sdk/client-davis-analyzers` (1.9.8 → 1.10.0).
+
 ## 1.8.4
 
 - This repository is now in Maintenance Mode. Active development has moved to the [Remote Dynatrace MCP Server](https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/). See [#496](https://github.com/dynatrace-oss/dynatrace-mcp/issues/496) for details.
