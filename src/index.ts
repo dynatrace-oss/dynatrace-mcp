@@ -1363,6 +1363,15 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
         destructiveHint: true,
       },
       async ({ eventType, title, entitySelector, properties, startTime, endTime }) => {
+        // Request human approval before sending the event
+        const approved = await requestHumanApproval(
+          `Send ${eventType} event: "${title}"${entitySelector ? ` targeting ${entitySelector}` : ''}`,
+        );
+
+        if (!approved) {
+          return 'Operation cancelled: Human approval was not granted for sending this event.';
+        }
+
         const dtClient = await createAuthenticatedHttpClient(scopesBase.concat('storage:events:write'));
 
         const result = await sendEvent(dtClient, {
