@@ -26,6 +26,9 @@
 - Fixed: OAuth flow now handles `open()` failures gracefully, preventing unhandled errors when the browser cannot be launched automatically.
 - Updated `@dynatrace-sdk/client-automation` (5.20.0 → 5.22.0).
 
+- Added missing `platform-management:environments:read` scope required by the `EnvironmentInformationClient` for startup connection verification and the `get_environment_info` tool.
+- Improved error messages for 403 permission errors to display specific missing scopes and actionable guidance (e.g., "Add the scope(s) ... to your platform token / OAuth client").
+
 ## 1.8.0
 
 - Increased the default Grail query budget from 1,000 GB to 5,000 GB per session, enabling larger data exploration without configuration changes. The budget can still be overridden via the `DT_GRAIL_QUERY_BUDGET_GB` environment variable.
