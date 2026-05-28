@@ -1,5 +1,9 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## 1.8.6
+
+- Updated `uuid` (11.1.0 → 14.0.0) and `qs` (6.14.2 → 6.15.2).
+
 ## 1.8.5
 
 - Updated `@dynatrace-sdk/client-automation` (5.22.0 → 7.0.1), `@dynatrace-sdk/client-davis-analyzers` (1.9.8 → 1.10.0), `@dynatrace-sdk/client-query` (1.23.1 → 1.24.0), `express-rate-limit` (8.3.0 → 8.5.1), `hono` (4.12.14 → 4.12.18), `ip-address` (10.1.0 → 10.2.0), and `fast-uri` (3.1.0 → 3.1.2).
