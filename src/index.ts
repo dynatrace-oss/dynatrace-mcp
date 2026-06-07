@@ -99,6 +99,24 @@ const allRequiredScopes = scopesBase.concat([
 ]);
 
 const main = async () => {
+  // Parse command line arguments before environment validation so metadata flags
+  // such as --help and --version work in a clean install.
+  const program = new Command();
+
+  program
+    .name('dynatrace-mcp-server')
+    .description('Dynatrace Model Context Protocol (MCP) Server')
+    .version(getPackageJsonVersion(), '-v, --version')
+    .option('--http', 'enable HTTP server mode instead of stdio')
+    .option('--server', 'enable HTTP server mode (alias for --http)')
+    .option('-p, --port <number>', 'port for HTTP server', '3000')
+    .option('-H, --host <host>', 'host for HTTP server', '127.0.0.1')
+    .option('--oauth-redirect-port <number>', 'fixed port for the OAuth redirect server')
+    .allowExcessArguments() // Avoid "too many arguments" when launched from .mcpb bundles
+    .parse();
+
+  const options = program.opts();
+
   console.error(`Initializing Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
   // Configure proxy from environment variables early in the startup process
@@ -1603,23 +1621,6 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
     return server;
   }; // end createConfiguredMcpServer
 
-  // Parse command line arguments using commander
-  const program = new Command();
-
-  program
-    .name('dynatrace-mcp-server')
-    .description('Dynatrace Model Context Protocol (MCP) Server')
-    .version(getPackageJsonVersion())
-    .option('--http', 'enable HTTP server mode instead of stdio')
-    .option('--server', 'enable HTTP server mode (alias for --http)')
-    .option('-p, --port <number>', 'port for HTTP server', '3000')
-    .option('-H, --host <host>', 'host for HTTP server', '127.0.0.1')
-    .option('--oauth-redirect-port <number>', 'fixed port for the OAuth redirect server')
-    .allowUnknownOption() // Claude Desktop / Electron UtilityProcess may inject extra arguments
-    .allowExcessArguments() // Avoid "too many arguments" when launched from .mcpb bundles
-    .parse();
-
-  const options = program.opts();
   const httpMode = options.http || options.server;
   const httpPort = parseInt(options.port, 10);
   const host = options.host || '0.0.0.0';
