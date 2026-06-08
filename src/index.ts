@@ -9,9 +9,9 @@ import { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/types
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { Command } from 'commander';
 import { z, ZodRawShape, ZodTypeAny } from 'zod';
 
+import { createCliProgram } from './cli';
 import { getPackageJsonVersion } from './utils/version';
 import { createDtHttpClient } from './authentication/dynatrace-clients';
 import { listVulnerabilities } from './capabilities/list-vulnerabilities';
@@ -99,6 +99,11 @@ const allRequiredScopes = scopesBase.concat([
 ]);
 
 const main = async () => {
+  // Parse command line arguments before startup validation so metadata flags
+  // like --help and --version do not require Dynatrace environment variables.
+  const program = createCliProgram(getPackageJsonVersion()).parse();
+  const options = program.opts();
+
   console.error(`Initializing Dynatrace MCP Server v${getPackageJsonVersion()}...`);
 
   // Configure proxy from environment variables early in the startup process
@@ -1603,23 +1608,6 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
     return server;
   }; // end createConfiguredMcpServer
 
-  // Parse command line arguments using commander
-  const program = new Command();
-
-  program
-    .name('dynatrace-mcp-server')
-    .description('Dynatrace Model Context Protocol (MCP) Server')
-    .version(getPackageJsonVersion())
-    .option('--http', 'enable HTTP server mode instead of stdio')
-    .option('--server', 'enable HTTP server mode (alias for --http)')
-    .option('-p, --port <number>', 'port for HTTP server', '3000')
-    .option('-H, --host <host>', 'host for HTTP server', '127.0.0.1')
-    .option('--oauth-redirect-port <number>', 'fixed port for the OAuth redirect server')
-    .allowUnknownOption() // Claude Desktop / Electron UtilityProcess may inject extra arguments
-    .allowExcessArguments() // Avoid "too many arguments" when launched from .mcpb bundles
-    .parse();
-
-  const options = program.opts();
   const httpMode = options.http || options.server;
   const httpPort = parseInt(options.port, 10);
   const host = options.host || '0.0.0.0';
