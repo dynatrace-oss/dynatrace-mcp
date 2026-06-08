@@ -51,10 +51,7 @@ export function getDynatraceEnv(env: NodeJS.ProcessEnv = process.env): Dynatrace
 
   // For dev and hardening stages, set unlimited budget (-1) unless explicitly overridden
   const hostname = parsedDtEnvironment.hostname;
-  if (
-    (hostname === 'apps.dynatracelabs.com' || hostname.endsWith('.apps.dynatracelabs.com')) &&
-    !env.DT_GRAIL_QUERY_BUDGET_GB
-  ) {
+  if (hostname.endsWith('.apps.dynatracelabs.com') && !env.DT_GRAIL_QUERY_BUDGET_GB) {
     grailBudgetGB = -1;
   }
 
