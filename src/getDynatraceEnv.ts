@@ -37,11 +37,24 @@ export function getDynatraceEnv(env: NodeJS.ProcessEnv = process.env): Dynatrace
     throw new Error('Please set DT_ENVIRONMENT environment variable to your Dynatrace Platform Environment');
   }
 
+  let parsedDtEnvironment: URL;
+  try {
+    parsedDtEnvironment = new URL(dtEnvironment);
+  } catch {
+    throw new Error(
+      'Please set DT_ENVIRONMENT to a valid Dynatrace Environment URL (e.g., https://<environment-id>.apps.dynatrace.com)',
+    );
+  }
+
   // Allow case where no auth credentials are provided - OAuth auth code flow will be inferred
   // We only require DT_ENVIRONMENT to be set
 
   // For dev and hardening stages, set unlimited budget (-1) unless explicitly overridden
-  if (dtEnvironment.includes('apps.dynatracelabs.com') && !env.DT_GRAIL_QUERY_BUDGET_GB) {
+  const hostname = parsedDtEnvironment.hostname;
+  if (
+    (hostname === 'apps.dynatracelabs.com' || hostname.endsWith('.apps.dynatracelabs.com')) &&
+    !env.DT_GRAIL_QUERY_BUDGET_GB
+  ) {
     grailBudgetGB = -1;
   }
 
