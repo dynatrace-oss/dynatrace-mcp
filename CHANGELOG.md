@@ -1,5 +1,12 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## 1.8.7
+
+- Added a human approval gate to the `create_dynatrace_notebook` tool, consistent with other write-capable tools.
+- Fixed: CLI metadata flags (`--help`, `--version`) now work correctly without `DT_ENVIRONMENT` being set (fixes [#523](https://github.com/dynatrace-oss/dynatrace-mcp/issues/523)).
+- Fixed: Improved detection of internal environments by parsing hostnames instead of using string matching.
+- Updated `hono` (4.12.18 → 4.12.23, includes security fixes), `@dynatrace-sdk/client-document` (1.30.0 → 1.31.0), `@dynatrace-sdk/client-query` (1.24.0 → 1.25.0), and `@dynatrace/strato-components` (3.5.0 → 3.6.0).
+
 ## 1.8.6
 
 - Added a human approval gate to the `send_event` tool, consistent with other write-capable tools. This prevents unintended Davis Problem creation and cascading on-call notifications when sending `CUSTOM_ALERT` events.
