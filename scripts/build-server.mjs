@@ -8,7 +8,7 @@ const esbuildOptions = {
   entryPoints: ['src/index.ts'],
   bundle: true,
   platform: 'node',
-  target: ['node24'],
+  target: ['node18'],
   format: 'cjs',
   outfile: 'dist/index.js',
   // Keep `open` external so npm manages it as a runtime dependency.
