@@ -19,36 +19,36 @@ Dynatrace now offers an official **Remote MCP Server** that runs directly in you
 
 ## Tool Comparison
 
-| Capability                                  | Local MCP Tool                       | Remote MCP Tool                      |
-| ------------------------------------------- | ------------------------------------ | ------------------------------------ |
-| Execute DQL queries                         | `execute_dql`                        | `execute-dql`                        |
-| Verify DQL syntax                           | `verify_dql`                         | —                                    |
-| Reset Grail query budget                    | `reset_grail_budget`                 | —                                    |
-| Generate DQL from natural language          | `generate_dql_from_natural_language` | `create-dql`                         |
-| Explain DQL in natural language             | `explain_dql_in_natural_language`    | `explain-dql`                        |
-| Ask Dynatrace documentation / AI assistance | `chat_with_davis_copilot`            | `ask-dynatrace-docs`                 |
-| Query / list problems                       | `list_problems`                      | `query-problems`                     |
-| Get problem details by ID                   | —                                    | `get-problem-by-id`                  |
-| List vulnerabilities                        | `list_vulnerabilities`               | `get-vulnerabilities`                |
-| List exceptions                             | `list_exceptions`                    | —                                    |
-| Get Kubernetes events                       | `get_kubernetes_events`              | `get-events-for-kubernetes-cluster`  |
-| Find entity ID by name                      | `find_entity_by_name`                | `get-entity-id`                      |
-| Get entity name by ID                       | —                                    | `get-entity-name`                    |
-| Get environment info                        | `get_environment_info`               | —                                    |
-| List Davis analyzers                        | `list_davis_analyzers`               | —                                    |
-| Adaptive anomaly detection                  | `execute_davis_analyzer`             | `adaptive-anomaly-detector`          |
-| Seasonal baseline anomaly detection         | `execute_davis_analyzer`             | `seasonal-baseline-anomaly-detector` |
-| Static threshold analysis                   | `execute_davis_analyzer`             | `static-threshold-analyzer`          |
-| Time series forecasting                     | `execute_davis_analyzer`             | `timeseries-forecast`                |
-| Time series novelty detection               | `execute_davis_analyzer`             | `timeseries-novelty-detection`       |
-| Find documents                              | —                                    | `find-documents`                     |
-| Find troubleshooting guides                 | —                                    | `find-troubleshooting-guides`        |
-| Create workflow for notification            | `create_workflow_for_notification`   | —                                    |
-| Make workflow public                        | `make_workflow_public`               | —                                    |
-| Send Slack message                          | `send_slack_message`                 | —                                    |
-| Send email                                  | `send_email`                         | —                                    |
-| Send event                                  | `send_event`                         | —                                    |
-| Create Dynatrace Notebook                   | `create_dynatrace_notebook`          | —                                    |
+| Capability                                  | Local MCP Tool                                   | Remote MCP Tool                      |
+| ------------------------------------------- | ------------------------------------------------ | ------------------------------------ |
+| Execute DQL queries                         | `execute_dql`                                    | `execute-dql`                        |
+| Verify DQL syntax                           | `verify_dql`                                     | —                                    |
+| Reset Grail query budget                    | `reset_grail_budget`                             | —                                    |
+| Generate DQL from natural language          | `generate_dql_from_natural_language`             | `create-dql`                         |
+| Explain DQL in natural language             | `explain_dql_in_natural_language`                | `explain-dql`                        |
+| Ask Dynatrace documentation / AI assistance | `chat_with_davis_copilot`                        | `ask-dynatrace-docs`                 |
+| Query / list problems                       | `list_problems`                                  | `query-problems`                     |
+| Get problem details by ID                   | —                                                | `get-problem-by-id`                  |
+| List vulnerabilities                        | `list_vulnerabilities`                           | `get-vulnerabilities`                |
+| List exceptions                             | `list_exceptions`                                | —                                    |
+| Get Kubernetes events                       | `get_kubernetes_events`                          | `get-events-for-kubernetes-cluster`  |
+| Find entity ID by name                      | `find_entity_by_name`                            | `get-entity-id`                      |
+| Get entity name by ID                       | —                                                | `get-entity-name`                    |
+| Get environment info                        | `get_environment_info`                           | —                                    |
+| List Davis analyzers                        | `list_davis_analyzers`                           | —                                    |
+| Adaptive anomaly detection                  | `execute_davis_analyzer`                         | `adaptive-anomaly-detector`          |
+| Seasonal baseline anomaly detection         | `execute_davis_analyzer`                         | `seasonal-baseline-anomaly-detector` |
+| Static threshold analysis                   | `execute_davis_analyzer`                         | `static-threshold-analyzer`          |
+| Time series forecasting                     | `execute_davis_analyzer`                         | `timeseries-forecast`                |
+| Time series novelty detection               | `execute_davis_analyzer`                         | `timeseries-novelty-detection`       |
+| Find documents                              | —                                                | `find-documents`                     |
+| Find troubleshooting guides                 | —                                                | `find-troubleshooting-guides`        |
+| Create workflow for notification            | ~~`create_workflow_for_notification`~~ (removed) | —                                    |
+| Make workflow public                        | `make_workflow_public`                           | —                                    |
+| Send Slack message                          | `send_slack_message`                             | —                                    |
+| Send email                                  | `send_email`                                     | —                                    |
+| Send event                                  | `send_event`                                     | —                                    |
+| Create Dynatrace Notebook                   | `create_dynatrace_notebook`                      | —                                    |
 
 > **Legend:** — = not available (as of the 2026-04-13) - check the [official documentation](https://docs.dynatrace.com/docs/dynatrace-intelligence/dynatrace-mcp) for the latest tool list.
 
@@ -117,4 +117,4 @@ Replace `abc12345` with your Dynatrace tenant identifier and `<YOUR_PLATFORM_TOK
 
 ### 4. Handle Local-Only Tools
 
-If you rely on tools only available in the local server (such as `send_slack_message`, `send_email`, `create_workflow_for_notification`, or `create_dynatrace_notebook`), you can keep the local MCP server running alongside the remote one, or wait for the remote server to add parity.
+If you rely on tools only available in the local server (such as `send_slack_message`, `send_email`, or `create_dynatrace_notebook`), you can keep the local MCP server running alongside the remote one, or wait for the remote server to add parity.

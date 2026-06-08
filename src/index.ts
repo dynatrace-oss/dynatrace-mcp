@@ -22,7 +22,6 @@ import { sendSlackMessage } from './capabilities/send-slack-message';
 import { sendEmail } from './capabilities/send-email';
 import { sendEvent, EventIngestEventType } from './capabilities/send-event';
 import { executeDql, verifyDqlStatement } from './capabilities/execute-dql';
-import { createWorkflowForProblemNotification } from './capabilities/create-workflow-for-problem-notification';
 import { updateWorkflow } from './capabilities/update-workflow';
 import {
   findMonitoredEntitiesByName,
@@ -1048,58 +1047,6 @@ const main = async () => {
 
         if (response.status == 'FAILED') {
           resp += `\n❌ **Your request was not successful**\n`;
-        }
-
-        return resp;
-      },
-    );
-
-    tool(
-      'create_workflow_for_notification',
-      'Create Workflow for Notification',
-      'Create a notification for a team based on a problem type within Workflows in Dynatrace',
-      {
-        problemType: z.string().optional(),
-        teamName: z.string().optional(),
-        channel: z.string().optional(),
-        isPrivate: z.boolean().optional().default(false),
-      },
-      {
-        // not read only, not idempotent
-        readOnlyHint: false,
-        idempotentHint: false, // creating the same workflow multiple times is possible
-      },
-      async ({ problemType, teamName, channel, isPrivate }) => {
-        // ask for human approval
-        const approved = await requestHumanApproval(
-          `Create a workflow for notifying team ${teamName} via ${channel} about ${problemType} problems`,
-        );
-
-        if (!approved) {
-          return 'Operation cancelled: Human approval was not granted for creating this workflow.';
-        }
-
-        const dtClient = await createAuthenticatedHttpClient(
-          scopesBase.concat('automation:workflows:write', 'automation:workflows:read', 'automation:workflows:run'),
-        );
-        const response = await createWorkflowForProblemNotification(
-          dtClient,
-          teamName,
-          channel,
-          problemType,
-          isPrivate,
-        );
-
-        let resp = `Workflow Created: ${response?.id} with name ${response?.title}.\nYou can access the Workflow via the following link: ${dtEnvironment}/ui/apps/dynatrace.automations/workflows/${response?.id}.\nTell the user to inspect the Workflow by visiting the link.\n`;
-
-        if (response.type == 'SIMPLE') {
-          resp += `Note: This is a simple workflow. Workflow-hours will not be billed.\n`;
-        } else if (response.type == 'STANDARD') {
-          resp += `Note: This is a standard workflow. Workflow-hours will be billed.\n`;
-        }
-
-        if (isPrivate) {
-          resp += `This workflow is private and can only be accessed by the owner of the authentication credentials. In case you can not access it, you can instruct me to make the workflow public.`;
         }
 
         return resp;

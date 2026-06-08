@@ -97,7 +97,7 @@ Once you are done, we recommend looking into [example prompts](#-example-prompts
 - Querying Data from Grail (e.g., `execute_dql`, `verify_dql`, `generate_dql_from_natural_language`, `explain_dql_in_natural_language`)
 - Entity Discovery (e.g., `find_entity_by_name`)
 - [Dynatrace Intelligence](https://www.dynatrace.com/platform/artificial-intelligence/) (e.g., `chat_with_davis_copilot`, `list_davis_analyzers`, `execute_davis_analyzer`)
-- Automation & Notifications (e.g., `create_workflow_for_notification`, `send_slack_message`, `send_email`, `send_event`)
+- Automation & Notifications (e.g., `send_slack_message`, `send_email`, `send_event`)
 - Share results (e.g., `create_dynatrace_notebook`)
 
 ### Costs
