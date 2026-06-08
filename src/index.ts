@@ -1596,6 +1596,13 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
         readOnlyHint: false,
       },
       async ({ name, content, description }) => {
+        // Request human approval before creating the notebook
+        const approved = await requestHumanApproval(`Create Dynatrace notebook: "${name}"`);
+
+        if (!approved) {
+          return 'Operation cancelled: Human approval was not granted for creating this notebook.';
+        }
+
         const dtClient = await createAuthenticatedHttpClient(allRequiredScopes);
         const data = await createDynatraceNotebook(dtClient, name, content, description);
 
