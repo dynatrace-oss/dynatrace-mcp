@@ -45,7 +45,7 @@ https://github.com/user-attachments/assets/25c05db1-8e09-4a7f-add2-ed486ffd4b5a
 
 ## Prerequisites
 
-- **Node.js v22.10 or newer** is required to run the Dynatrace MCP Server.
+- **Node.js v24 or newer** is required to run the Dynatrace MCP Server.
 
 ## Quickstart
 
