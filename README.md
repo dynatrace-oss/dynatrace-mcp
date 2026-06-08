@@ -26,11 +26,13 @@
 
 ## 🛠️ MAINTENANCE MODE
 
-Please note, that this repository is currently in [_Maintenance Mode_](https://github.com/dynatrace-oss/dynatrace-mcp/issues/496).
+Please note, that this repository is currently in [_Maintenance Mode_](https://github.com/dynatrace-oss/dynatrace-mcp/issues/496). We will continue fixing/patching issues when they come up.
 
-> 🚀 **Try out [Dynatrace-for-Ai](https://github.com/Dynatrace/dynatrace-for-ai/) and [`dtctl`](https://github.com/dynatrace-oss/dtctl)**
+**Recommended Actions**
 
-> **Try out our new [Remote Dynatrace MCP Server](https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/)!** Now available - no local setup required, connect instantly to your Dynatrace environment from any MCP-compatible client. See our [migration guide](docs/remote-mcp-migration.md) for a comparison and step-by-step instructions.
+> 🚀 **Try [Dynatrace-for-Ai](https://github.com/Dynatrace/dynatrace-for-ai/) and [`dtctl`](https://github.com/dynatrace-oss/dtctl)** (recommended for local development use cases like VS Code, IntelliJ, Claude Code, Cursor and alike)
+
+> **Try out our new [Remote Dynatrace MCP Server](https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/)!** Now available - no local setup required, connect instantly to your Dynatrace environment from any MCP-compatible client. See our [migration guide](docs/remote-mcp-migration.md) for a comparison and step-by-step instructions. This setup is recommended when connecting another Agent (e.g., Atlassian Rovo, GitHub Coding Agent and alike) to Dynatrace.
 
 The local _Dynatrace MCP server_ allows AI Assistants to interact with the [Dynatrace](https://www.dynatrace.com/) observability platform,
 bringing real-time observability data directly into your development workflow.
