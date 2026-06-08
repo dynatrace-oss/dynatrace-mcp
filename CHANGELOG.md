@@ -1,5 +1,9 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## Unreleased
+
+- **Breaking**: Raised the minimum supported Node.js version from `22.10.0` to `24.0.0`.
+
 ## 1.8.7
 
 - Added a human approval gate to the `create_dynatrace_notebook` tool, consistent with other write-capable tools.
