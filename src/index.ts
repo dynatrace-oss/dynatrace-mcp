@@ -1595,6 +1595,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
       {
         readOnlyHint: false,
         destructiveHint: true,
+        idempotentHint: false,
       },
       async ({ name, content, description }) => {
         // Request human approval before creating the notebook
