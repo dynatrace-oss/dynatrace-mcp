@@ -101,11 +101,11 @@ const allRequiredScopes = scopesBase.concat([
 const main = async () => {
   // Parse command line arguments before startup validation so metadata flags
   // like --help and --version do not require Dynatrace environment variables.
-  const program = createCliProgram(getPackageJsonVersion()).parse();
+  const version = getPackageJsonVersion();
+  const program = createCliProgram(version).parse();
   const options = program.opts();
 
-  console.error(`Initializing Dynatrace MCP Server v${getPackageJsonVersion()}...`);
-
+  console.error(`Initializing Dynatrace MCP Server v${version}...`);
   // Configure proxy from environment variables early in the startup process
   configureProxyFromEnvironment();
 
