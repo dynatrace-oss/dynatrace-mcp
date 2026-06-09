@@ -117,4 +117,4 @@ Replace `abc12345` with your Dynatrace tenant identifier and `<YOUR_PLATFORM_TOK
 
 ### 4. Handle Local-Only Tools
 
-If you rely on tools only available in the local server (such as `send_slack_message`, `send_email`, or `create_dynatrace_notebook`), you can keep the local MCP server running alongside the remote one, or wait for the remote server to add parity.
+If you rely on tools only available in the local server (such as `send_slack_message`, `send_email`, or `create_dynatrace_notebook`), you can keep the local MCP server running alongside the remote one, or wait for the remote server to add parity. Alternatively, [`dtctl`](https://github.com/dynatrace/dtctl) can be used for Dynatrace management tasks from the command line — combining the remote MCP server with `dtctl` is a great way to get broad coverage without running the local server.
