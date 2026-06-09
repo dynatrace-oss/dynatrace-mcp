@@ -7,7 +7,6 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
-import { timingSafeEqual } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { z, ZodRawShape, ZodTypeAny } from 'zod';
@@ -44,6 +43,7 @@ import { listExceptions } from './capabilities/list-exceptions';
 import { createDynatraceNotebook } from './capabilities/notebooks';
 import { parseEnvironmentUrl } from './utils/environment-url-parser';
 import { getToolCallRateLimiter } from './utils/rate-limiter';
+import { validateBearerToken, readBodyWithLimit } from './utils/http-auth';
 
 const DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID = 'dt0s12.local-dt-mcp-server';
 
@@ -1539,15 +1539,14 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
     console.error('   See: https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/');
     console.error();
 
-    // C1: Hard-fail if MCP_BEARER_TOKEN is not set in HTTP mode
     const bearerToken = process.env.MCP_BEARER_TOKEN;
     if (!bearerToken) {
       console.error(
-        'ERROR: MCP_BEARER_TOKEN environment variable is not set. ' +
-          'HTTP mode requires a bearer token for authentication. ' +
-          'Set MCP_BEARER_TOKEN before starting the server in HTTP mode.',
+        '⚠️  WARNING: MCP_BEARER_TOKEN is not set. The HTTP server is running without authentication.',
       );
-      process.exit(1);
+      console.error(
+        '    Set MCP_BEARER_TOKEN to require a bearer token on all requests.',
+      );
     }
 
     const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
@@ -1567,41 +1566,22 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
         return;
       }
 
-      // C5: Bearer token authentication for every request
-      const authHeader = req.headers.authorization;
-      const prefix = 'Bearer ';
-      const unauthorized = () => {
-        res.writeHead(401, {
-          'WWW-Authenticate': 'Bearer realm="dynatrace-mcp"',
-          'Content-Type': 'application/json',
-        });
-        res.end(
-          JSON.stringify({
-            jsonrpc: '2.0',
-            id: null,
-            error: { code: -32001, message: 'Unauthorized' },
-          }),
-        );
-      };
-
-      if (!authHeader || !authHeader.startsWith(prefix)) {
-        unauthorized();
-        return;
-      }
-
-      const providedToken = authHeader.slice(prefix.length);
-      let tokenMatches = false;
-      try {
-        const a = Buffer.from(providedToken);
-        const b = Buffer.from(bearerToken);
-        tokenMatches = a.length === b.length && timingSafeEqual(a, b);
-      } catch {
-        tokenMatches = false;
-      }
-
-      if (!tokenMatches) {
-        unauthorized();
-        return;
+      // Bearer token authentication: only enforced when MCP_BEARER_TOKEN is set
+      if (bearerToken) {
+        if (!validateBearerToken(req.headers.authorization, bearerToken)) {
+          res.writeHead(401, {
+            'WWW-Authenticate': 'Bearer realm="dynatrace-mcp"',
+            'Content-Type': 'application/json',
+          });
+          res.end(
+            JSON.stringify({
+              jsonrpc: '2.0',
+              id: null,
+              error: { code: -32001, message: 'Unauthorized' },
+            }),
+          );
+          return;
+        }
       }
 
       // Parse request body for POST requests
@@ -1649,27 +1629,22 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
 
       // Handle POST Requests for this endpoint
       if (req.method === 'POST') {
-        // C2: Body size limit to prevent memory DoS
-        const MAX_BODY_BYTES = 1_048_576; // 1 MiB
-        let totalBytes = 0;
-        const chunks: Buffer[] = [];
-        for await (const chunk of req) {
-          totalBytes += (chunk as Buffer).length;
-          if (totalBytes > MAX_BODY_BYTES) {
-            res.writeHead(413, { 'Content-Type': 'application/json' });
-            res.end(
-              JSON.stringify({
-                jsonrpc: '2.0',
-                id: null,
-                error: { code: -32700, message: 'Request body too large' },
-              }),
-            );
-            req.destroy();
-            return;
-          }
-          chunks.push(chunk as Buffer);
+        // Body size limit to prevent memory DoS
+        let rawBody: string;
+        try {
+          const bodyBuffer = await readBodyWithLimit(req);
+          rawBody = bodyBuffer.toString();
+        } catch {
+          res.writeHead(413, { 'Content-Type': 'application/json' });
+          res.end(
+            JSON.stringify({
+              jsonrpc: '2.0',
+              id: null,
+              error: { code: -32700, message: 'Request body too large' },
+            }),
+          );
+          return;
         }
-        const rawBody = Buffer.concat(chunks).toString();
         try {
           body = JSON.parse(rawBody);
         } catch (error) {

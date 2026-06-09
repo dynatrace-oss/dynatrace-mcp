@@ -1,0 +1,59 @@
+import { timingSafeEqual } from 'node:crypto';
+import { IncomingMessage } from 'node:http';
+
+/**
+ * Maximum allowed request body size in bytes (1 MiB).
+ */
+export const MAX_BODY_BYTES = 1_048_576;
+
+/**
+ * Validates a bearer token from an HTTP Authorization header using constant-time comparison.
+ *
+ * @param authHeader - The value of the `Authorization` request header (may be undefined).
+ * @param expectedToken - The token that the header value must match.
+ * @returns `true` if the header contains a valid `Bearer <token>` that matches `expectedToken`,
+ *          `false` otherwise (missing header, wrong format, or token mismatch).
+ */
+export function validateBearerToken(authHeader: string | undefined, expectedToken: string): boolean {
+  if (!authHeader) {
+    return false;
+  }
+
+  const prefix = 'Bearer ';
+  if (!authHeader.startsWith(prefix)) {
+    return false;
+  }
+
+  const providedToken = authHeader.slice(prefix.length);
+
+  try {
+    const a = Buffer.from(providedToken);
+    const b = Buffer.from(expectedToken);
+    return a.length === b.length && timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Reads the full request body while enforcing a maximum byte limit.
+ *
+ * @param req - The incoming HTTP request.
+ * @returns A `Buffer` containing the entire request body.
+ * @throws An error with message `'Request body too large'` if the body exceeds `MAX_BODY_BYTES`.
+ */
+export async function readBodyWithLimit(req: IncomingMessage): Promise<Buffer> {
+  let totalBytes = 0;
+  const chunks: Buffer[] = [];
+
+  for await (const chunk of req) {
+    totalBytes += (chunk as Buffer).length;
+    if (totalBytes > MAX_BODY_BYTES) {
+      req.destroy();
+      throw new Error('Request body too large');
+    }
+    chunks.push(chunk as Buffer);
+  }
+
+  return Buffer.concat(chunks);
+}
