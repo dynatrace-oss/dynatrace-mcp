@@ -7,6 +7,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
+import { timingSafeEqual } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { z, ZodRawShape, ZodTypeAny } from 'zod';
@@ -1537,6 +1538,18 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
     );
     console.error('   See: https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/');
     console.error();
+
+    // C1: Hard-fail if MCP_BEARER_TOKEN is not set in HTTP mode
+    const bearerToken = process.env.MCP_BEARER_TOKEN;
+    if (!bearerToken) {
+      console.error(
+        'ERROR: MCP_BEARER_TOKEN environment variable is not set. ' +
+          'HTTP mode requires a bearer token for authentication. ' +
+          'Set MCP_BEARER_TOKEN before starting the server in HTTP mode.',
+      );
+      process.exit(1);
+    }
+
     const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
       // Health check endpoint — unauthenticated, must not expose sensitive data
       const reqPath = req.url ? new URL(req.url, 'http://localhost').pathname : '';
@@ -1551,6 +1564,43 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
           'Cache-Control': 'no-store',
         });
         res.end(JSON.stringify(health));
+        return;
+      }
+
+      // C5: Bearer token authentication for every request
+      const authHeader = req.headers.authorization;
+      const prefix = 'Bearer ';
+      const unauthorized = () => {
+        res.writeHead(401, {
+          'WWW-Authenticate': 'Bearer realm="dynatrace-mcp"',
+          'Content-Type': 'application/json',
+        });
+        res.end(
+          JSON.stringify({
+            jsonrpc: '2.0',
+            id: null,
+            error: { code: -32001, message: 'Unauthorized' },
+          }),
+        );
+      };
+
+      if (!authHeader || !authHeader.startsWith(prefix)) {
+        unauthorized();
+        return;
+      }
+
+      const providedToken = authHeader.slice(prefix.length);
+      let tokenMatches = false;
+      try {
+        const a = Buffer.from(providedToken);
+        const b = Buffer.from(bearerToken);
+        tokenMatches = a.length === b.length && timingSafeEqual(a, b);
+      } catch {
+        tokenMatches = false;
+      }
+
+      if (!tokenMatches) {
+        unauthorized();
         return;
       }
 
@@ -1599,9 +1649,25 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
 
       // Handle POST Requests for this endpoint
       if (req.method === 'POST') {
+        // C2: Body size limit to prevent memory DoS
+        const MAX_BODY_BYTES = 1_048_576; // 1 MiB
+        let totalBytes = 0;
         const chunks: Buffer[] = [];
         for await (const chunk of req) {
-          chunks.push(chunk);
+          totalBytes += (chunk as Buffer).length;
+          if (totalBytes > MAX_BODY_BYTES) {
+            req.destroy();
+            res.writeHead(413, { 'Content-Type': 'application/json' });
+            res.end(
+              JSON.stringify({
+                jsonrpc: '2.0',
+                id: null,
+                error: { code: -32700, message: 'Request body too large' },
+              }),
+            );
+            return;
+          }
+          chunks.push(chunk as Buffer);
         }
         const rawBody = Buffer.concat(chunks).toString();
         try {
@@ -1616,6 +1682,9 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
 
       await httpTransport.handleRequest(req, res, body);
     });
+
+    // C4: Limit concurrent connections to prevent SSE connection exhaustion
+    httpServer.maxConnections = 100;
 
     // Start HTTP Server on the specified host and port
     httpServer.listen(httpPort, host, () => {
