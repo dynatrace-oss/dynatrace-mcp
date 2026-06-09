@@ -22,7 +22,6 @@ import { sendSlackMessage } from './capabilities/send-slack-message';
 import { sendEmail } from './capabilities/send-email';
 import { sendEvent, EventIngestEventType } from './capabilities/send-event';
 import { executeDql, verifyDqlStatement } from './capabilities/execute-dql';
-import { updateWorkflow } from './capabilities/update-workflow';
 import {
   findMonitoredEntitiesByName,
   findMonitoredEntityViaSmartscapeByName,
@@ -80,11 +79,6 @@ const allRequiredScopes = scopesBase.concat([
   // Davis Analyzers scopes
   'davis:analyzers:read', // Read analyzer definitions
   'davis:analyzers:execute', // Execute analyzers
-
-  // Automation/Workflows scopes
-  'automation:workflows:write', // Create and modify workflows
-  'automation:workflows:read', // Read workflows
-  'automation:workflows:run', // Execute workflows
 
   // Communication scopes
   'email:emails:send', // Send emails
@@ -1050,39 +1044,6 @@ const main = async () => {
         }
 
         return resp;
-      },
-    );
-
-    tool(
-      'make_workflow_public',
-      'Make Workflow Public',
-      'Modify a workflow and make it publicly available to everyone on the Dynatrace Environment',
-      {
-        workflowId: z.string().optional(),
-      },
-      {
-        // not read only, but idempotent
-        readOnlyHint: false,
-        idempotentHint: true, // making the same workflow public multiple times yields the same result
-      },
-      async ({ workflowId }) => {
-        // ask for human approval
-        const approved = await requestHumanApproval(
-          `Make workflow ${workflowId} publicly available to everyone on the Dynatrace Environment`,
-        );
-
-        if (!approved) {
-          return 'Operation cancelled: Human approval was not granted for making this workflow public.';
-        }
-
-        const dtClient = await createAuthenticatedHttpClient(
-          scopesBase.concat('automation:workflows:write', 'automation:workflows:read', 'automation:workflows:run'),
-        );
-        const response = await updateWorkflow(dtClient, workflowId, {
-          isPrivate: false,
-        });
-
-        return `Workflow ${response.id} is now public!\nYou can access the Workflow via the following link: ${dtEnvironment}/ui/apps/dynatrace.automations/workflows/${response?.id}.\nTell the user to inspect the Workflow by visiting the link.\n`;
       },
     );
 

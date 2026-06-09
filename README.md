@@ -390,9 +390,6 @@ Depending on the features you are using, the following scopes are needed:
 **Available for both Platform Tokens and OAuth Clients:**
 
 - `app-engine:apps:run` - needed for almost all tools
-- `automation:workflows:read` - read Workflows
-- `automation:workflows:write` - create and update Workflows
-- `automation:workflows:run` - run Workflows
 - `app-settings:objects:read` - read app-settings - needed for `send_slack_message` tool to read connection details from App-Settings
 - `storage:buckets:read` - needed for `execute_dql` tool to read all system data stored on Grail
 - `storage:logs:read` - needed for `execute_dql` tool to read logs for reliability guardian validations

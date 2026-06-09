@@ -44,7 +44,7 @@ Dynatrace now offers an official **Remote MCP Server** that runs directly in you
 | Find documents                              | —                                                | `find-documents`                     |
 | Find troubleshooting guides                 | —                                                | `find-troubleshooting-guides`        |
 | Create workflow for notification            | ~~`create_workflow_for_notification`~~ (removed) | —                                    |
-| Make workflow public                        | `make_workflow_public`                           | —                                    |
+| Make workflow public                        | ~~`make_workflow_public`~~ (removed)             | —                                    |
 | Send Slack message                          | `send_slack_message`                             | —                                    |
 | Send email                                  | `send_email`                                     | —                                    |
 | Send event                                  | `send_event`                                     | —                                    |
