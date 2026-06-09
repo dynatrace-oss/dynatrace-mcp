@@ -258,7 +258,7 @@ Or manually in your `~/.gemini/settings.json` or `.gemini/settings.json`:
 
 ### HTTP Server Mode (Alternative)
 
-> **💡 Recommendation:** Instead of self-hosting with `--http`, consider using the official [Dynatrace Remote MCP Server](https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/) — it is more secure, always up to date, and requires no infrastructure management.
+> **💡 Recommendation:** Instead of self-hosting with `--http` / `--server`, consider using the official [Dynatrace Remote MCP Server](https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/) — it is more secure, always up to date, and requires no infrastructure management.
 
 For scenarios where you need to run the MCP server as an HTTP service instead of using stdio (e.g., for stateful sessions, load balancing, or integration with web clients), you can use the HTTP server mode:
 
