@@ -1625,7 +1625,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
   // HTTP server mode (Stateless)
   if (httpMode) {
     console.error(
-      '⚠️  Note: For a more secure and convenient remote MCP experience, consider using the official Dynatrace Remote MCP Server instead of self-hosting with --http.',
+      '⚠️  Note: For a more secure and convenient remote MCP experience, consider using the official Dynatrace Remote MCP Server instead of self-hosting with --http/--server.',
     );
     console.error('   See: https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/');
     console.error();
