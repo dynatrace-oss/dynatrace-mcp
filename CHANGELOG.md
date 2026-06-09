@@ -1,5 +1,12 @@
 # @dynatrace-oss/dynatrace-mcp-server
 
+## Unreleased
+
+### Breaking Changes
+
+- **Removed** `create_workflow_for_notification` tool. The tool was not heavily used and `dtctl` provides more flexibility. If you relied on this tool, please create Dynatrace workflows manually via the Dynatrace UI, `dtctl`, or the Automations API.
+- **Removed** `make_workflow_public` tool. The tool was not heavily used and `dtctl` provides more flexibility. If you relied on this tool, please update workflow visibility manually via the Dynatrace UI, `dtctl`, or the Automations API.
+
 ## 1.8.7
 
 - Added a human approval gate to the `create_dynatrace_notebook` tool, consistent with other write-capable tools.

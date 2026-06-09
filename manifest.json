@@ -77,14 +77,6 @@
       "description": "Ask general Dynatrace questions using Dynatrace Intelligence."
     },
     {
-      "name": "create_workflow_for_notification",
-      "description": "Create a Dynatrace workflow for problem notifications."
-    },
-    {
-      "name": "make_workflow_public",
-      "description": "Update a workflow and make it publicly accessible in the Dynatrace environment."
-    },
-    {
       "name": "get_kubernetes_events",
       "description": "Retrieve Kubernetes events from Dynatrace for a cluster and timeframe."
     },

@@ -97,7 +97,7 @@ Once you are done, we recommend looking into [example prompts](#-example-prompts
 - Querying Data from Grail (e.g., `execute_dql`, `verify_dql`, `generate_dql_from_natural_language`, `explain_dql_in_natural_language`)
 - Entity Discovery (e.g., `find_entity_by_name`)
 - [Dynatrace Intelligence](https://www.dynatrace.com/platform/artificial-intelligence/) (e.g., `chat_with_davis_copilot`, `list_davis_analyzers`, `execute_davis_analyzer`)
-- Automation & Notifications (e.g., `create_workflow_for_notification`, `send_slack_message`, `send_email`, `send_event`)
+- Automation & Notifications (e.g., `send_slack_message`, `send_email`, `send_event`)
 - Share results (e.g., `create_dynatrace_notebook`)
 
 ### Costs
@@ -390,9 +390,6 @@ Depending on the features you are using, the following scopes are needed:
 **Available for both Platform Tokens and OAuth Clients:**
 
 - `app-engine:apps:run` - needed for almost all tools
-- `automation:workflows:read` - read Workflows
-- `automation:workflows:write` - create and update Workflows
-- `automation:workflows:run` - run Workflows
 - `app-settings:objects:read` - read app-settings - needed for `send_slack_message` tool to read connection details from App-Settings
 - `storage:buckets:read` - needed for `execute_dql` tool to read all system data stored on Grail
 - `storage:logs:read` - needed for `execute_dql` tool to read logs for reliability guardian validations
