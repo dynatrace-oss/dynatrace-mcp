@@ -43,6 +43,7 @@ import { listExceptions } from './capabilities/list-exceptions';
 import { createDynatraceNotebook } from './capabilities/notebooks';
 import { parseEnvironmentUrl } from './utils/environment-url-parser';
 import { getToolCallRateLimiter } from './utils/rate-limiter';
+import { validateBearerToken, readBodyWithLimit } from './utils/http-auth';
 
 const DT_MCP_AUTH_CODE_FLOW_OAUTH_CLIENT_ID = 'dt0s12.local-dt-mcp-server';
 
@@ -1537,7 +1538,36 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
     );
     console.error('   See: https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/');
     console.error();
+
+    const bearerToken = process.env.MCP_BEARER_TOKEN;
+    if (!bearerToken) {
+      console.error(
+        '⚠️  WARNING: MCP_BEARER_TOKEN is not set. The HTTP server is running without authentication.',
+      );
+      console.error(
+        '    Set MCP_BEARER_TOKEN to require a bearer token on all requests.',
+      );
+    }
+
     const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
+      // Bearer token authentication: only enforced when MCP_BEARER_TOKEN is set
+      if (bearerToken) {
+        if (!validateBearerToken(req.headers.authorization, bearerToken)) {
+          res.writeHead(401, {
+            'WWW-Authenticate': 'Bearer realm="dynatrace-mcp"',
+            'Content-Type': 'application/json',
+          });
+          res.end(
+            JSON.stringify({
+              jsonrpc: '2.0',
+              id: null,
+              error: { code: -32001, message: 'Unauthorized' },
+            }),
+          );
+          return;
+        }
+      }
+
       // Parse request body for POST requests
       let body: unknown;
       // Create a fresh MCP server instance per request to support concurrent
@@ -1560,11 +1590,22 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
 
       // Handle POST Requests for this endpoint
       if (req.method === 'POST') {
-        const chunks: Buffer[] = [];
-        for await (const chunk of req) {
-          chunks.push(chunk);
+        // Body size limit to prevent memory DoS
+        let rawBody: string;
+        try {
+          const bodyBuffer = await readBodyWithLimit(req);
+          rawBody = bodyBuffer.toString();
+        } catch {
+          res.writeHead(413, { 'Content-Type': 'application/json' });
+          res.end(
+            JSON.stringify({
+              jsonrpc: '2.0',
+              id: null,
+              error: { code: -32700, message: 'Request body too large' },
+            }),
+          );
+          return;
         }
-        const rawBody = Buffer.concat(chunks).toString();
         try {
           body = JSON.parse(rawBody);
         } catch (error) {
@@ -1577,6 +1618,9 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
 
       await httpTransport.handleRequest(req, res, body);
     });
+
+    // C4: Limit concurrent connections to prevent SSE connection exhaustion
+    httpServer.maxConnections = 100;
 
     // Start HTTP Server on the specified host and port
     httpServer.listen(httpPort, host, () => {
