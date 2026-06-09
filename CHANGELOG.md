@@ -4,8 +4,8 @@
 
 ### Breaking Changes
 
-- **Removed** `create_workflow_for_notification` tool. The tool was unused and not fit for production use. If you relied on this tool, please create Dynatrace workflows manually via the Dynatrace UI or Automations API.
-- **Removed** `make_workflow_public` tool. If you relied on this tool, please update workflow visibility manually via the Dynatrace UI or Automations API.
+- **Removed** `create_workflow_for_notification` tool. The tool was not heavily used and `dtctl` provides more flexibility. If you relied on this tool, please create Dynatrace workflows manually via the Dynatrace UI, `dtctl`, or the Automations API.
+- **Removed** `make_workflow_public` tool. The tool was not heavily used and `dtctl` provides more flexibility. If you relied on this tool, please update workflow visibility manually via the Dynatrace UI, `dtctl`, or the Automations API.
 
 ## 1.8.7
 
