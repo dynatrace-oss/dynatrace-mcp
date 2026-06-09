@@ -1584,9 +1584,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
       );
       const httpTransport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined, // No Session ID needed
-        // eslint-disable-next-line deprecation/deprecation -- built-in SDK option; external middleware is the long-term replacement
         enableDnsRebindingProtection: true,
-        // eslint-disable-next-line deprecation/deprecation -- built-in SDK option; external middleware is the long-term replacement
         allowedHosts,
       });
 
