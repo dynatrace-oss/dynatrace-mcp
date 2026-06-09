@@ -1617,7 +1617,6 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
         for await (const chunk of req) {
           totalBytes += (chunk as Buffer).length;
           if (totalBytes > MAX_BODY_BYTES) {
-            req.destroy();
             res.writeHead(413, { 'Content-Type': 'application/json' });
             res.end(
               JSON.stringify({
@@ -1626,6 +1625,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
                 error: { code: -32700, message: 'Request body too large' },
               }),
             );
+            req.destroy();
             return;
           }
           chunks.push(chunk as Buffer);
