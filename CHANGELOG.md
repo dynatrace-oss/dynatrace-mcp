@@ -3,6 +3,8 @@
 ## Unreleased
 
 - **Breaking**: Raised the minimum supported Node.js version from `22.10.0` to `24.0.0`.
+- **Removed** `create_workflow_for_notification` tool. The tool was not heavily used and `dtctl` provides more flexibility. If you relied on this tool, please create Dynatrace workflows manually via the Dynatrace UI, `dtctl`, or the Automations API.
+- **Removed** `make_workflow_public` tool. The tool was not heavily used and `dtctl` provides more flexibility. If you relied on this tool, please update workflow visibility manually via the Dynatrace UI, `dtctl`, or the Automations API.
 
 ## 1.8.7
 

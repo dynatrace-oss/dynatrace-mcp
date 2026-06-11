@@ -22,8 +22,6 @@ import { sendSlackMessage } from './capabilities/send-slack-message';
 import { sendEmail } from './capabilities/send-email';
 import { sendEvent, EventIngestEventType } from './capabilities/send-event';
 import { executeDql, verifyDqlStatement } from './capabilities/execute-dql';
-import { createWorkflowForProblemNotification } from './capabilities/create-workflow-for-problem-notification';
-import { updateWorkflow } from './capabilities/update-workflow';
 import {
   findMonitoredEntitiesByName,
   findMonitoredEntityViaSmartscapeByName,
@@ -81,11 +79,6 @@ const allRequiredScopes = scopesBase.concat([
   // Davis Analyzers scopes
   'davis:analyzers:read', // Read analyzer definitions
   'davis:analyzers:execute', // Execute analyzers
-
-  // Automation/Workflows scopes
-  'automation:workflows:write', // Create and modify workflows
-  'automation:workflows:read', // Read workflows
-  'automation:workflows:run', // Execute workflows
 
   // Communication scopes
   'email:emails:send', // Send emails
@@ -1055,91 +1048,6 @@ const main = async () => {
     );
 
     tool(
-      'create_workflow_for_notification',
-      'Create Workflow for Notification',
-      'Create a notification for a team based on a problem type within Workflows in Dynatrace',
-      {
-        problemType: z.string().optional(),
-        teamName: z.string().optional(),
-        channel: z.string().optional(),
-        isPrivate: z.boolean().optional().default(false),
-      },
-      {
-        // not read only, not idempotent
-        readOnlyHint: false,
-        idempotentHint: false, // creating the same workflow multiple times is possible
-      },
-      async ({ problemType, teamName, channel, isPrivate }) => {
-        // ask for human approval
-        const approved = await requestHumanApproval(
-          `Create a workflow for notifying team ${teamName} via ${channel} about ${problemType} problems`,
-        );
-
-        if (!approved) {
-          return 'Operation cancelled: Human approval was not granted for creating this workflow.';
-        }
-
-        const dtClient = await createAuthenticatedHttpClient(
-          scopesBase.concat('automation:workflows:write', 'automation:workflows:read', 'automation:workflows:run'),
-        );
-        const response = await createWorkflowForProblemNotification(
-          dtClient,
-          teamName,
-          channel,
-          problemType,
-          isPrivate,
-        );
-
-        let resp = `Workflow Created: ${response?.id} with name ${response?.title}.\nYou can access the Workflow via the following link: ${dtEnvironment}/ui/apps/dynatrace.automations/workflows/${response?.id}.\nTell the user to inspect the Workflow by visiting the link.\n`;
-
-        if (response.type == 'SIMPLE') {
-          resp += `Note: This is a simple workflow. Workflow-hours will not be billed.\n`;
-        } else if (response.type == 'STANDARD') {
-          resp += `Note: This is a standard workflow. Workflow-hours will be billed.\n`;
-        }
-
-        if (isPrivate) {
-          resp += `This workflow is private and can only be accessed by the owner of the authentication credentials. In case you can not access it, you can instruct me to make the workflow public.`;
-        }
-
-        return resp;
-      },
-    );
-
-    tool(
-      'make_workflow_public',
-      'Make Workflow Public',
-      'Modify a workflow and make it publicly available to everyone on the Dynatrace Environment',
-      {
-        workflowId: z.string().optional(),
-      },
-      {
-        // not read only, but idempotent
-        readOnlyHint: false,
-        idempotentHint: true, // making the same workflow public multiple times yields the same result
-      },
-      async ({ workflowId }) => {
-        // ask for human approval
-        const approved = await requestHumanApproval(
-          `Make workflow ${workflowId} publicly available to everyone on the Dynatrace Environment`,
-        );
-
-        if (!approved) {
-          return 'Operation cancelled: Human approval was not granted for making this workflow public.';
-        }
-
-        const dtClient = await createAuthenticatedHttpClient(
-          scopesBase.concat('automation:workflows:write', 'automation:workflows:read', 'automation:workflows:run'),
-        );
-        const response = await updateWorkflow(dtClient, workflowId, {
-          isPrivate: false,
-        });
-
-        return `Workflow ${response.id} is now public!\nYou can access the Workflow via the following link: ${dtEnvironment}/ui/apps/dynatrace.automations/workflows/${response?.id}.\nTell the user to inspect the Workflow by visiting the link.\n`;
-      },
-    );
-
-    tool(
       'get_kubernetes_events',
       'Get Kubernetes Events',
       'Get all events from a specific Kubernetes (K8s) cluster',
@@ -1624,6 +1532,11 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
 
   // HTTP server mode (Stateless)
   if (httpMode) {
+    console.error(
+      '⚠️  Note: For a more secure and convenient remote MCP experience, consider using the official Dynatrace Remote MCP Server instead of self-hosting with --http/--server.',
+    );
+    console.error('   See: https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/');
+    console.error();
     const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
       // Parse request body for POST requests
       let body: unknown;

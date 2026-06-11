@@ -35,7 +35,6 @@ Use this skill to systematically investigate production issues using live Dynatr
 ## Phase 4 — Resolution
 
 1. Document findings in a Dynatrace Notebook: `create_dynatrace_notebook`
-2. Create an alert workflow if needed: `create_workflow_for_notification`
 
 ## Tips
 
