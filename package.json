@@ -50,7 +50,7 @@
   "author": "Dynatrace",
   "license": "MIT",
   "engines": {
-    "node": ">=22.10.0"
+    "node": ">=24.0.0"
   },
   "dependencies": {
     "@dynatrace-sdk/client-classic-environment-v2": "^5.1.0",
@@ -78,7 +78,7 @@
     "@commitlint/config-conventional": "^20.5.0",
     "@eslint/js": "^9.39.4",
     "@types/jest": "^30.0.0",
-    "@types/node": "^22",
+    "@types/node": "^24",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.56.1",
