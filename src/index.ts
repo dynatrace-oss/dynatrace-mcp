@@ -1538,6 +1538,22 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
     console.error('   See: https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/');
     console.error();
     const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
+      // Health check endpoint — unauthenticated, must not expose sensitive data
+      const reqPath = req.url ? new URL(req.url, 'http://localhost').pathname : '';
+      if (req.method === 'GET' && reqPath === '/health') {
+        const health = {
+          status: 'ok',
+          uptime: process.uptime(),
+          timestamp: new Date().toISOString(),
+        };
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store',
+        });
+        res.end(JSON.stringify(health));
+        return;
+      }
+
       // Parse request body for POST requests
       let body: unknown;
       // Create a fresh MCP server instance per request to support concurrent
