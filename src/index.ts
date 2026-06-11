@@ -1527,7 +1527,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
 
   const httpMode = options.http || options.server;
   const httpPort = parseInt(options.port, 10);
-  const host = options.host || '0.0.0.0';
+  const host = options.host || '127.0.0.1';
   oauthRedirectPort = options.oauthRedirectPort ? parseInt(options.oauthRedirectPort, 10) : undefined;
 
   // HTTP server mode (Stateless)

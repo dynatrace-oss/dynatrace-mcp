@@ -277,7 +277,7 @@ npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --port 3001
 
 # Run with custom host/IP (using short or long flag)
 npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --host 127.0.0.1 # recommended for local computers
-npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --host 0.0.0.0 # recommended for container
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http --host 0.0.0.0 # required for container (binds all interfaces; omitting --host defaults to 127.0.0.1)
 npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http -H 192.168.0.1 # recommended when sharing connection over a local network
 
 # Static OAuth callback port (useful when the port must be exposed, e.g., when running the MCP in a container)
