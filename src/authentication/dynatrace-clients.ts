@@ -153,7 +153,7 @@ const createOAuthAuthCodeFlowHttpClient = async (
     if (!clientRefreshPromises.get(clientId)) {
       console.error(`🔍 Auth-Code-Flow: Found expired cached token (expires in ${expiresIn}s), attempting refresh...`);
       const refreshPromise = refreshAccessToken(ssoBaseURL, clientId, cachedToken.refresh_token, scopes).finally(() => {
-        clientRefreshPromises.set(clientId, null);
+        clientRefreshPromises.delete(clientId);
       });
       clientRefreshPromises.set(clientId, refreshPromise);
     } else {
