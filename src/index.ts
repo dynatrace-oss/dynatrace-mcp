@@ -1561,8 +1561,31 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
       // "Already connected to a transport" errors. See #345.
       const server = createConfiguredMcpServer();
       // Create a new Stateless HTTP Transport
+      // DNS rebinding protection: restrict accepted Host headers to the
+      // configured server address so that a malicious web page cannot reach
+      // this local server by rebinding a domain to 127.0.0.1.
+      // Note: enableDnsRebindingProtection only activates when allowedHosts
+      // and/or allowedOrigins are also supplied; the flag alone is a no-op.
+      // Both bare-host and host:port forms are allowed because HTTP/1.0
+      // clients may omit the port for well-known ports.
+      const allowedHosts = Array.from(
+        new Set([
+          host,
+          `${host}:${httpPort}`,
+          // Also allow the loopback aliases so tools that connect via
+          // "localhost" still work when the server binds to 127.0.0.1.
+          'localhost',
+          `localhost:${httpPort}`,
+          '127.0.0.1',
+          `127.0.0.1:${httpPort}`,
+          '[::1]',
+          `[::1]:${httpPort}`,
+        ]),
+      );
       const httpTransport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined, // No Session ID needed
+        enableDnsRebindingProtection: true,
+        allowedHosts,
       });
 
       res.on('close', () => {
