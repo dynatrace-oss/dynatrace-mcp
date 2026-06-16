@@ -3,6 +3,7 @@
 ## Unreleased
 
 - **Breaking**: Raised the minimum supported Node.js version from `22.10.0` to `24.0.0`.
+- Updated `@dynatrace-sdk/client-classic-environment-v2` (5.1.0 → 5.2.3), `@dynatrace-sdk/client-platform-management-service` (1.6.3 → 1.7.0), `@dynatrace-sdk/shared-errors` (1.0.0 → 1.0.2), `@dynatrace/openkit-js` (4.1.0 → 4.2.0), `@modelcontextprotocol/ext-apps` (1.0.1 → 1.2.2), `commander` (14.0.0 → 14.0.3), `zod` (4.1.0 → 4.1.13), and `zod-to-json-schema` (3.25.0 → 3.25.1).
 - **Removed** `create_workflow_for_notification` tool. The tool was not heavily used and `dtctl` provides more flexibility. If you relied on this tool, please create Dynatrace workflows manually via the Dynatrace UI, `dtctl`, or the Automations API.
 - **Removed** `make_workflow_public` tool. The tool was not heavily used and `dtctl` provides more flexibility. If you relied on this tool, please update workflow visibility manually via the Dynatrace UI, `dtctl`, or the Automations API.
 - OAuth Authorization Code Flow tokens are now persisted to the OS keychain (macOS Keychain, Windows Credential Manager, or Linux Secret Service), so the browser authentication window only opens once per token lifetime instead of on every server restart.
