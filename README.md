@@ -306,7 +306,7 @@ npx -y @dynatrace-oss/dynatrace-mcp-server@latest --version
 
 When running in HTTP mode you can protect the server with a bearer token:
 
-| Behaviour                      | Detail                                                                                                                                                                    |
+| Behavior                       | Detail                                                                                                                                                                    |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `MCP_BEARER_TOKEN` **set**     | Every HTTP request must include an `Authorization: Bearer <token>` header. Requests without a valid token receive `401 Unauthorized`.                                     |
 | `MCP_BEARER_TOKEN` **not set** | The server starts with a warning printed to stderr and accepts all requests without authentication. **Not recommended for production or any network-exposed deployment.** |
