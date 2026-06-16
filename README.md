@@ -266,6 +266,12 @@ For scenarios where you need to run the MCP server as an HTTP service instead of
 
 **Running as HTTP server:**
 
+Please secure your server with a bearer token:
+
+```bash
+export MCP_BEARER_TOKEN=<bearer-token>
+```
+
 ```bash
 # Get help and see all available options
 npx -y @dynatrace-oss/dynatrace-mcp-server@latest --help
@@ -296,7 +302,10 @@ npx -y @dynatrace-oss/dynatrace-mcp-server@latest --version
   "mcpServers": {
     "dynatrace-http": {
       "url": "http://localhost:3000",
-      "transport": "http"
+      "transport": "http",
+      "headers": {
+        "Authorization": "Bearer <bearer-token>"
+      }
     }
   }
 }
@@ -306,10 +315,10 @@ npx -y @dynatrace-oss/dynatrace-mcp-server@latest --version
 
 When running in HTTP mode you can protect the server with a bearer token:
 
-| Behavior                       | Detail                                                                                                                                                                    |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MCP_BEARER_TOKEN` **set**     | Every HTTP request must include an `Authorization: Bearer <token>` header. Requests without a valid token receive `401 Unauthorized`.                                     |
-| `MCP_BEARER_TOKEN` **not set** | The server starts with a warning printed to stderr and accepts all requests without authentication. **Not recommended for production or any network-exposed deployment.** |
+| Behavior                       | Detail                                                                                                                                                                                   |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MCP_BEARER_TOKEN` **set**     | Every HTTP request must include an `Authorization: Bearer <token>` header. Requests without a valid token receive `401 Unauthorized`.                                                    |
+| `MCP_BEARER_TOKEN` **not set** | **Deprecated** The server starts with a warning printed to stderr and accepts all requests without authentication. **Not recommended for production or any network-exposed deployment.** |
 
 **Generating a secure token:**
 
