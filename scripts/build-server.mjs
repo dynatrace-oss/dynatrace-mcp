@@ -15,8 +15,7 @@ const esbuildOptions = {
   // This lets `open` resolve xdg-open from its own node_modules/open/ directory on Linux.
   // Keep `@napi-rs/keyring` external: it's a native binary package that esbuild cannot bundle.
   // The runtime code lazy-loads it with try/catch and falls back gracefully when unavailable.
-  external: ['*.node', 'open', '@napi-rs/keyring'],
-};
+  external: ['*.node', 'open', '@napi-rs/keyring', '@napi-rs/keyring/*'],
 
 if (watchMode) {
   const ctx = await context(esbuildOptions);
