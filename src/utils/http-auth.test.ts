@@ -1,5 +1,4 @@
-import { EventEmitter } from 'node:events';
-import { IncomingMessage } from 'node:http';
+import { Readable } from 'node:stream';
 import { validateBearerToken, readBodyWithLimit, MAX_BODY_BYTES } from './http-auth';
 
 // ---------------------------------------------------------------------------
@@ -43,22 +42,10 @@ describe('validateBearerToken', () => {
 // ---------------------------------------------------------------------------
 
 /**
- * Creates a fake IncomingMessage that emits the given chunks.
+ * Creates a Readable stream that emits the given chunks.
  */
-function makeFakeRequest(chunks: Buffer[]): IncomingMessage {
-  const emitter = new EventEmitter() as IncomingMessage;
-
-  // Provide the async-iterator protocol used by `for await (const chunk of req)`
-  (emitter as any)[Symbol.asyncIterator] = async function* () {
-    for (const chunk of chunks) {
-      yield chunk;
-    }
-  };
-
-  // Stub destroy so readBodyWithLimit can call it without errors
-  (emitter as any).destroy = () => {};
-
-  return emitter;
+function makeFakeRequest(chunks: Buffer[]): Readable {
+  return Readable.from(chunks);
 }
 
 describe('readBodyWithLimit', () => {

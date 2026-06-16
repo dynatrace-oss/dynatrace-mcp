@@ -1,5 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
-import { IncomingMessage } from 'node:http';
+import { Readable } from 'node:stream';
 
 /**
  * Maximum allowed request body size in bytes (1 MiB).
@@ -40,7 +40,7 @@ export function validateBearerToken(authHeader: string | undefined, expectedToke
  * @returns A `Buffer` containing the entire request body.
  * @throws An error with message `'Request body too large'` if the body exceeds `MAX_BODY_BYTES`.
  */
-export async function readBodyWithLimit(req: IncomingMessage): Promise<Buffer> {
+export async function readBodyWithLimit(req: Readable): Promise<Buffer> {
   let totalBytes = 0;
   const chunks: Buffer[] = [];
 
