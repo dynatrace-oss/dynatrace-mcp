@@ -1,7 +1,7 @@
 import { HttpClient, PlatformHttpClient } from '@dynatrace-sdk/http-client';
 import { getUserAgent } from '../utils/user-agent';
 import { performOAuthAuthorizationCodeFlow, refreshAccessToken } from './dynatrace-oauth-auth-code-flow';
-import { getOrCreateKeychainCache } from './token-cache';
+import { getOrCreateTokenCache } from './token-cache';
 import { getRandomPort } from './utils';
 import { requestTokenForClientCredentials } from './dynatrace-oauth-client-credentials';
 import { getSSOUrl } from './get-sso-url';
@@ -128,8 +128,8 @@ const createOAuthAuthCodeFlowHttpClient = async (
   // Get SSO Base URL
   const ssoBaseURL = await getSSOUrl(environmentUrl);
 
-  // Get (or lazily create) the keychain-backed cache for this clientId
-  const tokenCache = await getOrCreateKeychainCache(clientId);
+  // Get (or lazily create) the appropriate token cache for this clientId
+  const tokenCache = await getOrCreateTokenCache(clientId);
 
   // Fast Track: Fetch cached token and check if it is still valid
   const cachedToken = tokenCache.getToken(scopes);
@@ -152,11 +152,9 @@ const createOAuthAuthCodeFlowHttpClient = async (
 
     if (!clientRefreshPromises.get(clientId)) {
       console.error(`🔍 Auth-Code-Flow: Found expired cached token (expires in ${expiresIn}s), attempting refresh...`);
-      const refreshPromise = refreshAccessToken(ssoBaseURL, clientId, cachedToken.refresh_token, scopes).finally(
-        () => {
-          clientRefreshPromises.set(clientId, null);
-        },
-      );
+      const refreshPromise = refreshAccessToken(ssoBaseURL, clientId, cachedToken.refresh_token, scopes).finally(() => {
+        clientRefreshPromises.set(clientId, null);
+      });
       clientRefreshPromises.set(clientId, refreshPromise);
     } else {
       console.error(`🔄 Token refresh already in progress, waiting for it to complete...`);

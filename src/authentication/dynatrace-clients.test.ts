@@ -3,7 +3,7 @@ import { PlatformHttpClient } from '@dynatrace-sdk/http-client';
 import { getSSOUrl } from './get-sso-url';
 import { OAuthTokenResponse, TokenCache } from './types';
 import { performOAuthAuthorizationCodeFlow, refreshAccessToken } from './dynatrace-oauth-auth-code-flow';
-import { getOrCreateKeychainCache, KeychainTokenCache } from './token-cache';
+import { getOrCreateTokenCache, KeychainTokenCache } from './token-cache';
 
 // Mock external dependencies
 jest.mock('@dynatrace-sdk/http-client');
@@ -23,7 +23,7 @@ const mockPerformOAuthAuthorizationCodeFlow = performOAuthAuthorizationCodeFlow 
   typeof performOAuthAuthorizationCodeFlow
 >;
 const mockRefreshAccessToken = refreshAccessToken as jest.MockedFunction<typeof refreshAccessToken>;
-const mockGetOrCreateKeychainCache = getOrCreateKeychainCache as jest.MockedFunction<typeof getOrCreateKeychainCache>;
+const mockGetOrCreateTokenCache = getOrCreateTokenCache as jest.MockedFunction<typeof getOrCreateTokenCache>;
 const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
 
 // Shared mock token cache instance returned by getOrCreateKeychainCache.
@@ -44,7 +44,7 @@ describe('dynatrace-clients', () => {
     // Mock getOrCreateKeychainCache to return the shared mock cache instance.
     // The cast is intentional: the mock only needs to satisfy the TokenCache interface
     // methods used by the code under test.
-    mockGetOrCreateKeychainCache.mockResolvedValue(mockTokenCacheInstance as unknown as KeychainTokenCache);
+    mockGetOrCreateTokenCache.mockResolvedValue(mockTokenCacheInstance as unknown as KeychainTokenCache);
 
     // Mock token cache methods
     mockTokenCacheInstance.getToken.mockReturnValue(null);
