@@ -128,8 +128,13 @@ const createOAuthAuthCodeFlowHttpClient = async (
   // Get SSO Base URL
   const ssoBaseURL = await getSSOUrl(environmentUrl);
 
-  // Get (or lazily create) the appropriate token cache for this clientId
-  const tokenCache = await getOrCreateTokenCache(clientId);
+  // Include ssoBaseURL in the cache key so that the same clientId used against
+  // different environments (dev/sprint/prod) gets separate token caches and
+  // never overwrites each other's stored tokens.
+  const cacheKey = `${clientId}@${ssoBaseURL}`;
+
+  // Get (or lazily create) the appropriate token cache for this environment+clientId pair
+  const tokenCache = await getOrCreateTokenCache(cacheKey);
 
   // Fast Track: Fetch cached token and check if it is still valid
   const cachedToken = tokenCache.getToken(scopes);
@@ -150,18 +155,18 @@ const createOAuthAuthCodeFlowHttpClient = async (
   if (cachedToken && cachedToken.refresh_token && !isValid) {
     const expiresIn = cachedToken.expires_at ? Math.round((cachedToken.expires_at - Date.now()) / 1000) : 'never';
 
-    if (!clientRefreshPromises.get(clientId)) {
+    if (!clientRefreshPromises.get(cacheKey)) {
       console.error(`🔍 Auth-Code-Flow: Found expired cached token (expires in ${expiresIn}s), attempting refresh...`);
       const refreshPromise = refreshAccessToken(ssoBaseURL, clientId, cachedToken.refresh_token, scopes).finally(() => {
-        clientRefreshPromises.delete(clientId);
+        clientRefreshPromises.delete(cacheKey);
       });
-      clientRefreshPromises.set(clientId, refreshPromise);
+      clientRefreshPromises.set(cacheKey, refreshPromise);
     } else {
       console.error(`🔄 Token refresh already in progress, waiting for it to complete...`);
     }
 
     try {
-      const tokenResponse = await clientRefreshPromises.get(clientId)!;
+      const tokenResponse = await clientRefreshPromises.get(cacheKey)!;
 
       if (tokenResponse.access_token && !tokenResponse.error) {
         console.error(`✅ Successfully refreshed access token!`);
