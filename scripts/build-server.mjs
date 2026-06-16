@@ -13,7 +13,9 @@ const esbuildOptions = {
   outfile: 'dist/index.js',
   // Keep `open` external so npm manages it as a runtime dependency.
   // This lets `open` resolve xdg-open from its own node_modules/open/ directory on Linux.
-  external: ['*.node', 'open'],
+  // Keep `@napi-rs/keyring` external: it's a native binary package that esbuild cannot bundle.
+  // The runtime code lazy-loads it with try/catch and falls back gracefully when unavailable.
+  external: ['*.node', 'open', '@napi-rs/keyring', '@napi-rs/keyring/*'],
 };
 
 if (watchMode) {
@@ -40,7 +42,9 @@ if (watchMode) {
     bugs: pkg.bugs,
     dependencies: {
       // `open` is kept external and must be present in node_modules at runtime.
-      open: pkg.dependencies.open,
+      'open': pkg.dependencies.open,
+      // `@napi-rs/keyring` is kept external; it provides OS keychain support.
+      '@napi-rs/keyring': pkg.dependencies['@napi-rs/keyring'],
     },
   };
 
@@ -60,10 +64,11 @@ if (watchMode) {
   // Build MCPB bundle: bundle `open` in since there is no node_modules at MCPB runtime.
   // xdg-open is NOT copied: MCPB only runs on macOS and Windows,
   // where `open` uses native `open` / `start` commands, not xdg-open.
+  // @napi-rs/keyring stays external: the try/catch in tryGetKeyring() handles the missing module.
   await build({
     ...esbuildOptions,
     outfile: `${bundleDir}/dist/index.js`,
-    external: ['*.node'],
+    external: ['*.node', '@napi-rs/keyring'],
   });
 
   cpSync('./dist/ui', `${bundleDir}/dist/ui`, { recursive: true });
