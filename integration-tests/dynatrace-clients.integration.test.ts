@@ -1,7 +1,7 @@
 /**
  * Integration test for dynatrace client functionality
  *
- * Verifies authentication behaviour by making actual API calls
+ * Verifies authentication behavior by making actual API calls
  * to the Dynatrace environment.
  *
  * The error tests use deliberately incorrect authentication credentials.

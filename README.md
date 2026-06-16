@@ -302,6 +302,38 @@ npx -y @dynatrace-oss/dynatrace-mcp-server@latest --version
 }
 ```
 
+#### Bearer Token Authentication (`MCP_BEARER_TOKEN`)
+
+When running in HTTP mode you can protect the server with a bearer token:
+
+| Behavior                       | Detail                                                                                                                                                                    |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MCP_BEARER_TOKEN` **set**     | Every HTTP request must include an `Authorization: Bearer <token>` header. Requests without a valid token receive `401 Unauthorized`.                                     |
+| `MCP_BEARER_TOKEN` **not set** | The server starts with a warning printed to stderr and accepts all requests without authentication. **Not recommended for production or any network-exposed deployment.** |
+
+**Generating a secure token:**
+
+```bash
+export MCP_BEARER_TOKEN=$(openssl rand -base64 32)
+npx -y @dynatrace-oss/dynatrace-mcp-server@latest --http
+```
+
+**Configuring the MCP client to send the token:**
+
+```json
+{
+  "mcpServers": {
+    "dynatrace-http": {
+      "url": "http://localhost:3000",
+      "transport": "http",
+      "headers": {
+        "Authorization": "Bearer <your-token>"
+      }
+    }
+  }
+}
+```
+
 ### MCP Bundle (MCPB)
 
 Each release publishes a pre-built MCP Bundle file (`.mcpb`) that you can install directly in Claude Desktop without any manual JSON configuration.
