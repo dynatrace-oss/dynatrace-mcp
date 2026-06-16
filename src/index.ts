@@ -1541,12 +1541,8 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
 
     const bearerToken = process.env.MCP_BEARER_TOKEN;
     if (!bearerToken) {
-      console.error(
-        '⚠️  WARNING: MCP_BEARER_TOKEN is not set. The HTTP server is running without authentication.',
-      );
-      console.error(
-        '    Set MCP_BEARER_TOKEN to require a bearer token on all requests.',
-      );
+      console.error('⚠️  WARNING: MCP_BEARER_TOKEN is not set. The HTTP server is running without authentication.');
+      console.error('    Set MCP_BEARER_TOKEN to require a bearer token on all requests.');
     }
 
     const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
