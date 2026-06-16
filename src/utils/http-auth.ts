@@ -15,15 +15,13 @@ export const MAX_BODY_BYTES = 1_048_576;
  *          `false` otherwise (missing header, wrong format, or token mismatch).
  */
 export function validateBearerToken(authHeader: string | undefined, expectedToken: string): boolean {
-  if (!authHeader) {
-    return false;
-  }
-
   const prefix = 'Bearer ';
-  if (!authHeader.startsWith(prefix)) {
+
+  if (!authHeader || !authHeader.startsWith(prefix)) {
     return false;
   }
 
+  // grab token from `Bearer <token>`
   const providedToken = authHeader.slice(prefix.length);
 
   try {

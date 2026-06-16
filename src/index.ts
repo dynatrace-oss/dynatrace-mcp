@@ -1654,7 +1654,7 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
       await httpTransport.handleRequest(req, res, body);
     });
 
-    // C4: Limit concurrent connections to prevent SSE connection exhaustion
+    // Limit concurrent connections to prevent SSE connection exhaustion
     httpServer.maxConnections = 100;
 
     // Start HTTP Server on the specified host and port
