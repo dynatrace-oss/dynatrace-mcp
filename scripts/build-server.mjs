@@ -16,6 +16,7 @@ const esbuildOptions = {
   // Keep `@napi-rs/keyring` external: it's a native binary package that esbuild cannot bundle.
   // The runtime code lazy-loads it with try/catch and falls back gracefully when unavailable.
   external: ['*.node', 'open', '@napi-rs/keyring', '@napi-rs/keyring/*'],
+};
 
 if (watchMode) {
   const ctx = await context(esbuildOptions);
