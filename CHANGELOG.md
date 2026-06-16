@@ -2,11 +2,16 @@
 
 ## Unreleased
 
+## 2.0.0
+
 - **Breaking**: Raised the minimum supported Node.js version from `22.10.0` to `24.0.0`.
-- Updated `@dynatrace-sdk/client-classic-environment-v2` (5.1.0 → 5.2.3), `@dynatrace-sdk/client-davis-analyzers` (1.9.8 → 1.10.0), `@dynatrace-sdk/client-document` (1.29.0 → 1.31.0), `@dynatrace-sdk/client-platform-management-service` (1.6.3 → 1.7.0), `@dynatrace-sdk/client-query` (1.18.1 → 1.25.0), `@dynatrace-sdk/shared-errors` (1.0.0 → 1.0.2), `@dynatrace/openkit-js` (4.1.0 → 4.2.0), `@dynatrace/strato-icons` (2.1.0 → 2.3.0), `@modelcontextprotocol/ext-apps` (1.0.1 → 1.2.2), `commander` (14.0.0 → 14.0.3), `zod` (4.1.0 → 4.1.13), and `zod-to-json-schema` (3.25.0 → 3.25.1).
-- **Removed** `create_workflow_for_notification` tool. The tool was not heavily used and `dtctl` provides more flexibility. If you relied on this tool, please create Dynatrace workflows manually via the Dynatrace UI, `dtctl`, or the Automations API.
-- **Removed** `make_workflow_public` tool. The tool was not heavily used and `dtctl` provides more flexibility. If you relied on this tool, please update workflow visibility manually via the Dynatrace UI, `dtctl`, or the Automations API.
+- **Breaking**: Removed`create_workflow_for_notification` tool. The tool was not heavily used and `dtctl` provides more flexibility. If you relied on this tool, please create Dynatrace workflows manually via the Dynatrace UI, `dtctl`, or the Automations API.
+- **Breaking**: Removed `make_workflow_public` tool. The tool was not heavily used and `dtctl` provides more flexibility. If you relied on this tool, please update workflow visibility manually via the Dynatrace UI, `dtctl`, or the Automations API.
+- **Deprecation**: Using `--http` mode without a bearer token is deprecated and will be removed in a future release.
+- Added `MCP_BEARER_TOKEN` environment variable to secure `--http` mode.
+- Several security improvements when running in `--http` mode
 - OAuth Authorization Code Flow tokens are now persisted to the OS keychain (macOS Keychain, Windows Credential Manager, or Linux Secret Service), so the browser authentication window only opens once per token lifetime instead of on every server restart.
+- Updated `@dynatrace-sdk/client-classic-environment-v2` (5.1.0 → 5.2.3), `@dynatrace-sdk/client-davis-analyzers` (1.9.8 → 1.10.0), `@dynatrace-sdk/client-document` (1.29.0 → 1.31.0), `@dynatrace-sdk/client-platform-management-service` (1.6.3 → 1.7.0), `@dynatrace-sdk/client-query` (1.18.1 → 1.25.0), `@dynatrace-sdk/shared-errors` (1.0.0 → 1.0.2), `@dynatrace/openkit-js` (4.1.0 → 4.2.0), `@dynatrace/strato-icons` (2.1.0 → 2.3.0), `@modelcontextprotocol/ext-apps` (1.0.1 → 1.2.2), `commander` (14.0.0 → 14.0.3), `zod` (4.1.0 → 4.1.13), and `zod-to-json-schema` (3.25.0 → 3.25.1).
 
 ## 1.8.7
 
