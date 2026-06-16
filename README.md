@@ -57,6 +57,8 @@ Furthermore, you need to configure the URL to a Dynatrace environment:
 
 Authentication will be handled via Authorization Code Flow in your browser, you don't need to define a Platform Token nor an OAuth Client to get started. After the initial authentication, your token is securely stored in the **OS keychain** (macOS Keychain, Windows Credential Manager, or Linux Secret Service) and reused on subsequent server starts, so the browser only opens once per token lifetime.
 
+If you are running in a headless/container environment where the OS keychain is unavailable, set `DT_MCP_TOKEN_STORAGE=file` to persist tokens in `~/.config/dynatrace-mcp/` instead.
+
 Once you are done, we recommend looking into [example prompts](#-example-prompts-), like `Get all details of the entity 'my-service'` or `Show me error logs`. Please mind that these prompts lead to executing DQL statements which may incur [costs](#costs) in accordance to your licence.
 
 **VSCode**
