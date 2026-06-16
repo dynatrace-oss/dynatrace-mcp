@@ -149,6 +149,16 @@ describe('KeychainTokenCache', () => {
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Failed to load token from OS keychain'));
   });
 
+  it('rejects structurally invalid keychain data', async () => {
+    mockGetPassword.mockResolvedValue(JSON.stringify({ not_a_token: true }));
+
+    const cache = new KeychainTokenCache('test-account');
+    await cache.initialize();
+
+    expect(cache.getToken(scopes)).toBeNull();
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Failed to load token from OS keychain'));
+  });
+
   it('persists a new token to keychain when setToken is called', async () => {
     const cache = new KeychainTokenCache('test-account');
     await cache.initialize();
@@ -290,6 +300,16 @@ describe('FileTokenCache', () => {
 
   it('handles corrupted file data gracefully', async () => {
     (mockFs.readFile as jest.Mock).mockResolvedValue('not-valid-json{{{');
+
+    const cache = new FileTokenCache('test-account');
+    await cache.initialize();
+
+    expect(cache.getToken(scopes)).toBeNull();
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Failed to load token from file cache'));
+  });
+
+  it('rejects structurally invalid file data', async () => {
+    (mockFs.readFile as jest.Mock).mockResolvedValue(JSON.stringify({ not_a_token: true }));
 
     const cache = new FileTokenCache('test-account');
     await cache.initialize();

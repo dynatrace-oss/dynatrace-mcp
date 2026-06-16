@@ -30,6 +30,15 @@ function tryGetKeyring(): KeyringModule | null {
   return lazyKeyringModule;
 }
 
+function isValidCachedToken(value: unknown): value is CachedToken {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as CachedToken).access_token === 'string' &&
+    (value as CachedToken).access_token.length > 0
+  );
+}
+
 /**
  * In-memory token cache implementation (no persistence across process restarts).
  */
@@ -106,9 +115,13 @@ export class KeychainTokenCache implements TokenCache {
     try {
       const stored = await keyring.getPassword(KEYCHAIN_SERVICE, this.account);
       if (stored) {
-        const parsed = JSON.parse(stored) as CachedToken;
-        this.token = parsed;
-        console.error(`🔑 Loaded existing auth token from OS keychain.`);
+        const parsed: unknown = JSON.parse(stored);
+        if (isValidCachedToken(parsed)) {
+          this.token = parsed;
+          console.error(`🔑 Loaded existing auth token from OS keychain.`);
+        } else {
+          console.error(`⚠️ Failed to load token from OS keychain: stored data is not a valid token`);
+        }
       }
     } catch (e) {
       console.error(`⚠️ Failed to load token from OS keychain: ${e instanceof Error ? e.message : String(e)}`);
@@ -210,8 +223,13 @@ export class FileTokenCache implements TokenCache {
   async initialize(): Promise<void> {
     try {
       const data = await fs.readFile(this.filePath, 'utf-8');
-      this.token = JSON.parse(data) as CachedToken;
-      console.error(`🔑 Loaded existing auth token from file cache.`);
+      const parsed: unknown = JSON.parse(data);
+      if (isValidCachedToken(parsed)) {
+        this.token = parsed;
+        console.error(`🔑 Loaded existing auth token from file cache.`);
+      } else {
+        console.error(`⚠️ Failed to load token from file cache: stored data is not a valid token`);
+      }
     } catch (e: unknown) {
       // ENOENT (file not found) is expected on first run — not an error worth logging
       const code = (e as NodeJS.ErrnoException).code;
@@ -252,7 +270,7 @@ export class FileTokenCache implements TokenCache {
     try {
       await fs.mkdir(TOKEN_CACHE_DIR, { recursive: true });
       await fs.writeFile(this.filePath, JSON.stringify(this.token), { mode: 0o600 });
-      console.error(`🔑 Auth token saved to file cache (${this.filePath}).`);
+      console.error(`🔑 Auth token saved to file cache.`);
     } catch (e) {
       console.error(`⚠️ Failed to save token to file cache: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -297,6 +315,3 @@ export function getOrCreateTokenCache(account: string): Promise<KeychainTokenCac
   }
   return getOrCreateKeychainCache(account);
 }
-
-// Global token cache instance - In-memory only (kept for backward compatibility)
-export const globalTokenCache = new InMemoryTokenCache();
