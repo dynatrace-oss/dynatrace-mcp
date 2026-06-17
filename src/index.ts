@@ -1541,8 +1541,10 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
 
     const bearerToken = process.env.MCP_BEARER_TOKEN;
     if (!bearerToken) {
-      console.error('⚠️  WARNING: MCP_BEARER_TOKEN is not set. The HTTP server is running without authentication.');
-      console.error('    Set MCP_BEARER_TOKEN to require a bearer token on all requests.');
+      console.error('❌ ERROR: MCP_BEARER_TOKEN is required when running in --http mode.');
+      console.error('   Set MCP_BEARER_TOKEN to a secure random value before starting the server:');
+      console.error('     export MCP_BEARER_TOKEN=$(openssl rand -base64 32)');
+      process.exit(1);
     }
 
     const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
@@ -1562,22 +1564,20 @@ You can now execute new Grail queries (DQL, etc.) again. If this happens more of
         return;
       }
 
-      // Bearer token authentication: only enforced when MCP_BEARER_TOKEN is set
-      if (bearerToken) {
-        if (!validateBearerToken(req.headers.authorization, bearerToken)) {
-          res.writeHead(401, {
-            'WWW-Authenticate': 'Bearer realm="dynatrace-mcp"',
-            'Content-Type': 'application/json',
-          });
-          res.end(
-            JSON.stringify({
-              jsonrpc: '2.0',
-              id: null,
-              error: { code: -32001, message: 'Unauthorized' },
-            }),
-          );
-          return;
-        }
+      // Bearer token authentication: always enforced in HTTP mode
+      if (!validateBearerToken(req.headers.authorization, bearerToken)) {
+        res.writeHead(401, {
+          'WWW-Authenticate': 'Bearer realm="dynatrace-mcp"',
+          'Content-Type': 'application/json',
+        });
+        res.end(
+          JSON.stringify({
+            jsonrpc: '2.0',
+            id: null,
+            error: { code: -32001, message: 'Unauthorized' },
+          }),
+        );
+        return;
       }
 
       // Parse request body for POST requests

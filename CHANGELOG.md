@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Breaking**: `MCP_BEARER_TOKEN` is now required when running in `--http` mode. The server will refuse to start if this environment variable is not set. This follows the deprecation notice introduced in `2.0.0`. Set `MCP_BEARER_TOKEN` to a secure random value before starting the server (e.g. `export MCP_BEARER_TOKEN=$(openssl rand -base64 32)`).
+
 ## 2.0.0
 
 - **Breaking**: Raised the minimum supported Node.js version from `22.10.0` to `24.0.0`.
