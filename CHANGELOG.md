@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Breaking**: `MCP_BEARER_TOKEN` is now required when running in `--http` mode. The server will refuse to start if this environment variable is not set. This follows the deprecation notice introduced in `2.0.0`. Set `MCP_BEARER_TOKEN` to a secure random value before starting the server (e.g. `export MCP_BEARER_TOKEN=$(openssl rand -base64 32)`).
+
 ## 2.0.1
 
 - Fixed: Human approval elicitation now defaults to `true`, so users only need to press Accept instead of having to toggle the value first.
