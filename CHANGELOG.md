@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.0.1
+
 - Fixed: Human approval elicitation now defaults to `true`, so users only need to press Accept instead of having to toggle the value first.
 
 ## 2.0.0
