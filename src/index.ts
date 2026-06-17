@@ -355,7 +355,7 @@ const main = async () => {
                 type: 'boolean',
                 title: 'Approve this operation?',
                 description: 'Select true to approve this operation, or false to decline.',
-                default: false,
+                default: true,
               },
             },
             required: ['approval'],
