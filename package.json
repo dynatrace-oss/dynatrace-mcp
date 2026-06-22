@@ -53,7 +53,7 @@
     "node": ">=24.0.0"
   },
   "dependencies": {
-    "@dynatrace-sdk/client-classic-environment-v2": "5.2.3",
+    "@dynatrace-sdk/client-classic-environment-v2": "6.1.0",
     "@dynatrace-sdk/client-davis-analyzers": "1.10.0",
     "@dynatrace-sdk/client-davis-copilot": "1.0.0",
     "@dynatrace-sdk/client-document": "1.31.0",
