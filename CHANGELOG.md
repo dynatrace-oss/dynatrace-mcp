@@ -2,7 +2,10 @@
 
 ## Unreleased
 
+## 2.1.0
+
 - **Breaking**: `MCP_BEARER_TOKEN` is now required when running in `--http` mode. The server will refuse to start if this environment variable is not set. This follows the deprecation notice introduced in `2.0.0`. Set `MCP_BEARER_TOKEN` to a secure random value before starting the server (e.g. `export MCP_BEARER_TOKEN=$(openssl rand -base64 32)`).
+- Updated `undici` (8.1.0 → 8.5.0), `@dynatrace-sdk/client-classic-environment-v2` (5.2.3 → 6.1.0), `@dynatrace-sdk/client-platform-management-service` (1.7.0 → 1.8.0), and `@dynatrace/strato-components` (3.6.0 → 3.7.0).
 
 ## 2.0.1
 
