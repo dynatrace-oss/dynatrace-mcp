@@ -58,4 +58,13 @@ describe('generateDqlSearchCommand', () => {
     const searchPart = `search "*test1*" OR "*test2*" OR "*example*"`;
     expect(result).toContain(searchPart);
   });
+
+  it('should escape double quotes in entity names to prevent DQL injection', () => {
+    const result = generateDqlSearchEntityCommand(['foo"bar'], true);
+
+    // The double quote must be escaped in the generated DQL
+    expect(result).toContain('*foo\\"bar*');
+    // The raw unescaped form must not appear
+    expect(result).not.toContain('*foo"bar*');
+  });
 });

@@ -16,6 +16,9 @@ export function validateTimeframe(value: string): void {
 /**
  * Validates a DQL filter expression intended for use after "| filter".
  * Rejects pipe characters and newlines that would allow injecting additional pipeline stages.
+ *
+ * Note: bracket-based subqueries (e.g. `x in [fetch ...]`) are not blocked here,
+ * but are bounded by the OAuth scopes of each tool — this is acceptable and intentional.
  */
 export function validateAdditionalFilter(value: string): void {
   if (/[|\n\r]/.test(value)) {

@@ -27,7 +27,7 @@ export const getEventsForCluster = async (
     dql += ` | filter isNotNull(k8s.cluster.uid)`;
   } else if (clusterId || kubernetesEntityId) {
     // filter by clusterId or kubernetesEntityId if provided
-    dql += ` | filter k8s.cluster.uid == "${escapeDqlStringValue(clusterId)}" or dt.entity.kubernetes_cluster == "${escapeDqlStringValue(kubernetesEntityId)}"`;
+    dql += ` | filter k8s.cluster.uid == "${escapeDqlStringValue(clusterId ?? '')}" or dt.entity.kubernetes_cluster == "${escapeDqlStringValue(kubernetesEntityId ?? '')}"`;
   }
 
   // filter by eventType if provided — eventType is validated as z.enum at the schema level
