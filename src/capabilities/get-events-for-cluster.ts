@@ -1,5 +1,6 @@
 import { HttpClient } from '@dynatrace-sdk/http-client';
 import { executeDql } from './execute-dql';
+import { escapeDqlStringValue, validateTimeframe } from '../utils/dql-sanitize';
 
 /**
  * Get events for a Kubernetes cluster
@@ -17,6 +18,8 @@ export const getEventsForCluster = async (
   eventType: string,
   timeframe: string = '24h',
 ) => {
+  validateTimeframe(timeframe);
+
   let dql = `fetch events, from: now()-${timeframe}, to: now()`;
 
   if (!clusterId && !kubernetesEntityId) {
@@ -24,12 +27,12 @@ export const getEventsForCluster = async (
     dql += ` | filter isNotNull(k8s.cluster.uid)`;
   } else if (clusterId || kubernetesEntityId) {
     // filter by clusterId or kubernetesEntityId if provided
-    dql += ` | filter k8s.cluster.uid == "${clusterId}" or dt.entity.kubernetes_cluster == "${kubernetesEntityId}"`;
+    dql += ` | filter k8s.cluster.uid == "${escapeDqlStringValue(clusterId)}" or dt.entity.kubernetes_cluster == "${escapeDqlStringValue(kubernetesEntityId)}"`;
   }
 
-  // filter by eventType if provided
+  // filter by eventType if provided — eventType is validated as z.enum at the schema level
   if (eventType) {
-    dql += ` | filter eventType == "${eventType}"`;
+    dql += ` | filter eventType == "${escapeDqlStringValue(eventType)}"`;
   }
 
   // sort by timestamp

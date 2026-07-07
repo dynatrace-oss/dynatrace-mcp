@@ -1,5 +1,6 @@
 import { HttpClient } from '@dynatrace-sdk/http-client';
 import { executeDql } from './execute-dql';
+import { escapeDqlStringValue } from '../utils/dql-sanitize';
 import {
   DYNATRACE_ENTITY_TYPES_ALL,
   DYNATRACE_ENTITY_TYPES_BASICS,
@@ -17,10 +18,12 @@ export const generateDqlSearchEntityCommand = (entityNames: string[], extendedSe
     throw new Error(`No entity names supplied to search for`);
   }
 
+  const escapedNames = entityNames.map(escapeDqlStringValue);
+
   // If extendedSearch is true, use all entity types, otherwise use only basic ones
   const fetchDqlCommands = (extendedSearch ? DYNATRACE_ENTITY_TYPES_ALL : DYNATRACE_ENTITY_TYPES_BASICS).map(
     (entityType, index) => {
-      const dql = `fetch ${entityType} | search "*${entityNames.join('*" OR "*')}*" | fieldsAdd entity.type | expand tags`;
+      const dql = `fetch ${entityType} | search "*${escapedNames.join('*" OR "*')}*" | fieldsAdd entity.type | expand tags`;
       if (index === 0) {
         return dql;
       }
@@ -38,7 +41,8 @@ export const generateDqlSearchEntityCommand = (entityNames: string[], extendedSe
  * @returns An array with the entity details like id, name and type
  */
 export const findMonitoredEntityViaSmartscapeByName = async (dtClient: HttpClient, entityNames: string[]) => {
-  const dql = `smartscapeNodes "*" | search "*${entityNames.join('*" OR "*')}*" | fields id, name, type`;
+  const escapedNames = entityNames.map(escapeDqlStringValue);
+  const dql = `smartscapeNodes "*" | search "*${escapedNames.join('*" OR "*')}*" | fields id, name, type`;
   console.error(`Executing DQL: ${dql}`);
 
   try {

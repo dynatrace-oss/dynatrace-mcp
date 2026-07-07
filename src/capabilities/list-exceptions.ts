@@ -1,5 +1,6 @@
 import { HttpClient } from '@dynatrace-sdk/http-client';
 import { executeDql } from './execute-dql';
+import { validateAdditionalFilter, validateTimeframe } from '../utils/dql-sanitize';
 
 export const listExceptions = async (
   dtClient: HttpClient,
@@ -7,6 +8,9 @@ export const listExceptions = async (
   timeframe: string = '24h',
   maxResultRecords: number = 5000,
 ) => {
+  validateTimeframe(timeframe);
+  if (additionalFilter) validateAdditionalFilter(additionalFilter);
+
   // DQL statement to fetch exception data from user.events for the specified timeframe
   const dql = `fetch user.events, from: now()-${timeframe}, to: now()
 | filter isNotNull(exception.stack_trace)

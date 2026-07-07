@@ -1,5 +1,6 @@
 import { HttpClient } from '@dynatrace-sdk/http-client';
 import { executeDql } from './execute-dql';
+import { validateAdditionalFilter, validateTimeframe } from '../utils/dql-sanitize';
 
 /**
  * List all problems via dt.davis.problems
@@ -15,6 +16,9 @@ export const listProblems = async (
   status?: string,
   timeframe: string = '24h',
 ) => {
+  validateTimeframe(timeframe);
+  if (additionalFilter) validateAdditionalFilter(additionalFilter);
+
   // DQL Statement from Problems App to fetch all Davis Problems
   let statusFilter = '';
   if (status === 'ACTIVE') {
