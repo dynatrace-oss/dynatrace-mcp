@@ -62,7 +62,7 @@
     "@dynatrace-sdk/shared-errors": "1.0.2",
     "@dynatrace/openkit-js": "4.2.0",
     "@dynatrace/strato-components": "3.7.0",
-    "@dynatrace/strato-icons": "2.3.0",
+    "@dynatrace/strato-icons": "2.3.1",
     "@modelcontextprotocol/ext-apps": "1.2.2",
     "@modelcontextprotocol/sdk": "1.27.1",
     "@napi-rs/keyring": "1.2.0",
