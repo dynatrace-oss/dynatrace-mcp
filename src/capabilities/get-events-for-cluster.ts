@@ -13,21 +13,25 @@ import { escapeDqlStringValue, validateTimeframe } from '../utils/dql-sanitize';
  */
 export const getEventsForCluster = async (
   dtClient: HttpClient,
-  clusterId: string,
-  kubernetesEntityId: string,
-  eventType: string,
+  clusterId?: string,
+  kubernetesEntityId?: string,
+  eventType?: string,
   timeframe: string = '24h',
 ) => {
   validateTimeframe(timeframe);
 
   let dql = `fetch events, from: now()-${timeframe}, to: now()`;
 
-  if (!clusterId && !kubernetesEntityId) {
-    // If no clusterId or kubernetesEntityId is provided, return all kubernetes related events
+  const clusterFilters: string[] = [];
+  if (clusterId) clusterFilters.push(`k8s.cluster.uid == "${escapeDqlStringValue(clusterId)}"`);
+  if (kubernetesEntityId)
+    clusterFilters.push(`dt.entity.kubernetes_cluster == "${escapeDqlStringValue(kubernetesEntityId)}"`);
+
+  if (clusterFilters.length > 0) {
+    dql += ` | filter ${clusterFilters.join(' or ')}`;
+  } else {
+    // No IDs provided — return all kubernetes related events
     dql += ` | filter isNotNull(k8s.cluster.uid)`;
-  } else if (clusterId || kubernetesEntityId) {
-    // filter by clusterId or kubernetesEntityId if provided
-    dql += ` | filter k8s.cluster.uid == "${escapeDqlStringValue(clusterId ?? '')}" or dt.entity.kubernetes_cluster == "${escapeDqlStringValue(kubernetesEntityId ?? '')}"`;
   }
 
   // filter by eventType if provided — eventType is validated as z.enum at the schema level

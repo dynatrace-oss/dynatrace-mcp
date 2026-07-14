@@ -5,7 +5,7 @@ describe('validateTimeframe', () => {
     expect(() => validateTimeframe(value)).not.toThrow();
   });
 
-  it.each(['12h; DROP TABLE', 'now()', '12h | exec("bad")', '', '7 d', 'abc', '24', '1h2d'])(
+  it.each(['12h; DROP TABLE', 'now()', '12h | exec("bad")', '', '7 d', 'abc', '24', '1h2d', '0h', '00m'])(
     'rejects invalid timeframe %s',
     (value) => {
       expect(() => validateTimeframe(value)).toThrow();

@@ -1,5 +1,5 @@
 // Valid DQL duration units: s=seconds, m=minutes, h=hours, d=days, w=weeks, M=months, y=years
-const TIMEFRAME_PATTERN = /^\d+[smhdwMy]$/;
+const TIMEFRAME_PATTERN = /^[1-9]\d*[smhdwMy]$/;
 
 /**
  * Validates a DQL timeframe string (e.g. "24h", "7d", "30m").
