@@ -4,7 +4,8 @@
 
 ## 2.1.1
 
-- Fixed a security vulnerability (GHSA-pqh8-p93p-2rx7) where DQL template parameters in several tools were not validated or escaped before being embedded into queries, potentially allowing DQL injection. Timeframe values are now validated against a strict duration format, additional filter strings are checked for pipeline-injection characters, and entity name and other string values are properly escaped in DQL string literals. Affected tools: `find_monitored_entity_by_name`, `get_events_for_cluster`, `list_exceptions`, `list_problems`, and `list_vulnerabilities`.
+- Fixed a security vulnerability where DQL template parameters in several tools were not validated or escaped before being embedded into queries, potentially allowing DQL injection. Timeframe values are now validated against a strict duration format, additional filter strings are checked for pipeline-injection characters, and string values are properly escaped in DQL string literals. Affected tools: `find_entity_by_name`, `get_kubernetes_events`, `list_exceptions`, `list_problems`, and `list_vulnerabilities`.
+- Fixed a crash in `get_kubernetes_events` when only one of `clusterId` or `kubernetesEntityId` was provided.
 - Updated `@dynatrace/strato-icons` (2.3.0 → 2.3.1).
 
 ## 2.1.0
