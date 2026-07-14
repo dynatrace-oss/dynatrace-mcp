@@ -1,5 +1,6 @@
 import { HttpClient } from '@dynatrace-sdk/http-client';
 import { executeDql } from './execute-dql';
+import { validateAdditionalFilter, validateTimeframe } from '../utils/dql-sanitize';
 
 /**
  * List vulnerabilities from security.events
@@ -15,6 +16,9 @@ export const listVulnerabilities = async (
   riskScore?: number,
   timeframe: string = '30d',
 ) => {
+  validateTimeframe(timeframe);
+  if (additionalFilter) validateAdditionalFilter(additionalFilter);
+
   // DQL query to fetch vulnerabilities with configurable timeframe
   const dqlStatement = `fetch security.events, from: now()-${timeframe}, to: now()
     | filter dt.system.bucket=="default_securityevents_builtin"
