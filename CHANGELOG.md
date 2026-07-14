@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 2.1.1
+
+- Fixed a security vulnerability (GHSA-pqh8-p93p-2rx7) where DQL template parameters in several tools were not validated or escaped before being embedded into queries, potentially allowing DQL injection. Timeframe values are now validated against a strict duration format, additional filter strings are checked for pipeline-injection characters, and entity name and other string values are properly escaped in DQL string literals. Affected tools: `find_monitored_entity_by_name`, `get_events_for_cluster`, `list_exceptions`, `list_problems`, and `list_vulnerabilities`.
+- Updated `@dynatrace/strato-icons` (2.3.0 → 2.3.1).
+
 ## 2.1.0
 
 - **Breaking**: `MCP_BEARER_TOKEN` is now required when running in `--http` mode. The server will refuse to start if this environment variable is not set. This follows the deprecation notice introduced in `2.0.0`. Set `MCP_BEARER_TOKEN` to a secure random value before starting the server (e.g. `export MCP_BEARER_TOKEN=$(openssl rand -base64 32)`).
