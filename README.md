@@ -30,10 +30,10 @@
 
 Please migrate to one of the actively maintained alternatives:
 
-| Use case | Recommended tool |
-| --- | --- |
-| **Local development** (VS Code, IntelliJ, Claude Code, Cursor, …) | [Dynatrace-for-AI](https://github.com/Dynatrace/dynatrace-for-ai/) + [`dtctl`](https://github.com/dynatrace-oss/dtctl) |
-| **Agent-to-agent / remote** (Atlassian Rovo, GitHub Coding Agent, …) | [Dynatrace Remote MCP Server](https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/) — no local setup required |
+| Use case                                                             | Recommended tool                                                                                                       |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Local development** (VS Code, IntelliJ, Claude Code, Cursor, …)    | [Dynatrace-for-AI](https://github.com/Dynatrace/dynatrace-for-ai/) + [`dtctl`](https://github.com/dynatrace-oss/dtctl) |
+| **Agent-to-agent / remote** (Atlassian Rovo, GitHub Coding Agent, …) | [Dynatrace Remote MCP Server](https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/) — no local setup required    |
 
 See the [migration guide](docs/remote-mcp-migration.md) for a step-by-step comparison and migration instructions.
 
