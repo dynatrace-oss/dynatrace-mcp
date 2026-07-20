@@ -4,7 +4,7 @@
   "display_name": "Dynatrace MCP Server",
   "version": "2.1.2",
   "description": "[DEPRECATED] Access Dynatrace observability data: logs, metrics, problems, vulnerabilities via DQL and Dynatrace Intelligence",
-  "long_description": "⚠️ This package is deprecated (final release: v2.1.2). For local development (VS Code, Cursor, Claude Code, IntelliJ, …), migrate to Dynatrace-for-AI + dtctl: https://github.com/Dynatrace/dynatrace-for-ai/. For agent-to-agent use cases (Atlassian Rovo, GitHub Coding Agent, …), use the Dynatrace Remote MCP Server: https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/",
+  "long_description": "⚠️ This package is deprecated and no longer maintained. For local development (VS Code, Cursor, Claude Code, IntelliJ, …), migrate to Dynatrace-for-AI + dtctl: https://github.com/Dynatrace/dynatrace-for-ai/. For agent-to-agent use cases (Atlassian Rovo, GitHub Coding Agent, …), use the Dynatrace Remote MCP Server: https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/",
   "author": {
     "name": "Dynatrace OSS",
     "url": "https://github.com/dynatrace-oss"
