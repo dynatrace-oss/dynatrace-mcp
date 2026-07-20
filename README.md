@@ -24,15 +24,18 @@
   </a>
 </h4>
 
-## 🛠️ MAINTENANCE MODE
+## ⚠️ DEPRECATED
 
-Please note, that this repository is currently in [_Maintenance Mode_](https://github.com/dynatrace-oss/dynatrace-mcp/issues/496). We will continue fixing/patching issues when they come up.
+> **This repository is deprecated. Version 2.1.1 was the final release — no further updates will be made.**
 
-**Recommended Actions**
+Please migrate to one of the actively maintained alternatives:
 
-> 🚀 **Try [Dynatrace-for-Ai](https://github.com/Dynatrace/dynatrace-for-ai/) and [`dtctl`](https://github.com/dynatrace-oss/dtctl)** (recommended for local development use cases like VS Code, IntelliJ, Claude Code, Cursor and alike)
+| Use case | Recommended tool |
+| --- | --- |
+| **Local development** (VS Code, IntelliJ, Claude Code, Cursor, …) | [Dynatrace-for-AI](https://github.com/Dynatrace/dynatrace-for-ai/) + [`dtctl`](https://github.com/dynatrace-oss/dtctl) |
+| **Agent-to-agent / remote** (Atlassian Rovo, GitHub Coding Agent, …) | [Dynatrace Remote MCP Server](https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/) — no local setup required |
 
-> **Try out our new [Remote Dynatrace MCP Server](https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/)!** Now available - no local setup required, connect instantly to your Dynatrace environment from any MCP-compatible client. See our [migration guide](docs/remote-mcp-migration.md) for a comparison and step-by-step instructions. This setup is recommended when connecting another Agent (e.g., Atlassian Rovo, GitHub Coding Agent and alike) to Dynatrace.
+See the [migration guide](docs/remote-mcp-migration.md) for a step-by-step comparison and migration instructions.
 
 The local _Dynatrace MCP server_ allows AI Assistants to interact with the [Dynatrace](https://www.dynatrace.com/) observability platform,
 bringing real-time observability data directly into your development workflow.
