@@ -104,7 +104,7 @@ const main = async () => {
       '',
       '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
       '  DEPRECATION NOTICE',
-      '  This local Dynatrace MCP Server is deprecated. Last release: v2.1.1.',
+      '  This local Dynatrace MCP Server is deprecated. Last release: v2.1.2.',
       '  No further updates will be made.',
       '',
       '  Please migrate to:',

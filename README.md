@@ -26,7 +26,7 @@
 
 ## ⚠️ DEPRECATED
 
-> **This repository is deprecated. Version 2.1.1 was the final release — no further updates will be made.**
+> **This repository is deprecated. Version 2.1.2 was the final release — no further updates will be made.**
 
 Please migrate to one of the actively maintained alternatives:
 
