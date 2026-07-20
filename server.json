@@ -1,18 +1,18 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.dynatrace-oss/Dynatrace-mcp",
-  "description": "Access Dynatrace observability data: logs, metrics, problems, vulnerabilities via DQL and Davis AI",
+  "description": "[DEPRECATED] Access Dynatrace observability data: logs, metrics, problems, vulnerabilities via DQL and Davis AI. Migrate to dynatrace-for-ai + dtctl or the Dynatrace Remote MCP Server.",
   "repository": {
     "url": "https://github.com/dynatrace-oss/Dynatrace-mcp",
     "source": "github"
   },
-  "version": "2.1.1",
+  "version": "2.1.2",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@dynatrace-oss/dynatrace-mcp-server",
-      "version": "2.1.1",
+      "version": "2.1.2",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"

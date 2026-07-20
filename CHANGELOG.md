@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 2.1.2
+
+- This is the final release. The repository is deprecated — no further updates will be made.
+- Added a deprecation notice printed to stderr on server startup, redirecting users to actively maintained alternatives.
+- Updated marketplace descriptions (`manifest.json`, `server.json`, `package.json`) to reflect deprecation status.
+- For local development (VS Code, Cursor, Claude Code, IntelliJ, …), migrate to [Dynatrace-for-AI](https://github.com/Dynatrace/dynatrace-for-ai/) + [`dtctl`](https://github.com/dynatrace-oss/dtctl).
+- For agent-to-agent use cases (Atlassian Rovo, GitHub Coding Agent, …), use the [Dynatrace Remote MCP Server](https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/).
+
 ## 2.1.1
 
 - Fixed a security vulnerability where DQL template parameters in several tools were not validated or escaped before being embedded into queries, potentially allowing DQL injection. Timeframe values are now validated against a strict duration format, additional filter strings are checked for pipeline-injection characters, and string values are properly escaped in DQL string literals. Affected tools: `find_entity_by_name`, `get_kubernetes_events`, `list_exceptions`, `list_problems`, and `list_vulnerabilities`.
