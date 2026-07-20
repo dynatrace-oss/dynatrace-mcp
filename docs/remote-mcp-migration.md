@@ -1,5 +1,7 @@
 # Migrating from Local to Remote Dynatrace MCP Server
 
+> **⚠️ The local Dynatrace MCP Server is deprecated as of version 2.1.1. This guide covers how to migrate away from it.**
+
 Dynatrace now offers an official **Remote MCP Server** that runs directly in your Dynatrace SaaS environment — no local setup, no Node.js, and no `npx` required.
 
 👉 **[Dynatrace Remote MCP Server Documentation](https://docs.dynatrace.com/docs/dynatrace-intelligence/dynatrace-mcp)**

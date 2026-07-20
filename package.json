@@ -1,8 +1,8 @@
 {
   "name": "@dynatrace-oss/dynatrace-mcp-server",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "mcpName": "io.github.dynatrace-oss/Dynatrace-mcp",
-  "description": "Model Context Protocol (MCP) server for Dynatrace",
+  "description": "[DEPRECATED] Model Context Protocol (MCP) server for Dynatrace. Migrate to dynatrace-for-ai + dtctl or the Dynatrace Remote MCP Server.",
   "keywords": [
     "Dynatrace",
     "mcp",

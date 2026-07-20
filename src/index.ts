@@ -99,6 +99,24 @@ const main = async () => {
   const program = createCliProgram(version).parse();
   const options = program.opts();
 
+  console.error(
+    [
+      '',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      '  DEPRECATION NOTICE',
+      '  This local Dynatrace MCP Server is deprecated. Last release: v2.1.2.',
+      '  No further updates will be made.',
+      '',
+      '  Please migrate to:',
+      '  - Local dev (VS Code, IntelliJ, Claude Code, Cursor, ...):',
+      '    https://github.com/Dynatrace/dynatrace-for-ai/ + dtctl',
+      '    https://github.com/dynatrace-oss/dtctl',
+      '  - Remote MCP Server (no local setup required):',
+      '    https://www.dynatrace.com/hub/detail/dynatrace-mcp-server/',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      '',
+    ].join('\n'),
+  );
   console.error(`Initializing Dynatrace MCP Server v${version}...`);
   // Configure proxy from environment variables early in the startup process
   configureProxyFromEnvironment();
