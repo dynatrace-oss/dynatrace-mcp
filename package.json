@@ -44,7 +44,6 @@
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",
     "lint": "eslint src",
-    "pack": "npm run build && npm pack dist/",
     "release:update-versions": "node scripts/update-versions.js"
   },
   "author": "Dynatrace",

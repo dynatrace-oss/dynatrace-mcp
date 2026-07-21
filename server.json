@@ -7,48 +7,5 @@
     "source": "github"
   },
   "version": "2.1.2",
-  "packages": [
-    {
-      "registryType": "npm",
-      "registryBaseUrl": "https://registry.npmjs.org",
-      "identifier": "@dynatrace-oss/dynatrace-mcp-server",
-      "version": "2.1.2",
-      "runtimeHint": "npx",
-      "transport": {
-        "type": "stdio"
-      },
-      "environmentVariables": [
-        {
-          "description": "The URL of your Dynatrace environment (e.g. 'https://abc12345.apps.dynatrace.com'). Do not use Dynatrace classic URLs.",
-          "isRequired": true,
-          "format": "string",
-          "name": "DT_ENVIRONMENT"
-        },
-        {
-          "description": "[OPTIONAL] Dynatrace Platform Token for authentication. Alternative to OAuth authentication.",
-          "isRequired": false,
-          "format": "string",
-          "name": "DT_PLATFORM_TOKEN"
-        },
-        {
-          "description": "[OPTIONAL] OAuth Client ID for advanced authentication scenarios. Use with OAUTH_CLIENT_SECRET.",
-          "isRequired": false,
-          "format": "string",
-          "name": "OAUTH_CLIENT_ID"
-        },
-        {
-          "description": "[OPTIONAL] OAuth Client Secret for advanced authentication scenarios. Use with OAUTH_CLIENT_ID.",
-          "isRequired": false,
-          "format": "string",
-          "name": "OAUTH_CLIENT_SECRET"
-        },
-        {
-          "description": "[OPTIONAL] Budget limit in GB for Grail query bytes scanned per session. Default: 1000. Set to -1 to disable budget tracking.",
-          "isRequired": false,
-          "format": "number",
-          "name": "DT_GRAIL_QUERY_BUDGET_GB"
-        }
-      ]
-    }
-  ]
+  "packages": []
 }

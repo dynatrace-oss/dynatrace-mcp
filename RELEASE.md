@@ -8,8 +8,6 @@ This repository uses automated GitHub workflows to prepare releases whenever a n
 2. The workflow builds the project, runs tests, validates the MCPB manifest, packs the `.mcpb` bundle, and creates a GitHub release with auto-generated release notes
 3. The generated `.mcpb` file is attached to the GitHub release as a downloadable asset
 
-**Note**: This workflow does (not yet) publish the release to npmjs.com.
-
 ## Creating a Release
 
 ### Manual tagging
