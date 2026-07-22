@@ -4,12 +4,6 @@ on:
   push:
     tags:
       - 'v*' # Triggers on version tags like v1.0.0, v2.1.3, etc.
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag to release (e.g. v1.0.0)'
-        required: true
-        type: string
 
 permissions:
   contents: write # Required for creating releases
@@ -45,23 +39,10 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          # Determine tag from workflow_dispatch input or pushed tag
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ github.event.inputs.tag }}"
-            # Normalize away optional refs/tags/ prefix
-            TAG="${TAG#refs/tags/}"
-            # Fail fast if tag doesn't start with 'v'
-            if [[ "$TAG" != v* ]]; then
-              echo "Error: tag '$TAG' does not start with 'v'" >&2
-              exit 1
-            fi
-          else
-            TAG="${GITHUB_REF#refs/tags/}"
-          fi
           # Remove 'v' prefix from tag to get version
-          VERSION="${TAG#v}"
+          VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
       - name: Validate MCPB manifest
         run: npm run mcpb:validate
