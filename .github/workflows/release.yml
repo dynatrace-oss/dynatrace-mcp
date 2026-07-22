@@ -48,6 +48,13 @@ jobs:
           # Determine tag from workflow_dispatch input or pushed tag
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             TAG="${{ github.event.inputs.tag }}"
+            # Normalize away optional refs/tags/ prefix
+            TAG="${TAG#refs/tags/}"
+            # Fail fast if tag doesn't start with 'v'
+            if [[ "$TAG" != v* ]]; then
+              echo "Error: tag '$TAG' does not start with 'v'" >&2
+              exit 1
+            fi
           else
             TAG="${GITHUB_REF#refs/tags/}"
           fi
