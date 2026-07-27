@@ -1,5 +1,7 @@
 # Dynatrace MCP Server
 
+[![MCP Toplist](https://mcptoplist.com/badge/io.github.dynatrace-oss%2FDynatrace-mcp.svg)](https://mcptoplist.com/server/io.github.dynatrace-oss%2FDynatrace-mcp)
+
 <h4 align="center">
   <a href="https://github.com/dynatrace-oss/dynatrace-mcp/releases">
     <img src="https://img.shields.io/github/release/dynatrace-oss/dynatrace-mcp" />
