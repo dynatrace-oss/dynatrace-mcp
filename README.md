@@ -1,5 +1,7 @@
 # Dynatrace MCP Server
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/dynatrace-oss/dynatrace-ai-agent-instrumentation-examples/badge)](https://scorecard.dev/viewer/?uri=github.com/dynatrace-oss/dynatrace-mcp)
+
 <h4 align="center">
   <a href="https://github.com/dynatrace-oss/dynatrace-mcp/releases">
     <img src="https://img.shields.io/github/release/dynatrace-oss/dynatrace-mcp" />
