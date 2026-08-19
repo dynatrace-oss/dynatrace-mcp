@@ -17,9 +17,9 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      security-events: write
-      id-token: write
       contents: read
+      id-token: write
+      security-events: write
 
     steps:
       - name: Checkout repository
