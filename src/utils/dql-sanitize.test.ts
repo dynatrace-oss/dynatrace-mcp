@@ -47,10 +47,23 @@ describe('escapeDqlStringValue', () => {
     expect(escapeDqlStringValue('foo\\"bar')).toBe('foo\\\\\\"bar');
   });
 
-  it('prevents breaking out of DQL string literal', () => {
+  it('prevents breaking out of DQL string literal via double quote', () => {
     const malicious = 'x" | exec("bad")';
-    const escaped = escapeDqlStringValue(malicious);
-    // The escaped value should not contain unescaped double quotes
-    expect(escaped).toBe('x\\" | exec(\\"bad\\")');
+    expect(escapeDqlStringValue(malicious)).toBe('x\\" | exec(\\"bad\\")');
+  });
+
+  it('escapes newline characters', () => {
+    expect(escapeDqlStringValue('foo\nbar')).toBe('foo\\nbar');
+    expect(escapeDqlStringValue('foo\rbar')).toBe('foo\\rbar');
+    expect(escapeDqlStringValue('foo\r\nbar')).toBe('foo\\r\\nbar');
+  });
+
+  it('escapes tab characters', () => {
+    expect(escapeDqlStringValue('foo\tbar')).toBe('foo\\tbar');
+  });
+
+  it('escapes embedded newline in a pipeline-like value', () => {
+    const value = 'foo\n| fetch logs';
+    expect(escapeDqlStringValue(value)).toBe('foo\\n| fetch logs');
   });
 });
