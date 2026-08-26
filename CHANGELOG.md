@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2.1.3
+
+- Hardened DQL string escaping so control characters (newline, carriage-return, tab) in string values are escaped, consistent with the existing filter validation. This is a defense-in-depth improvement; no exploitable issue was known.
+
 ## 2.1.2
 
 - This is the final release. This repository is now deprecated — see [README](README.md) for migration options.
