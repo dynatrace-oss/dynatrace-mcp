@@ -28,8 +28,14 @@ export function validateAdditionalFilter(value: string): void {
 
 /**
  * Escapes a value for safe embedding inside a DQL double-quoted string literal.
- * Escapes backslashes first, then double quotes.
+ * Escapes backslashes first, then double quotes, then control characters
+ * (newline, carriage-return, tab) for consistency with validateAdditionalFilter.
  */
 export function escapeDqlStringValue(value: string): string {
-  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\t/g, '\\t');
 }
